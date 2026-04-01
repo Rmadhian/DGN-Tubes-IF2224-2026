@@ -2,7 +2,6 @@
 #include <cctype>
 
 
-// Mengabaikan spasi, tab, enter, dan komentar { } atau (* *)
 void Lexer::skipWhitespaceAndComments() {
     while (current_char != '\0') {
         if (isspace(current_char)) {
