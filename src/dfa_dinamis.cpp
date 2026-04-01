@@ -6,25 +6,21 @@ DynamicToken DFADinamis::process(FILE* fp, char c) {
     std::string buffer = "";
     buffer += c;
 
-    // 1. Handling Identifiers (ident)
-    // Aturan: Diawali huruf, diikuti huruf/angka, case-insensitive 
     if (isalpha(c)) {
         char next;
         while ((next = fgetc(fp)) != EOF && (isalnum(next))) {
             buffer += next;
         }
-        ungetc(next, fp); // Kembalikan karakter non-alnum ke stream 
+        ungetc(next, fp);  
         return {DynamicTokenType::IDENT, buffer};
     }
 
-    // 2. Handling Numbers (intcon & realcon)
-    // Aturan: intcon adalah digit, realcon memiliki titik desimal 
     if (isdigit(c)) {
         char next;
         bool isReal = false;
         while ((next = fgetc(fp)) != EOF && (isdigit(next) || next == '.')) {
             if (next == '.') {
-                if (isReal) break; // Titik kedua mengakhiri token
+                if (isReal) break; 
                 isReal = true;
             }
             buffer += next;
@@ -33,20 +29,16 @@ DynamicToken DFADinamis::process(FILE* fp, char c) {
         return {isReal ? DynamicTokenType::REALCON : DynamicTokenType::INTCON, buffer};
     }
 
-    // 3. Handling Charcon & String
-    // Aturan: Diapit petik tunggal 
     if (c == '\'') {
         char next;
         while ((next = fgetc(fp)) != EOF && next != '\'') {
             buffer += next;
         }
         buffer += '\'';
-        // Jika hanya 1 karakter di dalam petik (misal 'a'), itu charcon 
         if (buffer.length() == 3) return {DynamicTokenType::CHARCON, buffer};
         return {DynamicTokenType::STRING, buffer};
     }
 
-    // 4. Handling Comments { } atau (* *) 
     if (c == '{') {
         char next;
         while ((next = fgetc(fp)) != EOF && next != '}') {
@@ -75,11 +67,10 @@ DynamicToken DFADinamis::process(FILE* fp, char c) {
             }
             return {DynamicTokenType::COMMENT, buffer};
         } else {
-            ungetc(next, fp); // Bukan komentar, biarkan Nelson (DFA Statis) menangani lparent 
+            ungetc(next, fp); 
         }
     }
 
-    // 5. Handling Whitespace 
     if (isspace(c)) {
         return {DynamicTokenType::WHITESPACE, " "};
     }
