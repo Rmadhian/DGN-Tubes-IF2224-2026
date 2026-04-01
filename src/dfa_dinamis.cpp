@@ -7,7 +7,7 @@ DynamicToken DFADinamis::process(FILE* fp, char c) {
     buffer += c;
 
     // 1. Handling Identifiers (ident)
-    // Aturan: Diawali huruf, diikuti huruf/angka, case-insensitive [cite: 141, 146]
+    // Aturan: Diawali huruf, diikuti huruf/angka, case-insensitive 
     if (isalpha(c)) {
         char next;
         while ((next = fgetc(fp)) != EOF && (isalnum(next))) {
@@ -18,7 +18,7 @@ DynamicToken DFADinamis::process(FILE* fp, char c) {
     }
 
     // 2. Handling Numbers (intcon & realcon)
-    // Aturan: intcon adalah digit, realcon memiliki titik desimal [cite: 136]
+    // Aturan: intcon adalah digit, realcon memiliki titik desimal 
     if (isdigit(c)) {
         char next;
         bool isReal = false;
@@ -34,14 +34,14 @@ DynamicToken DFADinamis::process(FILE* fp, char c) {
     }
 
     // 3. Handling Charcon & String
-    // Aturan: Diapit petik tunggal [cite: 136]
+    // Aturan: Diapit petik tunggal 
     if (c == '\'') {
         char next;
         while ((next = fgetc(fp)) != EOF && next != '\'') {
             buffer += next;
         }
         buffer += '\'';
-        // Jika hanya 1 karakter di dalam petik (misal 'a'), itu charcon [cite: 136]
+        // Jika hanya 1 karakter di dalam petik (misal 'a'), itu charcon 
         if (buffer.length() == 3) return {DynamicTokenType::CHARCON, buffer};
         return {DynamicTokenType::STRING, buffer};
     }
@@ -75,11 +75,11 @@ DynamicToken DFADinamis::process(FILE* fp, char c) {
             }
             return {DynamicTokenType::COMMENT, buffer};
         } else {
-            ungetc(next, fp); // Bukan komentar, biarkan Nelson (DFA Statis) menangani lparent [cite: 141]
+            ungetc(next, fp); // Bukan komentar, biarkan Nelson (DFA Statis) menangani lparent 
         }
     }
 
-    // 5. Handling Whitespace [cite: 96]
+    // 5. Handling Whitespace 
     if (isspace(c)) {
         return {DynamicTokenType::WHITESPACE, " "};
     }
