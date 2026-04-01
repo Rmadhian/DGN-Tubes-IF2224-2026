@@ -1,79 +1,82 @@
-#include "DFA_Dinamis.hpp"
+#include "lexer.h"
 #include <cctype>
-#include <cstdio>
 
-DynamicToken DFADinamis::process(FILE* fp, char c) {
-    std::string buffer = "";
-    buffer += c;
 
-    if (isalpha(c)) {
-        char next;
-        while ((next = fgetc(fp)) != EOF && (isalnum(next))) {
-            buffer += next;
-        }
-        ungetc(next, fp);  
-        return {DynamicTokenType::IDENT, buffer};
-    }
-
-    if (isdigit(c)) {
-        char next;
-        bool isReal = false;
-        while ((next = fgetc(fp)) != EOF && (isdigit(next) || next == '.')) {
-            if (next == '.') {
-                if (isReal) break; 
-                isReal = true;
+// Mengabaikan spasi, tab, enter, dan komentar { } atau (* *)
+void Lexer::skipWhitespaceAndComments() {
+    while (current_char != '\0') {
+        if (isspace(current_char)) {
+            advance();
+        } 
+        else if (current_char == '{') {
+            advance(); 
+            while (current_char != '\0' && current_char != '}') {
+                advance();
             }
-            buffer += next;
-        }
-        ungetc(next, fp);
-        return {isReal ? DynamicTokenType::REALCON : DynamicTokenType::INTCON, buffer};
-    }
-
-    if (c == '\'') {
-        char next;
-        while ((next = fgetc(fp)) != EOF && next != '\'') {
-            buffer += next;
-        }
-        buffer += '\'';
-        if (buffer.length() == 3) return {DynamicTokenType::CHARCON, buffer};
-        return {DynamicTokenType::STRING, buffer};
-    }
-
-    if (c == '{') {
-        char next;
-        while ((next = fgetc(fp)) != EOF && next != '}') {
-            buffer += next;
-        }
-        buffer += '}';
-        return {DynamicTokenType::COMMENT, buffer};
-    }
-    
-    if (c == '(') {
-        char next = fgetc(fp);
-        if (next == '*') {
-            buffer += next;
-            while (true) {
-                char d = fgetc(fp);
-                if (d == EOF) break;
-                buffer += d;
-                if (d == '*') {
-                    char e = fgetc(fp);
-                    if (e == ')') {
-                        buffer += e;
-                        break;
-                    }
-                    ungetc(e, fp);
+            if (current_char == '}') advance(); 
+        } 
+        else if (current_char == '(' && peek() == '*') {
+            advance(); 
+            advance(); 
+            while (current_char != '\0') {
+                if (current_char == '*' && peek() == ')') {
+                    advance(); 
+                    advance(); 
+                    break;
                 }
+                advance();
             }
-            return {DynamicTokenType::COMMENT, buffer};
         } else {
-            ungetc(next, fp); 
+            
+            break;
+        }
+    }
+}
+
+Token Lexer::scanNumber() {
+    string res = "";
+    bool isReal = false;
+
+    while (isdigit(current_char)) {
+        res += current_char;
+        advance();
+    }
+
+    if (current_char == '.') {
+        isReal = true;
+        res += current_char;
+        advance();
+        
+        while (isdigit(current_char)) {
+            res += current_char;
+            advance();
         }
     }
 
-    if (isspace(c)) {
-        return {DynamicTokenType::WHITESPACE, " "};
+    if (isReal) {
+        return Token(TokenType::REALCON, res);
+    } else {
+        return Token(TokenType::INTCON, res);
+    }
+}
+
+Token Lexer::scanStringOrChar() {
+    string content = ""; 
+    advance(); 
+
+    while (current_char != '\0' && current_char != '\'') {
+        content += current_char;
+        advance();
     }
 
-    return {DynamicTokenType::UNKNOWN, buffer};
+    string fullToken = "'" + content + "'"; 
+    if (current_char == '\'') {
+        advance(); 
+    }
+
+    if (content.length() == 1) {
+        return Token(TokenType::CHARCON, fullToken);
+    } else {
+        return Token(TokenType::STRING, fullToken);
+    }
 }
