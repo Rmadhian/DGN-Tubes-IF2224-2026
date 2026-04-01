@@ -26,7 +26,7 @@ enum class TokenType {
     UNTILSY, OFSY, DOSY, TOSY, DOWNTOSY, THENSY,
     
     // Special
-    UNKNOWN, END_OF_FILE
+    COMMENT, UNKNOWN, END_OF_FILE
 };
 
 // Struktur data untuk menyimpan hasil token yang ditemukan
@@ -50,8 +50,11 @@ private:
     char peek();
 
     // --- DFA DINAMIS ---
-    // Mengabaikan spasi, enter, tab, dan komentar { } atau (* *) 
-    void skipWhitespaceAndComments();
+    // Mengabaikan spasi, enter, dan tab
+    void skipWhitespace();
+
+    // Mendeteksi dan menghasilkan token komentar { } atau (* *)
+    Token scanComment();
 
     // Mendeteksi angka (bisa intcon atau realcon)
     Token scanNumber();
