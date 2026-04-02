@@ -2,6 +2,8 @@
 #include <fstream>
 #include <string>
 #include <sstream>
+#include <vector>
+#include "lexer.h"
 
 using namespace std;
 

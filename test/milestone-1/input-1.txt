@@ -1,0 +1,35 @@
+{ Program Uji Coba Komprehensif Lexer Arion }
+program UjiLexer;
+
+var
+  angka1, angka2 : integer;
+  desimal : real;
+  huruf : char;
+  kata : string;
+
+begin
+  (* Bagian ini untuk menguji tangkapan angka dan operator 
+  *)
+  angka1 := 10;
+  
+  { Menguji edge case angka bertanda dari QNA }
+  angka2 := +67; 
+  
+  { Menguji pecahan dari QNA }
+  desimal := 0.18; 
+  
+  huruf := 'A';
+  kata := 'baca buku ''KBBI'''; { Menguji escape character petik ganda }
+  
+  if (angka1 <= angka2) AND (angka1 <> 0) then
+  begin
+    angka1 := angka1 + 1;
+    angka2 := angka2 div 2;
+  end else
+  begin
+    kata := ''; { Menguji string kosong }
+  end;
+  
+  { Menguji longest match identifier dari QNA }
+  var arrayzz : array [1..10] of integer;
+end.
