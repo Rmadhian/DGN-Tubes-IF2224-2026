@@ -91,7 +91,7 @@ Token Lexer::scanStringOrChar() {
         if (peek() == '\'') {
           teks += current_char;
           advance();
-          teks +=current_char;
+          teks += current_char;
           advance();
         } else {
           // Petik penutup
