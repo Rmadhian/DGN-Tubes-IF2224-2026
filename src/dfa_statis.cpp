@@ -2,9 +2,11 @@
 #include <cctype>
 #include <utility>
 
+// Memeriksa apakah identifier adalah sebuah keyword
 TokenType Lexer::checkKeyword(const string& ident) {
+    // Menggunakan static map untuk mapping keyword ke TokenType agar efisien
     static const unordered_map<string, TokenType> keyword_map = {
-        // Keywords
+        // Keyword bawaan Pascal
         {"const", TokenType::CONSTSY},
         {"type", TokenType::TYPESY},
         {"var", TokenType::VARSY},
@@ -28,7 +30,7 @@ TokenType Lexer::checkKeyword(const string& ident) {
         {"downto", TokenType::DOWNTOSY},
         {"then", TokenType::THENSY},
 
-        // Operator kata
+        // Operator berbentuk kata
         {"not", TokenType::NOTSY},
         {"and", TokenType::ANDSY},
         {"or", TokenType::ORSY},
@@ -36,6 +38,7 @@ TokenType Lexer::checkKeyword(const string& ident) {
         {"mod", TokenType::IMOD},
     };
 
+    // Mengubah identifier ke lowercase karena Pascal bersifat case-insensitive
     string lower_ident;
     lower_ident.reserve(ident.size());
 
@@ -44,15 +47,18 @@ TokenType Lexer::checkKeyword(const string& ident) {
             tolower(static_cast<unsigned char>(ch)));
     }
 
+    // Cek apakah identifier ada di dalam map keyword
     const auto it = keyword_map.find(lower_ident);
     if (it != keyword_map.end()) {
         return it->second;
     }
-    return TokenType::IDENT;
+    return TokenType::IDENT; // Jika tidak ditemukan, kembalikan sebagai identifier biasa
 }
 
+// Melakukan pemindaian untuk simbol, operator, dan tanda baca
 Token Lexer::scanSymbol() {
     switch (current_char) {
+        // Operator aritmatika dasar
         case '+':
             advance();
             return Token(TokenType::PLUS, "+");
@@ -65,12 +71,14 @@ Token Lexer::scanSymbol() {
         case '/':
             advance();
             return Token(TokenType::RDIV, "/");
+        // Operator relasional dan logika
         case '=':
             advance();
             if (current_char == '=') {
                 advance();
                 return Token(TokenType::EQL, "==");
             }
+            // Mengembalikan unknown karena di Pascal assignment menggunakan := 
             return Token(TokenType::UNKNOWN, "=");
         case '<':
             advance();
@@ -90,6 +98,7 @@ Token Lexer::scanSymbol() {
                 return Token(TokenType::GEQ, ">=");
             }
             return Token(TokenType::GTR, ">");
+        // Tanda baca dan pengelompokan
         case '(':
             advance();
             return Token(TokenType::LPARENT, "(");
@@ -113,11 +122,14 @@ Token Lexer::scanSymbol() {
             return Token(TokenType::PERIOD, ".");
         case ':':
             advance();
+            // Mengecek operator assignment :=
             if (current_char == '=') {
                 advance();
                 return Token(TokenType::BECOMES, ":=");
             }
             return Token(TokenType::COLON, ":");
+            
+        // Menangani karakter yang tidak dikenali
         default: {
             const string unknown_lexeme(1, current_char);
             advance();

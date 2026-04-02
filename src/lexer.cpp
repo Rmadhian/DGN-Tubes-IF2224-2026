@@ -1,6 +1,7 @@
 #include "lexer.h"
 #include <cctype>
 
+// Inisialisasi lexer, posisi mulai dari awal source code
 Lexer::Lexer(string source) {
   source_code = source;
   current_pos=0;
@@ -8,10 +9,11 @@ Lexer::Lexer(string source) {
   if (source_code.length() > 0) {
     current_char = source_code[0];
   } else {
-    current_char = '\0';
+    current_char = '\0'; // Source kosong, langsung set null
   }
 }
 
+// Maju satu karakter, set null kalau sudah di akhir
 void Lexer::advance() {
   current_pos++;
 
@@ -22,6 +24,7 @@ void Lexer::advance() {
   }
 }
 
+// Lihat karakter selanjutnya tanpa memajukan posisi (lookahead 1)
 char Lexer::peek() {
   size_t peek_pos = current_pos + 1;
 
@@ -32,34 +35,41 @@ char Lexer::peek() {
   }
 }
 
+// Fungsi utama tokenisasi: baca seluruh source code dan hasilkan list token
 vector<Token> Lexer::tokenize() {
   vector<Token> hasil_token;
   while (current_char != '\0') {
+    // Skip whitespace dan komentar dulu sebelum proses
     if (isspace(current_char) || current_char == '{' || (current_char == '(' && peek() == '*')) {
       skipWhitespaceAndComments();
       continue;
     }
 
+    // Karakter huruf -> bisa identifier atau keyword
     if(isalpha(current_char)) {
       hasil_token.push_back(scanIdentOrKeyword());
       continue;
     }
 
+    // Karakter angka -> integer atau real constant
     if (isdigit(current_char)) {
       hasil_token.push_back(scanNumber());
       continue;
     }
 
+    // Karakter petik -> string atau char constant
     if (current_char == '\'') {
       hasil_token.push_back(scanStringOrChar());
       continue;
     }
 
+    // Selain itu masuk ke pemindaian simbol/operator
     hasil_token.push_back(scanSymbol());
   }
   return hasil_token;
 }
 
+// Konversi enum TokenType ke string untuk output
 string Lexer::tokenTypeToString(TokenType type) {
   switch (type) {
     case TokenType::INTCON: return "intcon";
