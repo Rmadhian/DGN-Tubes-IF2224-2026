@@ -45,5 +45,5 @@ Program akan membaca kode Arion dari `input-1.txt` dan menghasilkan daftar token
 | :--- | :--- | :---|
 | 13523150 | Benedictus Nelson | Mengerjakan dfa_statis.cpp. |
 | 13524117 | Rainaldi Pratama F. Sembiring | - |
-| 13524120 | Jonathan Alveraldo Bangun|Mengerjakan dfa_dinamis.cpp, mengerjakan laporan. |
+| 13524120 | Jonathan Alveraldo Bangun | Mengerjakan dfa_dinamis.cpp, membantu main.cpp, mengerjakan laporan. |
 |13524126| Ramadhian Nabil Firdaus Gumay | Membuat lexer.h, mengerjakan lexer.cpp, main.cpp, Makefile, membuat diagram, dan laporan. |
