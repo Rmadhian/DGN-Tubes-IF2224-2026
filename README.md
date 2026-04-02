@@ -36,7 +36,7 @@ Setelah berhasil dikompilasi, sebuah *executable* bernama `arion_lexer` (atau `a
 
 **Contoh Penggunaan:**
 ```bash
-./arion_lexer test/milestone-1/input-1.txt test/milstone-1/output-1.txt
+./arion_lexer test/milestone-1/input-1.txt test/milestone-1/output-1.txt
 ```
 Program akan membaca kode Arion dari `input-1.txt` dan menghasilkan daftar token ke dalam `output-1.txt` di dalam direktori test/milestone-1/ .
 
