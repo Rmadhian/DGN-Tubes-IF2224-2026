@@ -1,0 +1,12 @@
+program GanjilGenap;
+
+var
+  angka: integer;
+
+begin
+  angka := 15;
+  if (angka mod 2 == 0) then
+    writeln('Genap')
+  else
+    writeln('Ganjil');
+end.
