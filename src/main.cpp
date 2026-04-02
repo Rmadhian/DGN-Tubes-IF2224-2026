@@ -46,7 +46,14 @@ int main(int argc, char* argv[]) {
   for(int i = 0; i < hasilToken.size(); i++) {
     fileOutput << lexer.tokenTypeToString(hasilToken[i].type);
 
-    if (hasilToken[i].value != "") {
+    TokenType t = hasilToken[i].type;
+    if (t == TokenType::IDENT || 
+        t == TokenType::INTCON || 
+        t == TokenType::REALCON || 
+        t == TokenType::CHARCON || 
+        t == TokenType::STRING || 
+        t == TokenType::UNKNOWN) {
+        
       fileOutput << " (" << hasilToken[i].value << ")";
     }
 
