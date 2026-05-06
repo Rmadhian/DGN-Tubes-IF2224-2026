@@ -52,7 +52,7 @@ public:
     // CORE & EXPRESSION
     // =========================================================
     ParseTreeNode* parse(); // Entry point untuk mulai parsing
-    void printTree(ParseTreeNode* node, ofstream& outFile, string indent = "", bool isLast = true);
+    void printTree(ParseTreeNode* node, ofstream& outFile, string indent = "", bool isLast = true, bool isRoot = true);
     bool isError() const { return hasError; }
 
     // =========================================================
@@ -82,6 +82,9 @@ public:
     ParseTreeNode* parseStatementList();
     ParseTreeNode* parseStatement();
     ParseTreeNode* parseAssignmentStatement();
+    ParseTreeNode* parseVariable();
+    ParseTreeNode* parseComponentVariable();
+    ParseTreeNode* parseIndexList();
     ParseTreeNode* parseSubprogramDeclaration();
     ParseTreeNode* parseProcedureDeclaration();
     ParseTreeNode* parseFunctionDeclaration();
