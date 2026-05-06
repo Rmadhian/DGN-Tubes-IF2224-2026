@@ -2,7 +2,7 @@
 
 // Top-Level Program
 
-// Aturan: <program> -> <program-header> <declaration-part> <compound-statement> period
+// Mengeksekusi header, bagian deklarasi, dan blok statement utama.
 ParseTreeNode* Parser::parseProgram() {
     ParseTreeNode* node = new ParseTreeNode("<program>");
     
@@ -14,7 +14,7 @@ ParseTreeNode* Parser::parseProgram() {
     return node;
 }
 
-// Aturan: <program-header> -> programsy ident semicolon
+// Membaca nama program pada bagian paling atas kode.
 ParseTreeNode* Parser::parseProgramHeader() {
     ParseTreeNode* node = new ParseTreeNode("<program-header>");
     
@@ -25,7 +25,7 @@ ParseTreeNode* Parser::parseProgramHeader() {
     return node;
 }
 
-// Aturan: <declaration-part> -> (const-declaration)* (type-declaration)* (var-declaration)* (subprogram-declaration)*
+// Membaca seluruh deklarasi yang opsional sebelum blok begin (konstanta, tipe, variabel, subprogram).
 ParseTreeNode* Parser::parseDeclarationPart() {
     ParseTreeNode* node = new ParseTreeNode("<declaration-part>");
     
@@ -45,9 +45,9 @@ ParseTreeNode* Parser::parseDeclarationPart() {
     return node;
 }
 
-// Variabel & Kontanta
+// Variabel & Konstanta
 
-// Aturan: <const-declaration> -> constsy (ident eql constant semicolon)+
+// Membaca blok deklarasi konstanta yang mensyaratkan minimal satu konstanta di dalamnya.
 ParseTreeNode* Parser::parseConstDeclaration() {
     ParseTreeNode* node = new ParseTreeNode("<const-declaration>");
     node->children.push_back(match(TokenType::CONSTSY));
@@ -62,7 +62,7 @@ ParseTreeNode* Parser::parseConstDeclaration() {
     return node;
 }
 
-// Aturan: <constant> -> charcon | string | [(plus | minus)? (ident | intcon | realcon)]
+// Mengecek isi nilai konstanta, bisa berupa karakter, string, atau angka.
 ParseTreeNode* Parser::parseConstant() {
     ParseTreeNode* node = new ParseTreeNode("<constant>");
     
@@ -91,7 +91,7 @@ ParseTreeNode* Parser::parseConstant() {
     return node;
 }
 
-// Aturan: <var-declaration> -> varsy (identifier-list colon type semicolon)+
+// Membaca blok deklarasi variabel yang mensyaratkan minimal satu variabel didaftarkan.
 ParseTreeNode* Parser::parseVarDeclaration() {
     ParseTreeNode* node = new ParseTreeNode("<var-declaration>");
     node->children.push_back(match(TokenType::VARSY));
@@ -106,7 +106,7 @@ ParseTreeNode* Parser::parseVarDeclaration() {
     return node;
 }
 
-// Aturan: <identifier-list> -> ident (comma ident)*
+// Membaca satu atau lebih identifier yang dipisahkan oleh koma.
 ParseTreeNode* Parser::parseIdentifierList() {
     ParseTreeNode* node = new ParseTreeNode("<identifier-list>");
     node->children.push_back(match(TokenType::IDENT));
@@ -121,7 +121,7 @@ ParseTreeNode* Parser::parseIdentifierList() {
 
 // Data Types
 
-// Aturan: <type-declaration> -> typesy (ident eql type semicolon)+
+// Membaca pembuatan tipe data custom/alias.
 ParseTreeNode* Parser::parseTypeDeclaration() {
     ParseTreeNode* node = new ParseTreeNode("<type-declaration>");
     node->children.push_back(match(TokenType::TYPESY));
@@ -136,7 +136,7 @@ ParseTreeNode* Parser::parseTypeDeclaration() {
     return node;
 }
 
-// Aturan: <type> -> ident | array-type | range | enumerated | record-type
+// Menentukan apakah tipe datanya berupa identifier biasa, array, enum, record, atau range.
 ParseTreeNode* Parser::parseType() {
     ParseTreeNode* node = new ParseTreeNode("<type>");
     
@@ -155,7 +155,7 @@ ParseTreeNode* Parser::parseType() {
     return node;
 }
 
-// Aturan: <array-type> -> arraysy lbrack (range | ident) rbrack ofsy type
+// Membaca deklarasi array beserta indeks batasan dan tipe elemennya.
 ParseTreeNode* Parser::parseArrayType() {
     ParseTreeNode* node = new ParseTreeNode("<array-type>");
     node->children.push_back(match(TokenType::ARRAYSY));
@@ -174,7 +174,7 @@ ParseTreeNode* Parser::parseArrayType() {
     return node;
 }
 
-// Aturan: <range> -> constant period period constant
+// Membaca rentang nilai yang dipisahkan oleh dua titik.
 ParseTreeNode* Parser::parseRange() {
     ParseTreeNode* node = new ParseTreeNode("<range>");
     
@@ -186,7 +186,7 @@ ParseTreeNode* Parser::parseRange() {
     return node;
 }
 
-// Aturan: <enumerated> -> lparent ident (comma ident)* rparent
+// Membaca daftar nilai enumerasi di dalam tanda kurung.
 ParseTreeNode* Parser::parseEnumerated() {
     ParseTreeNode* node = new ParseTreeNode("<enumerated>");
     node->children.push_back(match(TokenType::LPARENT));
@@ -201,7 +201,7 @@ ParseTreeNode* Parser::parseEnumerated() {
     return node;
 }
 
-// Aturan: <record-type> -> recordsy field-list endsy
+// Membaca kerangka pembentukan tipe record.
 ParseTreeNode* Parser::parseRecordType() {
     ParseTreeNode* node = new ParseTreeNode("<record-type>");
     node->children.push_back(match(TokenType::RECORDSY));
@@ -211,7 +211,7 @@ ParseTreeNode* Parser::parseRecordType() {
     return node;
 }
 
-// Aturan: <field-list> -> field-part (semicolon field-part)*
+// Membaca seluruh atribut atau field yang didaftarkan dalam sebuah record.
 ParseTreeNode* Parser::parseFieldList() {
     ParseTreeNode* node = new ParseTreeNode("<field-list>");
     node->children.push_back(parseFieldPart());
@@ -229,7 +229,7 @@ ParseTreeNode* Parser::parseFieldList() {
     return node;
 }
 
-// Aturan: <field-part> -> identifier-list colon type
+// Membaca satu atau kelompok field yang bertipe data sama.
 ParseTreeNode* Parser::parseFieldPart() {
     ParseTreeNode* node = new ParseTreeNode("<field-part>");
     
