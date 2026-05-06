@@ -1,9 +1,11 @@
 #include "parser.h"
 
+// Top-Level Program
+
+// Aturan: <program> -> <program-header> <declaration-part> <compound-statement> period
 ParseTreeNode* Parser::parseProgram() {
     ParseTreeNode* node = new ParseTreeNode("<program>");
     
-    // memanggil urutan
     node->children.push_back(parseProgramHeader());
     node->children.push_back(parseDeclarationPart());
     node->children.push_back(parseCompoundStatement());
@@ -12,6 +14,7 @@ ParseTreeNode* Parser::parseProgram() {
     return node;
 }
 
+// Aturan: <program-header> -> programsy ident semicolon
 ParseTreeNode* Parser::parseProgramHeader() {
     ParseTreeNode* node = new ParseTreeNode("<program-header>");
     
@@ -22,10 +25,10 @@ ParseTreeNode* Parser::parseProgramHeader() {
     return node;
 }
 
+// Aturan: <declaration-part> -> (const-declaration)* (type-declaration)* (var-declaration)* (subprogram-declaration)*
 ParseTreeNode* Parser::parseDeclarationPart() {
     ParseTreeNode* node = new ParseTreeNode("<declaration-part>");
     
-    // Perulangan membaca deklarasi sesuai urutan grammar
     while (currentToken().type == TokenType::CONSTSY) {
         node->children.push_back(parseConstDeclaration());
     }
@@ -42,6 +45,9 @@ ParseTreeNode* Parser::parseDeclarationPart() {
     return node;
 }
 
+// Variabel & Kontanta
+
+// Aturan: <const-declaration> -> constsy (ident eql constant semicolon)+
 ParseTreeNode* Parser::parseConstDeclaration() {
     ParseTreeNode* node = new ParseTreeNode("<const-declaration>");
     node->children.push_back(match(TokenType::CONSTSY));
@@ -56,6 +62,7 @@ ParseTreeNode* Parser::parseConstDeclaration() {
     return node;
 }
 
+// Aturan: <constant> -> charcon | string | [(plus | minus)? (ident | intcon | realcon)]
 ParseTreeNode* Parser::parseConstant() {
     ParseTreeNode* node = new ParseTreeNode("<constant>");
     
@@ -84,6 +91,7 @@ ParseTreeNode* Parser::parseConstant() {
     return node;
 }
 
+// Aturan: <var-declaration> -> varsy (identifier-list colon type semicolon)+
 ParseTreeNode* Parser::parseVarDeclaration() {
     ParseTreeNode* node = new ParseTreeNode("<var-declaration>");
     node->children.push_back(match(TokenType::VARSY));
@@ -98,6 +106,7 @@ ParseTreeNode* Parser::parseVarDeclaration() {
     return node;
 }
 
+// Aturan: <identifier-list> -> ident (comma ident)*
 ParseTreeNode* Parser::parseIdentifierList() {
     ParseTreeNode* node = new ParseTreeNode("<identifier-list>");
     node->children.push_back(match(TokenType::IDENT));
@@ -110,6 +119,9 @@ ParseTreeNode* Parser::parseIdentifierList() {
     return node;
 }
 
+// Data Types
+
+// Aturan: <type-declaration> -> typesy (ident eql type semicolon)+
 ParseTreeNode* Parser::parseTypeDeclaration() {
     ParseTreeNode* node = new ParseTreeNode("<type-declaration>");
     node->children.push_back(match(TokenType::TYPESY));
@@ -124,6 +136,7 @@ ParseTreeNode* Parser::parseTypeDeclaration() {
     return node;
 }
 
+// Aturan: <type> -> ident | array-type | range | enumerated | record-type
 ParseTreeNode* Parser::parseType() {
     ParseTreeNode* node = new ParseTreeNode("<type>");
     
@@ -142,6 +155,7 @@ ParseTreeNode* Parser::parseType() {
     return node;
 }
 
+// Aturan: <array-type> -> arraysy lbrack (range | ident) rbrack ofsy type
 ParseTreeNode* Parser::parseArrayType() {
     ParseTreeNode* node = new ParseTreeNode("<array-type>");
     node->children.push_back(match(TokenType::ARRAYSY));
@@ -160,6 +174,7 @@ ParseTreeNode* Parser::parseArrayType() {
     return node;
 }
 
+// Aturan: <range> -> constant period period constant
 ParseTreeNode* Parser::parseRange() {
     ParseTreeNode* node = new ParseTreeNode("<range>");
     
@@ -171,6 +186,7 @@ ParseTreeNode* Parser::parseRange() {
     return node;
 }
 
+// Aturan: <enumerated> -> lparent ident (comma ident)* rparent
 ParseTreeNode* Parser::parseEnumerated() {
     ParseTreeNode* node = new ParseTreeNode("<enumerated>");
     node->children.push_back(match(TokenType::LPARENT));
@@ -185,6 +201,7 @@ ParseTreeNode* Parser::parseEnumerated() {
     return node;
 }
 
+// Aturan: <record-type> -> recordsy field-list endsy
 ParseTreeNode* Parser::parseRecordType() {
     ParseTreeNode* node = new ParseTreeNode("<record-type>");
     node->children.push_back(match(TokenType::RECORDSY));
@@ -194,6 +211,7 @@ ParseTreeNode* Parser::parseRecordType() {
     return node;
 }
 
+// Aturan: <field-list> -> field-part (semicolon field-part)*
 ParseTreeNode* Parser::parseFieldList() {
     ParseTreeNode* node = new ParseTreeNode("<field-list>");
     node->children.push_back(parseFieldPart());
@@ -211,6 +229,7 @@ ParseTreeNode* Parser::parseFieldList() {
     return node;
 }
 
+// Aturan: <field-part> -> identifier-list colon type
 ParseTreeNode* Parser::parseFieldPart() {
     ParseTreeNode* node = new ParseTreeNode("<field-part>");
     
