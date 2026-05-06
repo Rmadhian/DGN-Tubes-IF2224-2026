@@ -1,53 +1,67 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <sstream>
+#include <vector>
 #include "lexer.h"
 
-#include <fstream>
-#include <sstream>
+using namespace std;
 
 int main(int argc, char* argv[]) {
-  if (argc < 2 || argc > 3) {
-    cerr << "Usage: " << argv[0]
-       << " <source_file> [output_file]" << endl;
+
+  // Validasi jumlah argumen: harus ada file input dan output
+  if (argc < 3) {
+    cout << "Error: Argumen Kurang" << endl;
+    cout << "Usage: ./arion_lexer <file_input> <file_output>" << endl;
     return 1;
   }
 
-  ifstream input_file(argv[1]);
-  if (!input_file.is_open()) {
-    cerr << "Error: gagal membuka file " << argv[1] << endl;
+  // Buka file input Pascal
+  ifstream fileInput(argv[1]);
+
+  if (!fileInput.is_open()) {
+    cout << "Error: File Tidak Ditemuukan" << endl;
     return 1;
   }
 
-  ostringstream buffer;
-  buffer << input_file.rdbuf();
+  // Buka/buat file output untuk hasil tokenisasi
+  ofstream fileOutput(argv[2]);
 
-  Lexer lexer(buffer.str());
-  const vector<Token> tokens = lexer.tokenize();
-
-  ostream* out = &cout;
-  ofstream output_file;
-  if (argc == 3) {
-    output_file.open(argv[2]);
-    if (!output_file.is_open()) {
-      cerr << "Error: tidak bisa membuat file output " << argv[2] << endl;
-      return 1;
-    }
-    out = &output_file;
+  if (!fileOutput.is_open()) {
+    cout << "Error: Tidak Bisa Membuat File Output" << endl;
+    return 1;
   }
 
-  for (const Token& token : tokens) {
-    if (token.type == TokenType::END_OF_FILE) continue;
+  // Baca seluruh isi file ke string
+  stringstream buffer;
+  buffer << fileInput.rdbuf();
 
-    const string type_str = lexer.tokenTypeToString(token.type);
-    if (token.type == TokenType::IDENT   ||
-      token.type == TokenType::INTCON  ||
-      token.type == TokenType::REALCON ||
-      token.type == TokenType::CHARCON ||
-      token.type == TokenType::STRING  ||
-      token.type == TokenType::UNKNOWN) {
-      *out << type_str << " (" << token.value << ")" << endl;
-    } else {
-      *out << type_str << endl;
+  string sourceCode = buffer.str();
+
+  // Jalankan tokenisasi
+  Lexer lexer(sourceCode);
+  vector<Token> hasilToken = lexer.tokenize();
+
+  // Tulis hasil token ke file output sesuai format
+  for(int i = 0; i < hasilToken.size(); i++) {
+    fileOutput << lexer.tokenTypeToString(hasilToken[i].type);
+
+    TokenType t = hasilToken[i].type;
+    if (t == TokenType::IDENT || 
+        t == TokenType::INTCON || 
+        t == TokenType::REALCON || 
+        t == TokenType::CHARCON || 
+        t == TokenType::STRING || 
+        t == TokenType::UNKNOWN) {
+        
+      fileOutput << " (" << hasilToken[i].value << ")";
     }
+
+    fileOutput << endl;
   }
+
+  fileInput.close();
+  fileOutput.close();
 
   return 0;
 }
