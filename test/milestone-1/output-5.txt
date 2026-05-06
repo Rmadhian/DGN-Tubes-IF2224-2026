@@ -1,0 +1,48 @@
+programsy
+ident (HitungFaktorial)
+semicolon
+varsy
+ident (n)
+comma
+ident (hasil)
+colon
+ident (integer)
+semicolon
+beginsy
+ident (n)
+becomes
+intcon (5)
+semicolon
+ident (hasil)
+becomes
+intcon (1)
+semicolon
+repeatsy
+ident (hasil)
+becomes
+ident (hasil)
+times
+ident (n)
+semicolon
+ident (n)
+becomes
+ident (n)
+minus
+intcon (1)
+semicolon
+untilsy
+lparent
+ident (n)
+eql
+intcon (0)
+rparent
+semicolon
+ident (writeln)
+lparent
+string ('Hasil = ')
+comma
+ident (hasil)
+rparent
+semicolon
+endsy
+period

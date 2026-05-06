@@ -1,0 +1,15 @@
+program HitungExposure;
+
+var
+  iso, shutter: integer;
+  aperture: real;
+
+begin
+  { Simulasi Segitiga Exposure }
+  iso := 400;
+  shutter := 250;
+  aperture := 2.8;
+  
+  if (iso >= 800) and (aperture <= 1.4) then
+    writeln('Foto overexposed');
+end.

@@ -1,0 +1,37 @@
+programsy
+ident (LuasLingkaran)
+semicolon
+constsy
+ident (PI)
+UNKNOWN (=)
+realcon (3.14159)
+semicolon
+varsy
+ident (jarijari)
+comma
+ident (luas)
+colon
+ident (real)
+semicolon
+beginsy
+ident (jarijari)
+becomes
+realcon (7.5)
+semicolon
+ident (luas)
+becomes
+ident (PI)
+times
+ident (jarijari)
+times
+ident (jarijari)
+semicolon
+ident (writeln)
+lparent
+string ('Luas = ')
+comma
+ident (luas)
+rparent
+semicolon
+endsy
+period

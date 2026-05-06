@@ -1,0 +1,13 @@
+program LuasLingkaran;
+
+const
+  PI = 3.14159;
+
+var
+  jarijari, luas: real;
+
+begin
+  jarijari := 7.5;
+  luas := PI * jarijari * jarijari;
+  writeln('Luas = ', luas);
+end.
