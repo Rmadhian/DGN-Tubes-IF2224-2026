@@ -51,7 +51,7 @@ private:
 
     // --- DFA DINAMIS ---
     // Mengabaikan spasi, enter, dan tab
-    void skipWhitespace();
+    void skipWhitespaceAndComments();
 
     // Mendeteksi dan menghasilkan token komentar { } atau (* *)
     Token scanComment();

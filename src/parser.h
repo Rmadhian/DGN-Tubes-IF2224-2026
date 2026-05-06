@@ -9,17 +9,11 @@
 
 using namespace std;
 
-// ---------------------------------------------------------
-// STRUKTUR NODE PARSE TREE
-// ---------------------------------------------------------
 struct ParseTreeNode {
-    string label;      // Nama non-terminal (ex: "<expression>") atau tipe token terminal (ex: "ident")
-    string value;      // Isi dari token jika ada (ex: "angka1", "10", "+")
-    vector<ParseTreeNode*> children; // Anak-anak dari node ini
-
+    string label;
+    string value;
+    vector<ParseTreeNode*> children;
     ParseTreeNode(string l, string v = "") : label(l), value(v) {}
-    
-    // Destructor buat ngebersihin memori rekursif (penting biar ga memory leak)
     ~ParseTreeNode() {
         for (auto child : children) {
             delete child;
@@ -27,18 +21,12 @@ struct ParseTreeNode {
     }
 };
 
-// ---------------------------------------------------------
-// KELAS PARSER UTAMA
-// ---------------------------------------------------------
+
 class Parser {
 private:
     vector<Token> tokens;
     int currentTokenIndex;
-    bool hasError; // Flag penanda kalau terjadi syntax error
-
-    // =========================================================
-    // CORE & EXPRESSION
-    // =========================================================
+    bool hasError;
     Token currentToken();
     Token peek(int offset = 1);
     void advance();
@@ -47,17 +35,10 @@ private:
 
 public:
     Parser(const vector<Token>& tokens);
-    
-    // =========================================================
-    // CORE & EXPRESSION
-    // =========================================================
-    ParseTreeNode* parse(); // Entry point untuk mulai parsing
+    ParseTreeNode* parse();
     void printTree(ParseTreeNode* node, ofstream& outFile, string indent = "", bool isLast = true, bool isRoot = true);
     bool isError() const { return hasError; }
 
-    // =========================================================
-    // TOP-LEVEL & DATA TYPES
-    // =========================================================
     ParseTreeNode* parseProgram();
     ParseTreeNode* parseProgramHeader();
     ParseTreeNode* parseDeclarationPart();
@@ -74,9 +55,6 @@ public:
     ParseTreeNode* parseVarDeclaration();
     ParseTreeNode* parseIdentifierList();
 
-    // =========================================================
-    // BLOCK, STATEMENT DASAR, & SUBPROGRAMS
-    // =========================================================
     ParseTreeNode* parseBlock();
     ParseTreeNode* parseCompoundStatement();
     ParseTreeNode* parseStatementList();
@@ -93,9 +71,6 @@ public:
     ParseTreeNode* parseProcedureFunctionCall();
     ParseTreeNode* parseParameterList();
 
-    // =========================================================
-    // CORE & EXPRESSION
-    // =========================================================
     ParseTreeNode* parseIfStatement();
     ParseTreeNode* parseCaseStatement();
     ParseTreeNode* parseCaseBlock();

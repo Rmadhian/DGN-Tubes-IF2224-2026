@@ -1,9 +1,5 @@
 #include "parser.h"
 
-// =========================================================
-// BLOCK & COMPOUND STATEMENT
-// =========================================================
-
 // block -> declaration-part + compound-statement
 ParseTreeNode* Parser::parseBlock() {
     ParseTreeNode* node = new ParseTreeNode("<block>");
@@ -114,10 +110,6 @@ ParseTreeNode* Parser::parseAssignmentStatement() {
     return node;
 }
 
-// =========================================================
-// VARIABLE (Helper buat assignment dan factor)
-// =========================================================
-
 // <variable> -> ident + (component-variable)*
 ParseTreeNode* Parser::parseVariable() {
     ParseTreeNode* node = new ParseTreeNode("<variable>");
@@ -186,10 +178,6 @@ ParseTreeNode* Parser::parseIndexList() {
 
     return node;
 }
-
-// =========================================================
-// SUBPROGRAM (PROCEDURE / FUNCTION) DECLARATION
-// =========================================================
 
 // <subprogram-declaration> -> procedure-declaration | function-declaration
 ParseTreeNode* Parser::parseSubprogramDeclaration() {
@@ -349,10 +337,6 @@ ParseTreeNode* Parser::parseParameterGroup() {
 
     return node;
 }
-
-// =========================================================
-// PROCEDURE / FUNCTION CALL
-// =========================================================
 
 // <procedure/function-call> -> ident + (lparent + parameter-list? + rparent)?
 ParseTreeNode* Parser::parseProcedureFunctionCall() {

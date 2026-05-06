@@ -1,0 +1,43 @@
+program UjianMentalParser;
+const
+  MAKS == 100;
+type
+  TipeArray == array[1..10] of integer;
+var
+  a, b, x, y: integer;
+  arr: TipeArray;
+  valid: boolean;
+begin
+  (* EDGE CASE 1: Matematika Brutal & Unary Bertumpuk *)
+  a := -5 + 3 * (2 - 8) div 4 mod 2;
+  valid := not not (a > b) and (x == 5) or (MAKS <= 100);
+
+  (* EDGE CASE 2: Dangling Else & Statement Kosong (Sesuai Revisi QNA) *)
+  if a > b then
+    if x < 5 then
+      a := 1
+    else
+      b := 2;
+  ;
+
+  (* EDGE CASE 3: Array Multi-Dimensi & Record Chaining di Matematika *)
+  x := fungsiSakti(a, b) * arr[1, x].data + 10;
+
+  (* EDGE CASE 4: Case-Of dengan Banyak Konstanta Koma *)
+  case arr[1] of
+    1, 2, 3: x := 10;
+    'a', 'b': 
+      begin
+        x := 20;
+        y := 30
+      end;
+  end;
+
+  (* EDGE CASE 5: Loop Inception (For di dalam While di dalam Repeat) *)
+  repeat
+    while x < 10 do
+      for a := 1 to MAKS do
+        x := x + 1
+  until (x >= 100);
+
+end.
