@@ -1,0 +1,14 @@
+program HitungFaktorial;
+
+var
+  n, hasil: integer;
+
+begin
+  n := 5;
+  hasil := 1;
+  repeat
+    hasil := hasil * n;
+    n := n-1;
+  until(n == 0);
+  writeln('Hasil = ', hasil);
+end.

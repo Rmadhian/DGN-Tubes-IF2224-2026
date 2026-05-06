@@ -1,0 +1,34 @@
+programsy
+ident (GanjilGenap)
+semicolon
+varsy
+ident (angka)
+colon
+ident (integer)
+semicolon
+beginsy
+ident (angka)
+becomes
+intcon (15)
+semicolon
+ifsy
+lparent
+ident (angka)
+imod
+intcon (2)
+eql
+intcon (0)
+rparent
+thensy
+ident (writeln)
+lparent
+string ('Genap')
+rparent
+elsesy
+ident (writeln)
+lparent
+string ('Ganjil')
+rparent
+semicolon
+endsy
+period

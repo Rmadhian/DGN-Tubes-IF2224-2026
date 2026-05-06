@@ -1,0 +1,14 @@
+program KonversiSuhu;
+
+var
+  celsius, fahrenheit: real;
+
+begin
+  (* Inisialisasi suhu di bawah nol *)
+  celsius := -10.5;
+  
+  { Rumus F = C * 9/5 + 32 }
+  fahrenheit := celsius * 9 div 5 + 32;
+  
+  writeln('{Hasil} Suhu F = ', fahrenheit);
+end.
