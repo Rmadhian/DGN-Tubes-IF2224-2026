@@ -1,0 +1,151 @@
+<program>
+├──<program-header>
+| ├──programsy (program) 
+| ├──ident (Math) 
+| └──semicolon (;) 
+├──<declaration-part>
+| ├──<const-declaration>
+| | ├──constsy (const) 
+| | ├──ident (PI) 
+| | ├──eql (==) 
+| | ├──<constant>
+| | | └──realcon (3.14) 
+| | └──semicolon (;) 
+| └──<var-declaration>
+|  ├──varsy (var) 
+|  ├──<identifier-list>
+|  | ├──ident (a) 
+|  | ├──comma (,) 
+|  | ├──ident (b) 
+|  | ├──comma (,) 
+|  | └──ident (c) 
+|  ├──colon (:) 
+|  ├──<type>
+|  | └──ident (real) 
+|  ├──semicolon (;) 
+|  ├──<identifier-list>
+|  | └──ident (flag) 
+|  ├──colon (:) 
+|  ├──<type>
+|  | └──ident (boolean) 
+|  └──semicolon (;) 
+├──<compound-statement>
+| ├──beginsy (begin) 
+| ├──<statement-list>
+| | ├──<statement>
+| | | └──<assignment-statement>
+| | |  ├──<variable>
+| | |  | └──ident (a) 
+| | |  ├──becomes (:=) 
+| | |  └──<expression>
+| | |   └──<simple-expression>
+| | |    ├──minus (-) 
+| | |    ├──<term>
+| | |    | └──<factor>
+| | |    |  └──ident (PI) 
+| | |    ├──<additive-operator>
+| | |    | └──plus (+) 
+| | |    ├──<term>
+| | |    | ├──<factor>
+| | |    | | └──realcon (2.5) 
+| | |    | ├──<multiplicative-operator>
+| | |    | | └──times (*) 
+| | |    | └──<factor>
+| | |    |  ├──lparent (() 
+| | |    |  ├──<expression>
+| | |    |  | └──<simple-expression>
+| | |    |  |  └──<term>
+| | |    |  |   ├──<factor>
+| | |    |  |   | └──realcon (10.0) 
+| | |    |  |   ├──<multiplicative-operator>
+| | |    |  |   | └──rdiv (/) 
+| | |    |  |   └──<factor>
+| | |    |  |    └──realcon (2.0) 
+| | |    |  └──rparent ()) 
+| | |    ├──<additive-operator>
+| | |    | └──minus (-) 
+| | |    └──<term>
+| | |     └──<factor>
+| | |      └──realcon (5.0) 
+| | ├──semicolon (;) 
+| | ├──<statement>
+| | | └──<assignment-statement>
+| | |  ├──<variable>
+| | |  | └──ident (flag) 
+| | |  ├──becomes (:=) 
+| | |  └──<expression>
+| | |   └──<simple-expression>
+| | |    ├──<term>
+| | |    | └──<factor>
+| | |    |  ├──notsy (not) 
+| | |    |  └──<factor>
+| | |    |   └──ident (flag) 
+| | |    ├──<additive-operator>
+| | |    | └──orsy (or) 
+| | |    └──<term>
+| | |     ├──<factor>
+| | |     | ├──lparent (() 
+| | |     | ├──<expression>
+| | |     | | ├──<simple-expression>
+| | |     | | | └──<term>
+| | |     | | |  └──<factor>
+| | |     | | |   └──ident (a) 
+| | |     | | ├──<relational-operator>
+| | |     | | | └──leq (<=) 
+| | |     | | └──<simple-expression>
+| | |     | |  └──<term>
+| | |     | |   └──<factor>
+| | |     | |    └──ident (b) 
+| | |     | └──rparent ()) 
+| | |     ├──<multiplicative-operator>
+| | |     | └──andsy (and) 
+| | |     └──<factor>
+| | |      ├──notsy (not) 
+| | |      └──<factor>
+| | |       ├──lparent (() 
+| | |       ├──<expression>
+| | |       | ├──<simple-expression>
+| | |       | | └──<term>
+| | |       | |  └──<factor>
+| | |       | |   └──ident (c) 
+| | |       | ├──<relational-operator>
+| | |       | | └──eql (==) 
+| | |       | └──<simple-expression>
+| | |       |  └──<term>
+| | |       |   └──<factor>
+| | |       |    └──realcon (0.0) 
+| | |       └──rparent ()) 
+| | ├──semicolon (;) 
+| | └──<statement>
+| |  └──<repeat-statement>
+| |   ├──repeatsy (repeat) 
+| |   ├──<statement-list>
+| |   | └──<statement>
+| |   |  └──<assignment-statement>
+| |   |   ├──<variable>
+| |   |   | └──ident (a) 
+| |   |   ├──becomes (:=) 
+| |   |   └──<expression>
+| |   |    └──<simple-expression>
+| |   |     ├──<term>
+| |   |     | └──<factor>
+| |   |     |  └──ident (a) 
+| |   |     ├──<additive-operator>
+| |   |     | └──minus (-) 
+| |   |     └──<term>
+| |   |      └──<factor>
+| |   |       └──realcon (0.1) 
+| |   ├──untilsy (until) 
+| |   └──<expression>
+| |    ├──<simple-expression>
+| |    | └──<term>
+| |    |  └──<factor>
+| |    |   └──ident (a) 
+| |    ├──<relational-operator>
+| |    | └──lss (<) 
+| |    └──<simple-expression>
+| |     └──<term>
+| |      └──<factor>
+| |       └──realcon (0.0) 
+| └──endsy (end) 
+└──period (.) 

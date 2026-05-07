@@ -1,10 +1,17 @@
-program Hello;
-
+program SemicolonFest;
 var
-  a, b: integer;
-
+  x: integer;
 begin
-  a := 5;
-  b := a + 10;
-  writeln('Result = ', b);
+  ;;;
+  if x > 0 then 
+  else ;
+  
+  while x < 10 do 
+  begin 
+  end;
+  
+  case x of
+    1: ;
+    2: begin ; end;
+  end
 end.

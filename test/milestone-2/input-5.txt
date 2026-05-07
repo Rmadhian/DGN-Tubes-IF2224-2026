@@ -1,0 +1,10 @@
+program UjiError;
+var
+  x: integer;
+begin
+  x := 5
+  y := 10;
+  
+  if x > 0 then
+    writeln('Halo'
+end.

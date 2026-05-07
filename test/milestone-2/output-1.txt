@@ -1,0 +1,95 @@
+<program>
+├──<program-header>
+| ├──programsy (program) 
+| ├──ident (SemicolonFest) 
+| └──semicolon (;) 
+├──<declaration-part>
+| └──<var-declaration>
+|  ├──varsy (var) 
+|  ├──<identifier-list>
+|  | └──ident (x) 
+|  ├──colon (:) 
+|  ├──<type>
+|  | └──ident (integer) 
+|  └──semicolon (;) 
+├──<compound-statement>
+| ├──beginsy (begin) 
+| ├──<statement-list>
+| | ├──<statement>
+| | ├──semicolon (;) 
+| | ├──<statement>
+| | ├──semicolon (;) 
+| | ├──<statement>
+| | ├──semicolon (;) 
+| | ├──<statement>
+| | | └──<if-statement>
+| | |  ├──ifsy (if) 
+| | |  ├──<expression>
+| | |  | ├──<simple-expression>
+| | |  | | └──<term>
+| | |  | |  └──<factor>
+| | |  | |   └──ident (x) 
+| | |  | ├──<relational-operator>
+| | |  | | └──gtr (>) 
+| | |  | └──<simple-expression>
+| | |  |  └──<term>
+| | |  |   └──<factor>
+| | |  |    └──intcon (0) 
+| | |  ├──thensy (then) 
+| | |  ├──<statement>
+| | |  ├──elsesy (else) 
+| | |  └──<statement>
+| | ├──semicolon (;) 
+| | ├──<statement>
+| | | └──<while-statement>
+| | |  ├──whilesy (while) 
+| | |  ├──<expression>
+| | |  | ├──<simple-expression>
+| | |  | | └──<term>
+| | |  | |  └──<factor>
+| | |  | |   └──ident (x) 
+| | |  | ├──<relational-operator>
+| | |  | | └──lss (<) 
+| | |  | └──<simple-expression>
+| | |  |  └──<term>
+| | |  |   └──<factor>
+| | |  |    └──intcon (10) 
+| | |  ├──dosy (do) 
+| | |  └──<statement>
+| | |   └──<compound-statement>
+| | |    ├──beginsy (begin) 
+| | |    ├──<statement-list>
+| | |    | └──<statement>
+| | |    └──endsy (end) 
+| | ├──semicolon (;) 
+| | └──<statement>
+| |  └──<case-statement>
+| |   ├──casesy (case) 
+| |   ├──<expression>
+| |   | └──<simple-expression>
+| |   |  └──<term>
+| |   |   └──<factor>
+| |   |    └──ident (x) 
+| |   ├──ofsy (of) 
+| |   ├──<case-block>
+| |   | ├──<constant>
+| |   | | └──intcon (1) 
+| |   | ├──colon (:) 
+| |   | ├──<statement>
+| |   | ├──semicolon (;) 
+| |   | └──<case-block>
+| |   |  ├──<constant>
+| |   |  | └──intcon (2) 
+| |   |  ├──colon (:) 
+| |   |  ├──<statement>
+| |   |  | └──<compound-statement>
+| |   |  |  ├──beginsy (begin) 
+| |   |  |  ├──<statement-list>
+| |   |  |  | ├──<statement>
+| |   |  |  | ├──semicolon (;) 
+| |   |  |  | └──<statement>
+| |   |  |  └──endsy (end) 
+| |   |  └──semicolon (;) 
+| |   └──endsy (end) 
+| └──endsy (end) 
+└──period (.) 

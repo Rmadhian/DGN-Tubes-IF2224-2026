@@ -1,0 +1,230 @@
+<program>
+├──<program-header>
+| ├──programsy (program) 
+| ├──ident (DataInception) 
+| └──semicolon (;) 
+├──<declaration-part>
+| ├──<type-declaration>
+| | ├──typesy (type) 
+| | ├──ident (Bulan) 
+| | ├──eql (==) 
+| | ├──<type>
+| | | └──<enumerated>
+| | |  ├──lparent (() 
+| | |  ├──ident (Jan) 
+| | |  ├──comma (,) 
+| | |  ├──ident (Feb) 
+| | |  ├──comma (,) 
+| | |  ├──ident (Mar) 
+| | |  └──rparent ()) 
+| | ├──semicolon (;) 
+| | ├──ident (Siswa) 
+| | ├──eql (==) 
+| | ├──<type>
+| | | └──<record-type>
+| | |  ├──recordsy (record) 
+| | |  ├──<field-list>
+| | |  | ├──<field-part>
+| | |  | | ├──<identifier-list>
+| | |  | | | └──ident (nilai) 
+| | |  | | ├──colon (:) 
+| | |  | | └──<type>
+| | |  | |  └──<array-type>
+| | |  | |   ├──arraysy (array) 
+| | |  | |   ├──lbrack ([) 
+| | |  | |   ├──<range>
+| | |  | |   | ├──<constant>
+| | |  | |   | | └──intcon (1) 
+| | |  | |   | ├──period (.) 
+| | |  | |   | ├──period (.) 
+| | |  | |   | └──<constant>
+| | |  | |   |  └──intcon (10) 
+| | |  | |   ├──rbrack (]) 
+| | |  | |   ├──ofsy (of) 
+| | |  | |   └──<type>
+| | |  | |    └──ident (integer) 
+| | |  | ├──semicolon (;) 
+| | |  | └──<field-part>
+| | |  |  ├──<identifier-list>
+| | |  |  | └──ident (lulus) 
+| | |  |  ├──colon (:) 
+| | |  |  └──<type>
+| | |  |   └──ident (boolean) 
+| | |  └──endsy (end) 
+| | └──semicolon (;) 
+| ├──<var-declaration>
+| | ├──varsy (var) 
+| | ├──<identifier-list>
+| | | └──ident (dataSiswa) 
+| | ├──colon (:) 
+| | ├──<type>
+| | | └──<array-type>
+| | |  ├──arraysy (array) 
+| | |  ├──lbrack ([) 
+| | |  ├──<range>
+| | |  | ├──<constant>
+| | |  | | └──charcon ('a') 
+| | |  | ├──period (.) 
+| | |  | ├──period (.) 
+| | |  | └──<constant>
+| | |  |  └──charcon ('z') 
+| | |  ├──rbrack (]) 
+| | |  ├──ofsy (of) 
+| | |  └──<type>
+| | |   └──ident (Siswa) 
+| | └──semicolon (;) 
+| └──<subprogram-declaration>
+|  └──<procedure-declaration>
+|   ├──proceduresy (procedure) 
+|   ├──ident (prosesData) 
+|   ├──<formal-parameter-list>
+|   | ├──lparent (() 
+|   | ├──<parameter-group>
+|   | | ├──<identifier-list>
+|   | | | ├──ident (x) 
+|   | | | ├──comma (,) 
+|   | | | └──ident (y) 
+|   | | ├──colon (:) 
+|   | | └──ident (integer) 
+|   | ├──semicolon (;) 
+|   | ├──<parameter-group>
+|   | | ├──<identifier-list>
+|   | | | └──ident (z) 
+|   | | ├──colon (:) 
+|   | | └──<array-type>
+|   | |  ├──arraysy (array) 
+|   | |  ├──lbrack ([) 
+|   | |  ├──<range>
+|   | |  | ├──<constant>
+|   | |  | | └──intcon (1) 
+|   | |  | ├──period (.) 
+|   | |  | ├──period (.) 
+|   | |  | └──<constant>
+|   | |  |  └──intcon (100) 
+|   | |  ├──rbrack (]) 
+|   | |  ├──ofsy (of) 
+|   | |  └──<type>
+|   | |   └──ident (integer) 
+|   | └──rparent ()) 
+|   ├──semicolon (;) 
+|   ├──<block>
+|   | ├──<declaration-part>
+|   | └──<compound-statement>
+|   |  ├──beginsy (begin) 
+|   |  ├──<statement-list>
+|   |  | ├──<statement>
+|   |  | | └──<assignment-statement>
+|   |  | |  ├──<variable>
+|   |  | |  | ├──ident (dataSiswa) 
+|   |  | |  | ├──<component-variable>
+|   |  | |  | | ├──lbrack ([) 
+|   |  | |  | | ├──<index-list>
+|   |  | |  | | | └──charcon ('b') 
+|   |  | |  | | └──rbrack (]) 
+|   |  | |  | ├──<component-variable>
+|   |  | |  | | ├──period (.) 
+|   |  | |  | | └──ident (nilai) 
+|   |  | |  | └──<component-variable>
+|   |  | |  |  ├──lbrack ([) 
+|   |  | |  |  ├──<index-list>
+|   |  | |  |  | └──intcon (5) 
+|   |  | |  |  └──rbrack (]) 
+|   |  | |  ├──becomes (:=) 
+|   |  | |  └──<expression>
+|   |  | |   └──<simple-expression>
+|   |  | |    ├──<term>
+|   |  | |    | └──<factor>
+|   |  | |    |  └──ident (x) 
+|   |  | |    ├──<additive-operator>
+|   |  | |    | └──plus (+) 
+|   |  | |    └──<term>
+|   |  | |     ├──<factor>
+|   |  | |     | └──ident (y) 
+|   |  | |     ├──<multiplicative-operator>
+|   |  | |     | └──times (*) 
+|   |  | |     └──<factor>
+|   |  | |      └──<variable>
+|   |  | |       ├──ident (z) 
+|   |  | |       └──<component-variable>
+|   |  | |        ├──lbrack ([) 
+|   |  | |        ├──<index-list>
+|   |  | |        | └──intcon (10) 
+|   |  | |        └──rbrack (]) 
+|   |  | ├──semicolon (;) 
+|   |  | └──<statement>
+|   |  |  └──<assignment-statement>
+|   |  |   ├──<variable>
+|   |  |   | ├──ident (dataSiswa) 
+|   |  |   | ├──<component-variable>
+|   |  |   | | ├──lbrack ([) 
+|   |  |   | | ├──<index-list>
+|   |  |   | | | └──charcon ('c') 
+|   |  |   | | └──rbrack (]) 
+|   |  |   | └──<component-variable>
+|   |  |   |  ├──period (.) 
+|   |  |   |  └──ident (lulus) 
+|   |  |   ├──becomes (:=) 
+|   |  |   └──<expression>
+|   |  |    └──<simple-expression>
+|   |  |     └──<term>
+|   |  |      └──<factor>
+|   |  |       ├──notsy (not) 
+|   |  |       └──<factor>
+|   |  |        ├──lparent (() 
+|   |  |        ├──<expression>
+|   |  |        | ├──<simple-expression>
+|   |  |        | | └──<term>
+|   |  |        | |  └──<factor>
+|   |  |        | |   └──<variable>
+|   |  |        | |    ├──ident (z) 
+|   |  |        | |    └──<component-variable>
+|   |  |        | |     ├──lbrack ([) 
+|   |  |        | |     ├──<index-list>
+|   |  |        | |     | └──intcon (1) 
+|   |  |        | |     └──rbrack (]) 
+|   |  |        | ├──<relational-operator>
+|   |  |        | | └──lss (<) 
+|   |  |        | └──<simple-expression>
+|   |  |        |  └──<term>
+|   |  |        |   └──<factor>
+|   |  |        |    └──intcon (0) 
+|   |  |        └──rparent ()) 
+|   |  └──endsy (end) 
+|   └──semicolon (;) 
+├──<compound-statement>
+| ├──beginsy (begin) 
+| ├──<statement-list>
+| | └──<statement>
+| |  └──<procedure/function-call>
+| |   ├──ident (prosesData) 
+| |   ├──lparent (() 
+| |   ├──<parameter-list>
+| |   | ├──<expression>
+| |   | | └──<simple-expression>
+| |   | |  └──<term>
+| |   | |   └──<factor>
+| |   | |    └──intcon (1) 
+| |   | ├──comma (,) 
+| |   | ├──<expression>
+| |   | | └──<simple-expression>
+| |   | |  └──<term>
+| |   | |   └──<factor>
+| |   | |    └──intcon (2) 
+| |   | ├──comma (,) 
+| |   | └──<expression>
+| |   |  └──<simple-expression>
+| |   |   └──<term>
+| |   |    └──<factor>
+| |   |     └──<variable>
+| |   |      ├──ident (dataSiswa) 
+| |   |      ├──<component-variable>
+| |   |      | ├──lbrack ([) 
+| |   |      | ├──<index-list>
+| |   |      | | └──charcon ('a') 
+| |   |      | └──rbrack (]) 
+| |   |      └──<component-variable>
+| |   |       ├──period (.) 
+| |   |       └──ident (nilai) 
+| |   └──rparent ()) 
+| └──endsy (end) 
+└──period (.) 

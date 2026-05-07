@@ -1,0 +1,17 @@
+program DataInception;
+type
+  Bulan == (Jan, Feb, Mar);
+  Siswa == record
+    nilai: array[1..10] of integer;
+    lulus: boolean
+  end;
+var
+  dataSiswa: array['a'..'z'] of Siswa;
+procedure prosesData(x, y: integer; z: array[1..100] of integer);
+begin
+  dataSiswa['b'].nilai[5] := x + y * z[10];
+  dataSiswa['c'].lulus := not (z[1] < 0)
+end;
+begin
+  prosesData(1, 2, dataSiswa['a'].nilai)
+end.

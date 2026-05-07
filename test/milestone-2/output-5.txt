@@ -1,0 +1,1 @@
+Parsing gagal: terdapat syntax error.
