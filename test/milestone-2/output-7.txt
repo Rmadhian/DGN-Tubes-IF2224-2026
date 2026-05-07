@@ -1,76 +1,76 @@
 <program>
 ├──<program-header>
-| ├──programsy (program) 
+| ├──programsy
 | ├──ident (KonversiSuhu) 
-| └──semicolon (;) 
+| └──semicolon
 ├──<declaration-part>
 | └──<var-declaration>
-|  ├──varsy (var) 
+|  ├──varsy
 |  ├──<identifier-list>
 |  | ├──ident (celsius) 
-|  | ├──comma (,) 
+|  | ├──comma
 |  | └──ident (fahrenheit) 
-|  ├──colon (:) 
+|  ├──colon
 |  ├──<type>
 |  | └──ident (real) 
-|  └──semicolon (;) 
+|  └──semicolon
 ├──<compound-statement>
-| ├──beginsy (begin) 
+| ├──beginsy
 | ├──<statement-list>
 | | ├──<statement>
 | | | └──<assignment-statement>
 | | |  ├──<variable>
 | | |  | └──ident (celsius) 
-| | |  ├──becomes (:=) 
+| | |  ├──becomes
 | | |  └──<expression>
 | | |   └──<simple-expression>
-| | |    ├──minus (-) 
+| | |    ├──minus
 | | |    └──<term>
 | | |     └──<factor>
 | | |      └──realcon (10.5) 
-| | ├──semicolon (;) 
+| | ├──semicolon
 | | ├──<statement>
 | | | └──<assignment-statement>
 | | |  ├──<variable>
 | | |  | └──ident (fahrenheit) 
-| | |  ├──becomes (:=) 
+| | |  ├──becomes
 | | |  └──<expression>
 | | |   └──<simple-expression>
 | | |    ├──<term>
 | | |    | ├──<factor>
 | | |    | | └──ident (celsius) 
 | | |    | ├──<multiplicative-operator>
-| | |    | | └──times (*) 
+| | |    | | └──times
 | | |    | ├──<factor>
 | | |    | | └──intcon (9) 
 | | |    | ├──<multiplicative-operator>
-| | |    | | └──idiv (div) 
+| | |    | | └──idiv
 | | |    | └──<factor>
 | | |    |  └──intcon (5) 
 | | |    ├──<additive-operator>
-| | |    | └──plus (+) 
+| | |    | └──plus
 | | |    └──<term>
 | | |     └──<factor>
 | | |      └──intcon (32) 
-| | ├──semicolon (;) 
+| | ├──semicolon
 | | ├──<statement>
 | | | └──<procedure/function-call>
 | | |  ├──ident (writeln) 
-| | |  ├──lparent (() 
+| | |  ├──lparent
 | | |  ├──<parameter-list>
 | | |  | ├──<expression>
 | | |  | | └──<simple-expression>
 | | |  | |  └──<term>
 | | |  | |   └──<factor>
 | | |  | |    └──string ('{Hasil} Suhu F = ') 
-| | |  | ├──comma (,) 
+| | |  | ├──comma
 | | |  | └──<expression>
 | | |  |  └──<simple-expression>
 | | |  |   └──<term>
 | | |  |    └──<factor>
 | | |  |     └──ident (fahrenheit) 
-| | |  └──rparent ()) 
-| | ├──semicolon (;) 
+| | |  └──rparent
+| | ├──semicolon
 | | └──<statement>
-| └──endsy (end) 
-└──period (.) 
+| └──endsy
+└──period

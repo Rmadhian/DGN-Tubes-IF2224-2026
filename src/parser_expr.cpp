@@ -45,7 +45,13 @@ ParseTreeNode* Parser::match(TokenType expectedType) {
   string expectedStr = dummyLexer.tokenTypeToString(expectedType);
 
   if (current.type == expectedType) {
-    ParseTreeNode* node = new ParseTreeNode(currentStr, current.value);
+    string valToStore = "";
+    if (current.type == TokenType::IDENT || current.type == TokenType::INTCON || 
+      current.type == TokenType::REALCON || current.type == TokenType::CHARCON || 
+      current.type == TokenType::STRING) {
+      valToStore = current.value;
+    }
+    ParseTreeNode* node = new ParseTreeNode(currentStr, valToStore);
     advance();
     return node;
   } else {
