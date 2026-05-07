@@ -1,4 +1,4 @@
-# Arion Lexer - Tugas Besar IF2224 TBFO (Milestone 1)
+# Arion Parser - Tugas Besar IF2224 TBFO (Milestone 2)
 
 ## Identitas Kelompok
 **Kelompok DongunGanteng (DGN)**
@@ -10,9 +10,9 @@
 | Ramadhian Nabil Firdaus Gumay | 13524126 |
 
 ## Deskripsi Program
-Program ini adalah sebuah **Lexical Analyzer (Lexer)** untuk bahasa pemrograman simulasi bernama **Arion**. Lexer ini dibangun menggunakan bahasa C++ dan bekerja murni berdasarkan prinsip **Deterministic Finite Automata (DFA)**. 
+Program ini adalah kelanjutan dari Milestone 1 yang sekarang bertindak sebagai **Syntax Analyzer (Parser)** untuk bahasa pemrograman simulasi bernama **Arion**. Parser ini dibangun menggunakan bahasa C++ dan mengimplementasikan algoritma **Recursive Descent Parser**. 
 
-Program akan membaca *source code* berupa file `.txt` karakter demi karakter (tanpa membaca mundur), mengenali pola-pola karakter (seperti angka, *string*, *identifier*, *keyword*, dan simbol), lalu mengonversinya menjadi sekumpulan *token* yang divalidasi sesuai spesifikasi Milestone 1 IF2224. Program juga sudah dilengkapi dengan *error handling* untuk argumen terminal dan pembacaan file I/O.
+Program akan memproses input (baik berupa *source code* murni maupun file hasil tokenisasi M1) menjadi deretan token. Kemudian, Parser akan memeriksa deretan token tersebut berdasarkan aturan tata bahasa (Grammar) spesifikasi Milestone 2 untuk merakit dan mencetak sebuah **Parse Tree**.
 
 ## Requirements
 Untuk melakukan kompilasi dan menjalankan program ini, pastikan sistem Anda sudah terpasang:
@@ -26,7 +26,7 @@ Buka terminal pada *root directory* proyek ini, lalu jalankan perintah `make`:
 ```bash
 make
 ```
-*(Untuk OS Windows: Jika `make` tidak dikenali, gunakan `mingw32-make` atau kompilasi manual dengan perintah: `g++ src/main.cpp src/lexer.cpp src/dfa_dinamis.cpp src/dfa_statis.cpp -o arion_lexer`)*
+*(Untuk OS Windows: Jika `make` tidak dikenali, gunakan `mingw32-make` atau kompilasi manual dengan perintah: `g++ src/main.cpp src/lexer.cpp src/dfa_dinamis.cpp src/dfa_statis.cpp src/parser_decl.cpp src/parser_expr.cpp src/parser_stmt.cpp -o arion_lexer`)*
 
 ### 2. Menjalankan Program
 Setelah berhasil dikompilasi, sebuah *executable* bernama `arion_lexer` (atau `arion_lexer.exe` di Windows) akan muncul. Jalankan program dengan format berikut:
@@ -36,13 +36,14 @@ Setelah berhasil dikompilasi, sebuah *executable* bernama `arion_lexer` (atau `a
 
 **Contoh Penggunaan:**
 ```bash
-./arion_lexer test/milestone-1/input-1.txt test/milestone-1/output-1.txt
+./arion_lexer test/milestone-2/input-1.txt test/milestone-2/output-1.txt
 ```
-Program akan membaca kode Arion dari `input-1.txt` dan menghasilkan daftar token ke dalam `output-1.txt` di dalam direktori test/milestone-1/ .
+Program akan membaca kode dari `input-1.txt` dan menghasilkan pohon sintaks (Parse Tree) ke dalam file `output-1.txt` di dalam direktori `test/milestone-2/`.
 
 ## Pembagian Tugas
 | NIM | Nama | Tugas |
 | :--- | :--- | :---|
-| 13523150 | Benedictus Nelson | Mengerjakan dfa_statis.cpp. |
-| 13524117 | Rainaldi Pratama F. Sembiring | Hard Carry |
-|13524126| Ramadhian Nabil Firdaus Gumay | Membuat lexer.h, mengerjakan lexer.cpp, main.cpp, Makefile, membuat diagram, dan laporan. |
+| 13523150 | Benedictus Nelson | Mengimplementasikan parser_stmt.cpp, mengerjakan laporan. |
+| 13524117 | Rainaldi Pratama F. Sembiring | - |
+| 13524120 | Jonathan Alveraldo Bangun | Mengimplementasikan parser_decl.cpp, membuat laporan. |
+| 13524126 | Ramadhian Nabil Firdaus Gumay | Menginisialisasi parser.h, mengimplementasikan parser_expr.cpp, integrasi program, membuat laporan. |
