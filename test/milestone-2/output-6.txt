@@ -1,0 +1,117 @@
+<program>
+├──<program-header>
+| ├──programsy
+| ├──ident (HitungFaktorial) 
+| └──semicolon
+├──<declaration-part>
+| └──<var-declaration>
+|  ├──varsy
+|  ├──<identifier-list>
+|  | ├──ident (n) 
+|  | ├──comma
+|  | └──ident (hasil) 
+|  ├──colon
+|  ├──<type>
+|  | └──ident (integer) 
+|  └──semicolon
+├──<compound-statement>
+| ├──beginsy
+| ├──<statement-list>
+| | ├──<statement>
+| | | └──<assignment-statement>
+| | |  ├──<variable>
+| | |  | └──ident (n) 
+| | |  ├──becomes
+| | |  └──<expression>
+| | |   └──<simple-expression>
+| | |    └──<term>
+| | |     └──<factor>
+| | |      └──intcon (5) 
+| | ├──semicolon
+| | ├──<statement>
+| | | └──<assignment-statement>
+| | |  ├──<variable>
+| | |  | └──ident (hasil) 
+| | |  ├──becomes
+| | |  └──<expression>
+| | |   └──<simple-expression>
+| | |    └──<term>
+| | |     └──<factor>
+| | |      └──intcon (1) 
+| | ├──semicolon
+| | ├──<statement>
+| | | └──<repeat-statement>
+| | |  ├──repeatsy
+| | |  ├──<statement-list>
+| | |  | ├──<statement>
+| | |  | | └──<assignment-statement>
+| | |  | |  ├──<variable>
+| | |  | |  | └──ident (hasil) 
+| | |  | |  ├──becomes
+| | |  | |  └──<expression>
+| | |  | |   └──<simple-expression>
+| | |  | |    └──<term>
+| | |  | |     ├──<factor>
+| | |  | |     | └──ident (hasil) 
+| | |  | |     ├──<multiplicative-operator>
+| | |  | |     | └──times
+| | |  | |     └──<factor>
+| | |  | |      └──ident (n) 
+| | |  | ├──semicolon
+| | |  | ├──<statement>
+| | |  | | └──<assignment-statement>
+| | |  | |  ├──<variable>
+| | |  | |  | └──ident (n) 
+| | |  | |  ├──becomes
+| | |  | |  └──<expression>
+| | |  | |   └──<simple-expression>
+| | |  | |    ├──<term>
+| | |  | |    | └──<factor>
+| | |  | |    |  └──ident (n) 
+| | |  | |    ├──<additive-operator>
+| | |  | |    | └──minus
+| | |  | |    └──<term>
+| | |  | |     └──<factor>
+| | |  | |      └──intcon (1) 
+| | |  | ├──semicolon
+| | |  | └──<statement>
+| | |  ├──untilsy
+| | |  └──<expression>
+| | |   └──<simple-expression>
+| | |    └──<term>
+| | |     └──<factor>
+| | |      ├──lparent
+| | |      ├──<expression>
+| | |      | ├──<simple-expression>
+| | |      | | └──<term>
+| | |      | |  └──<factor>
+| | |      | |   └──ident (n) 
+| | |      | ├──<relational-operator>
+| | |      | | └──eql
+| | |      | └──<simple-expression>
+| | |      |  └──<term>
+| | |      |   └──<factor>
+| | |      |    └──intcon (0) 
+| | |      └──rparent
+| | ├──semicolon
+| | ├──<statement>
+| | | └──<procedure/function-call>
+| | |  ├──ident (writeln) 
+| | |  ├──lparent
+| | |  ├──<parameter-list>
+| | |  | ├──<expression>
+| | |  | | └──<simple-expression>
+| | |  | |  └──<term>
+| | |  | |   └──<factor>
+| | |  | |    └──string ('Hasil = ') 
+| | |  | ├──comma
+| | |  | └──<expression>
+| | |  |  └──<simple-expression>
+| | |  |   └──<term>
+| | |  |    └──<factor>
+| | |  |     └──ident (hasil) 
+| | |  └──rparent
+| | ├──semicolon
+| | └──<statement>
+| └──endsy
+└──period

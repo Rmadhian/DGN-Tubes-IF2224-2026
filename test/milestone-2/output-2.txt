@@ -1,269 +1,269 @@
 <program>
 ├──<program-header>
-| ├──programsy (program) 
+| ├──programsy
 | ├──ident (UjiParser) 
-| └──semicolon (;) 
+| └──semicolon
 ├──<declaration-part>
 | ├──<const-declaration>
-| | ├──constsy (const) 
+| | ├──constsy
 | | ├──ident (MAKS) 
-| | ├──eql (==) 
+| | ├──eql
 | | ├──<constant>
 | | | └──intcon (100) 
-| | └──semicolon (;) 
+| | └──semicolon
 | ├──<type-declaration>
-| | ├──typesy (type) 
+| | ├──typesy
 | | ├──ident (TipeArray) 
-| | ├──eql (==) 
+| | ├──eql
 | | ├──<type>
 | | | └──<array-type>
-| | |  ├──arraysy (array) 
-| | |  ├──lbrack ([) 
+| | |  ├──arraysy
+| | |  ├──lbrack
 | | |  ├──<range>
 | | |  | ├──<constant>
 | | |  | | └──intcon (1) 
-| | |  | ├──period (.) 
-| | |  | ├──period (.) 
+| | |  | ├──period
+| | |  | ├──period
 | | |  | └──<constant>
 | | |  |  └──intcon (10) 
-| | |  ├──rbrack (]) 
-| | |  ├──ofsy (of) 
+| | |  ├──rbrack
+| | |  ├──ofsy
 | | |  └──<type>
 | | |   └──ident (integer) 
-| | └──semicolon (;) 
+| | └──semicolon
 | └──<var-declaration>
-|  ├──varsy (var) 
+|  ├──varsy
 |  ├──<identifier-list>
 |  | ├──ident (a) 
-|  | ├──comma (,) 
+|  | ├──comma
 |  | ├──ident (b) 
-|  | ├──comma (,) 
+|  | ├──comma
 |  | ├──ident (x) 
-|  | ├──comma (,) 
+|  | ├──comma
 |  | └──ident (y) 
-|  ├──colon (:) 
+|  ├──colon
 |  ├──<type>
 |  | └──ident (integer) 
-|  ├──semicolon (;) 
+|  ├──semicolon
 |  ├──<identifier-list>
 |  | └──ident (arr) 
-|  ├──colon (:) 
+|  ├──colon
 |  ├──<type>
 |  | └──ident (TipeArray) 
-|  ├──semicolon (;) 
+|  ├──semicolon
 |  ├──<identifier-list>
 |  | └──ident (valid) 
-|  ├──colon (:) 
+|  ├──colon
 |  ├──<type>
 |  | └──ident (boolean) 
-|  └──semicolon (;) 
+|  └──semicolon
 ├──<compound-statement>
-| ├──beginsy (begin) 
+| ├──beginsy
 | ├──<statement-list>
 | | ├──<statement>
 | | | └──<assignment-statement>
 | | |  ├──<variable>
 | | |  | └──ident (a) 
-| | |  ├──becomes (:=) 
+| | |  ├──becomes
 | | |  └──<expression>
 | | |   └──<simple-expression>
-| | |    ├──minus (-) 
+| | |    ├──minus
 | | |    ├──<term>
 | | |    | └──<factor>
 | | |    |  └──intcon (5) 
 | | |    ├──<additive-operator>
-| | |    | └──plus (+) 
+| | |    | └──plus
 | | |    └──<term>
 | | |     ├──<factor>
 | | |     | └──intcon (3) 
 | | |     ├──<multiplicative-operator>
-| | |     | └──times (*) 
+| | |     | └──times
 | | |     ├──<factor>
-| | |     | ├──lparent (() 
+| | |     | ├──lparent
 | | |     | ├──<expression>
 | | |     | | └──<simple-expression>
 | | |     | |  ├──<term>
 | | |     | |  | └──<factor>
 | | |     | |  |  └──intcon (2) 
 | | |     | |  ├──<additive-operator>
-| | |     | |  | └──minus (-) 
+| | |     | |  | └──minus
 | | |     | |  └──<term>
 | | |     | |   └──<factor>
 | | |     | |    └──intcon (8) 
-| | |     | └──rparent ()) 
+| | |     | └──rparent
 | | |     ├──<multiplicative-operator>
-| | |     | └──idiv (div) 
+| | |     | └──idiv
 | | |     ├──<factor>
 | | |     | └──intcon (4) 
 | | |     ├──<multiplicative-operator>
-| | |     | └──imod (mod) 
+| | |     | └──imod
 | | |     └──<factor>
 | | |      └──intcon (2) 
-| | ├──semicolon (;) 
+| | ├──semicolon
 | | ├──<statement>
 | | | └──<assignment-statement>
 | | |  ├──<variable>
 | | |  | └──ident (valid) 
-| | |  ├──becomes (:=) 
+| | |  ├──becomes
 | | |  └──<expression>
 | | |   └──<simple-expression>
 | | |    ├──<term>
 | | |    | ├──<factor>
-| | |    | | ├──notsy (not) 
+| | |    | | ├──notsy
 | | |    | | └──<factor>
-| | |    | |  ├──notsy (not) 
+| | |    | |  ├──notsy
 | | |    | |  └──<factor>
-| | |    | |   ├──lparent (() 
+| | |    | |   ├──lparent
 | | |    | |   ├──<expression>
 | | |    | |   | ├──<simple-expression>
 | | |    | |   | | └──<term>
 | | |    | |   | |  └──<factor>
 | | |    | |   | |   └──ident (a) 
 | | |    | |   | ├──<relational-operator>
-| | |    | |   | | └──gtr (>) 
+| | |    | |   | | └──gtr
 | | |    | |   | └──<simple-expression>
 | | |    | |   |  └──<term>
 | | |    | |   |   └──<factor>
 | | |    | |   |    └──ident (b) 
-| | |    | |   └──rparent ()) 
+| | |    | |   └──rparent
 | | |    | ├──<multiplicative-operator>
-| | |    | | └──andsy (and) 
+| | |    | | └──andsy
 | | |    | └──<factor>
-| | |    |  ├──lparent (() 
+| | |    |  ├──lparent
 | | |    |  ├──<expression>
 | | |    |  | ├──<simple-expression>
 | | |    |  | | └──<term>
 | | |    |  | |  └──<factor>
 | | |    |  | |   └──ident (x) 
 | | |    |  | ├──<relational-operator>
-| | |    |  | | └──eql (==) 
+| | |    |  | | └──eql
 | | |    |  | └──<simple-expression>
 | | |    |  |  └──<term>
 | | |    |  |   └──<factor>
 | | |    |  |    └──intcon (5) 
-| | |    |  └──rparent ()) 
+| | |    |  └──rparent
 | | |    ├──<additive-operator>
-| | |    | └──orsy (or) 
+| | |    | └──orsy
 | | |    └──<term>
 | | |     └──<factor>
-| | |      ├──lparent (() 
+| | |      ├──lparent
 | | |      ├──<expression>
 | | |      | ├──<simple-expression>
 | | |      | | └──<term>
 | | |      | |  └──<factor>
 | | |      | |   └──ident (MAKS) 
 | | |      | ├──<relational-operator>
-| | |      | | └──leq (<=) 
+| | |      | | └──leq
 | | |      | └──<simple-expression>
 | | |      |  └──<term>
 | | |      |   └──<factor>
 | | |      |    └──intcon (100) 
-| | |      └──rparent ()) 
-| | ├──semicolon (;) 
+| | |      └──rparent
+| | ├──semicolon
 | | ├──<statement>
 | | | └──<if-statement>
-| | |  ├──ifsy (if) 
+| | |  ├──ifsy
 | | |  ├──<expression>
 | | |  | ├──<simple-expression>
 | | |  | | └──<term>
 | | |  | |  └──<factor>
 | | |  | |   └──ident (a) 
 | | |  | ├──<relational-operator>
-| | |  | | └──gtr (>) 
+| | |  | | └──gtr
 | | |  | └──<simple-expression>
 | | |  |  └──<term>
 | | |  |   └──<factor>
 | | |  |    └──ident (b) 
-| | |  ├──thensy (then) 
+| | |  ├──thensy
 | | |  └──<statement>
 | | |   └──<if-statement>
-| | |    ├──ifsy (if) 
+| | |    ├──ifsy
 | | |    ├──<expression>
 | | |    | ├──<simple-expression>
 | | |    | | └──<term>
 | | |    | |  └──<factor>
 | | |    | |   └──ident (x) 
 | | |    | ├──<relational-operator>
-| | |    | | └──lss (<) 
+| | |    | | └──lss
 | | |    | └──<simple-expression>
 | | |    |  └──<term>
 | | |    |   └──<factor>
 | | |    |    └──intcon (5) 
-| | |    ├──thensy (then) 
+| | |    ├──thensy
 | | |    ├──<statement>
 | | |    | └──<assignment-statement>
 | | |    |  ├──<variable>
 | | |    |  | └──ident (a) 
-| | |    |  ├──becomes (:=) 
+| | |    |  ├──becomes
 | | |    |  └──<expression>
 | | |    |   └──<simple-expression>
 | | |    |    └──<term>
 | | |    |     └──<factor>
 | | |    |      └──intcon (1) 
-| | |    ├──elsesy (else) 
+| | |    ├──elsesy
 | | |    └──<statement>
 | | |     └──<assignment-statement>
 | | |      ├──<variable>
 | | |      | └──ident (b) 
-| | |      ├──becomes (:=) 
+| | |      ├──becomes
 | | |      └──<expression>
 | | |       └──<simple-expression>
 | | |        └──<term>
 | | |         └──<factor>
 | | |          └──intcon (2) 
-| | ├──semicolon (;) 
+| | ├──semicolon
 | | ├──<statement>
-| | ├──semicolon (;) 
+| | ├──semicolon
 | | ├──<statement>
 | | | └──<assignment-statement>
 | | |  ├──<variable>
 | | |  | └──ident (x) 
-| | |  ├──becomes (:=) 
+| | |  ├──becomes
 | | |  └──<expression>
 | | |   └──<simple-expression>
 | | |    ├──<term>
 | | |    | ├──<factor>
 | | |    | | └──<procedure/function-call>
 | | |    | |  ├──ident (fungsiSakti) 
-| | |    | |  ├──lparent (() 
+| | |    | |  ├──lparent
 | | |    | |  ├──<parameter-list>
 | | |    | |  | ├──<expression>
 | | |    | |  | | └──<simple-expression>
 | | |    | |  | |  └──<term>
 | | |    | |  | |   └──<factor>
 | | |    | |  | |    └──ident (a) 
-| | |    | |  | ├──comma (,) 
+| | |    | |  | ├──comma
 | | |    | |  | └──<expression>
 | | |    | |  |  └──<simple-expression>
 | | |    | |  |   └──<term>
 | | |    | |  |    └──<factor>
 | | |    | |  |     └──ident (b) 
-| | |    | |  └──rparent ()) 
+| | |    | |  └──rparent
 | | |    | ├──<multiplicative-operator>
-| | |    | | └──times (*) 
+| | |    | | └──times
 | | |    | └──<factor>
 | | |    |  └──<variable>
 | | |    |   ├──ident (arr) 
 | | |    |   ├──<component-variable>
-| | |    |   | ├──lbrack ([) 
+| | |    |   | ├──lbrack
 | | |    |   | ├──<index-list>
 | | |    |   | | ├──intcon (1) 
-| | |    |   | | ├──comma (,) 
+| | |    |   | | ├──comma
 | | |    |   | | └──<index-list>
 | | |    |   | |  └──ident (x) 
-| | |    |   | └──rbrack (]) 
+| | |    |   | └──rbrack
 | | |    |   └──<component-variable>
-| | |    |    ├──period (.) 
+| | |    |    ├──period
 | | |    |    └──ident (data) 
 | | |    ├──<additive-operator>
-| | |    | └──plus (+) 
+| | |    | └──plus
 | | |    └──<term>
 | | |     └──<factor>
 | | |      └──intcon (10) 
-| | ├──semicolon (;) 
+| | ├──semicolon
 | | ├──<statement>
 | | | └──<case-statement>
-| | |  ├──casesy (case) 
+| | |  ├──casesy
 | | |  ├──<expression>
 | | |  | └──<simple-expression>
 | | |  |  └──<term>
@@ -271,138 +271,138 @@
 | | |  |    └──<variable>
 | | |  |     ├──ident (arr) 
 | | |  |     └──<component-variable>
-| | |  |      ├──lbrack ([) 
+| | |  |      ├──lbrack
 | | |  |      ├──<index-list>
 | | |  |      | └──intcon (1) 
-| | |  |      └──rbrack (]) 
-| | |  ├──ofsy (of) 
+| | |  |      └──rbrack
+| | |  ├──ofsy
 | | |  ├──<case-block>
 | | |  | ├──<constant>
 | | |  | | └──intcon (1) 
-| | |  | ├──comma (,) 
+| | |  | ├──comma
 | | |  | ├──<constant>
 | | |  | | └──intcon (2) 
-| | |  | ├──comma (,) 
+| | |  | ├──comma
 | | |  | ├──<constant>
 | | |  | | └──intcon (3) 
-| | |  | ├──colon (:) 
+| | |  | ├──colon
 | | |  | ├──<statement>
 | | |  | | └──<assignment-statement>
 | | |  | |  ├──<variable>
 | | |  | |  | └──ident (x) 
-| | |  | |  ├──becomes (:=) 
+| | |  | |  ├──becomes
 | | |  | |  └──<expression>
 | | |  | |   └──<simple-expression>
 | | |  | |    └──<term>
 | | |  | |     └──<factor>
 | | |  | |      └──intcon (10) 
-| | |  | ├──semicolon (;) 
+| | |  | ├──semicolon
 | | |  | └──<case-block>
 | | |  |  ├──<constant>
 | | |  |  | └──charcon ('a') 
-| | |  |  ├──comma (,) 
+| | |  |  ├──comma
 | | |  |  ├──<constant>
 | | |  |  | └──charcon ('b') 
-| | |  |  ├──colon (:) 
+| | |  |  ├──colon
 | | |  |  ├──<statement>
 | | |  |  | └──<compound-statement>
-| | |  |  |  ├──beginsy (begin) 
+| | |  |  |  ├──beginsy
 | | |  |  |  ├──<statement-list>
 | | |  |  |  | ├──<statement>
 | | |  |  |  | | └──<assignment-statement>
 | | |  |  |  | |  ├──<variable>
 | | |  |  |  | |  | └──ident (x) 
-| | |  |  |  | |  ├──becomes (:=) 
+| | |  |  |  | |  ├──becomes
 | | |  |  |  | |  └──<expression>
 | | |  |  |  | |   └──<simple-expression>
 | | |  |  |  | |    └──<term>
 | | |  |  |  | |     └──<factor>
 | | |  |  |  | |      └──intcon (20) 
-| | |  |  |  | ├──semicolon (;) 
+| | |  |  |  | ├──semicolon
 | | |  |  |  | └──<statement>
 | | |  |  |  |  └──<assignment-statement>
 | | |  |  |  |   ├──<variable>
 | | |  |  |  |   | └──ident (y) 
-| | |  |  |  |   ├──becomes (:=) 
+| | |  |  |  |   ├──becomes
 | | |  |  |  |   └──<expression>
 | | |  |  |  |    └──<simple-expression>
 | | |  |  |  |     └──<term>
 | | |  |  |  |      └──<factor>
 | | |  |  |  |       └──intcon (30) 
-| | |  |  |  └──endsy (end) 
-| | |  |  └──semicolon (;) 
-| | |  └──endsy (end) 
-| | ├──semicolon (;) 
+| | |  |  |  └──endsy
+| | |  |  └──semicolon
+| | |  └──endsy
+| | ├──semicolon
 | | ├──<statement>
 | | | └──<repeat-statement>
-| | |  ├──repeatsy (repeat) 
+| | |  ├──repeatsy
 | | |  ├──<statement-list>
 | | |  | └──<statement>
 | | |  |  └──<while-statement>
-| | |  |   ├──whilesy (while) 
+| | |  |   ├──whilesy
 | | |  |   ├──<expression>
 | | |  |   | ├──<simple-expression>
 | | |  |   | | └──<term>
 | | |  |   | |  └──<factor>
 | | |  |   | |   └──ident (x) 
 | | |  |   | ├──<relational-operator>
-| | |  |   | | └──lss (<) 
+| | |  |   | | └──lss
 | | |  |   | └──<simple-expression>
 | | |  |   |  └──<term>
 | | |  |   |   └──<factor>
 | | |  |   |    └──intcon (10) 
-| | |  |   ├──dosy (do) 
+| | |  |   ├──dosy
 | | |  |   └──<statement>
 | | |  |    └──<for-statement>
-| | |  |     ├──forsy (for) 
+| | |  |     ├──forsy
 | | |  |     ├──ident (a) 
-| | |  |     ├──becomes (:=) 
+| | |  |     ├──becomes
 | | |  |     ├──<expression>
 | | |  |     | └──<simple-expression>
 | | |  |     |  └──<term>
 | | |  |     |   └──<factor>
 | | |  |     |    └──intcon (1) 
-| | |  |     ├──tosy (to) 
+| | |  |     ├──tosy
 | | |  |     ├──<expression>
 | | |  |     | └──<simple-expression>
 | | |  |     |  └──<term>
 | | |  |     |   └──<factor>
 | | |  |     |    └──ident (MAKS) 
-| | |  |     ├──dosy (do) 
+| | |  |     ├──dosy
 | | |  |     └──<statement>
 | | |  |      └──<assignment-statement>
 | | |  |       ├──<variable>
 | | |  |       | └──ident (x) 
-| | |  |       ├──becomes (:=) 
+| | |  |       ├──becomes
 | | |  |       └──<expression>
 | | |  |        └──<simple-expression>
 | | |  |         ├──<term>
 | | |  |         | └──<factor>
 | | |  |         |  └──ident (x) 
 | | |  |         ├──<additive-operator>
-| | |  |         | └──plus (+) 
+| | |  |         | └──plus
 | | |  |         └──<term>
 | | |  |          └──<factor>
 | | |  |           └──intcon (1) 
-| | |  ├──untilsy (until) 
+| | |  ├──untilsy
 | | |  └──<expression>
 | | |   └──<simple-expression>
 | | |    └──<term>
 | | |     └──<factor>
-| | |      ├──lparent (() 
+| | |      ├──lparent
 | | |      ├──<expression>
 | | |      | ├──<simple-expression>
 | | |      | | └──<term>
 | | |      | |  └──<factor>
 | | |      | |   └──ident (x) 
 | | |      | ├──<relational-operator>
-| | |      | | └──geq (>=) 
+| | |      | | └──geq
 | | |      | └──<simple-expression>
 | | |      |  └──<term>
 | | |      |   └──<factor>
 | | |      |    └──intcon (100) 
-| | |      └──rparent ()) 
-| | ├──semicolon (;) 
+| | |      └──rparent
+| | ├──semicolon
 | | └──<statement>
-| └──endsy (end) 
-└──period (.) 
+| └──endsy
+└──period

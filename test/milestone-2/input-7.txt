@@ -1,0 +1,47 @@
+programsy
+ident (HitungExposure)
+semicolon
+varsy
+ident (iso)
+comma
+ident (shutter)
+colon
+ident (integer)
+semicolon
+ident (aperture)
+colon
+ident (real)
+semicolon
+beginsy
+ident (iso)
+becomes
+intcon (400)
+semicolon
+ident (shutter)
+becomes
+intcon (250)
+semicolon
+ident (aperture)
+becomes
+realcon (2.8)
+semicolon
+ifsy
+lparent
+ident (iso)
+geq
+intcon (800)
+rparent
+andsy
+lparent
+ident (aperture)
+leq
+realcon (1.4)
+rparent
+thensy
+ident (writeln)
+lparent
+string ('Foto overexposed')
+rparent
+semicolon
+endsy
+period

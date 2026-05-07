@@ -1,0 +1,35 @@
+programsy
+ident (KonversiSuhu)
+semicolon
+varsy
+ident (celsius)
+comma
+ident (fahrenheit)
+colon
+ident (real)
+semicolon
+beginsy
+ident (celsius)
+becomes
+minus
+realcon (10.5)
+semicolon
+ident (fahrenheit)
+becomes
+ident (celsius)
+times
+intcon (9)
+idiv
+intcon (5)
+plus
+intcon (32)
+semicolon
+ident (writeln)
+lparent
+string ('{Hasil} Suhu F = ')
+comma
+ident (fahrenheit)
+rparent
+semicolon
+endsy
+period

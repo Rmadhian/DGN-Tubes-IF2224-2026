@@ -1,95 +1,95 @@
 <program>
 ├──<program-header>
-| ├──programsy (program) 
+| ├──programsy
 | ├──ident (SemicolonFest) 
-| └──semicolon (;) 
+| └──semicolon
 ├──<declaration-part>
 | └──<var-declaration>
-|  ├──varsy (var) 
+|  ├──varsy
 |  ├──<identifier-list>
 |  | └──ident (x) 
-|  ├──colon (:) 
+|  ├──colon
 |  ├──<type>
 |  | └──ident (integer) 
-|  └──semicolon (;) 
+|  └──semicolon
 ├──<compound-statement>
-| ├──beginsy (begin) 
+| ├──beginsy
 | ├──<statement-list>
 | | ├──<statement>
-| | ├──semicolon (;) 
+| | ├──semicolon
 | | ├──<statement>
-| | ├──semicolon (;) 
+| | ├──semicolon
 | | ├──<statement>
-| | ├──semicolon (;) 
+| | ├──semicolon
 | | ├──<statement>
 | | | └──<if-statement>
-| | |  ├──ifsy (if) 
+| | |  ├──ifsy
 | | |  ├──<expression>
 | | |  | ├──<simple-expression>
 | | |  | | └──<term>
 | | |  | |  └──<factor>
 | | |  | |   └──ident (x) 
 | | |  | ├──<relational-operator>
-| | |  | | └──gtr (>) 
+| | |  | | └──gtr
 | | |  | └──<simple-expression>
 | | |  |  └──<term>
 | | |  |   └──<factor>
 | | |  |    └──intcon (0) 
-| | |  ├──thensy (then) 
+| | |  ├──thensy
 | | |  ├──<statement>
-| | |  ├──elsesy (else) 
+| | |  ├──elsesy
 | | |  └──<statement>
-| | ├──semicolon (;) 
+| | ├──semicolon
 | | ├──<statement>
 | | | └──<while-statement>
-| | |  ├──whilesy (while) 
+| | |  ├──whilesy
 | | |  ├──<expression>
 | | |  | ├──<simple-expression>
 | | |  | | └──<term>
 | | |  | |  └──<factor>
 | | |  | |   └──ident (x) 
 | | |  | ├──<relational-operator>
-| | |  | | └──lss (<) 
+| | |  | | └──lss
 | | |  | └──<simple-expression>
 | | |  |  └──<term>
 | | |  |   └──<factor>
 | | |  |    └──intcon (10) 
-| | |  ├──dosy (do) 
+| | |  ├──dosy
 | | |  └──<statement>
 | | |   └──<compound-statement>
-| | |    ├──beginsy (begin) 
+| | |    ├──beginsy
 | | |    ├──<statement-list>
 | | |    | └──<statement>
-| | |    └──endsy (end) 
-| | ├──semicolon (;) 
+| | |    └──endsy
+| | ├──semicolon
 | | └──<statement>
 | |  └──<case-statement>
-| |   ├──casesy (case) 
+| |   ├──casesy
 | |   ├──<expression>
 | |   | └──<simple-expression>
 | |   |  └──<term>
 | |   |   └──<factor>
 | |   |    └──ident (x) 
-| |   ├──ofsy (of) 
+| |   ├──ofsy
 | |   ├──<case-block>
 | |   | ├──<constant>
 | |   | | └──intcon (1) 
-| |   | ├──colon (:) 
+| |   | ├──colon
 | |   | ├──<statement>
-| |   | ├──semicolon (;) 
+| |   | ├──semicolon
 | |   | └──<case-block>
 | |   |  ├──<constant>
 | |   |  | └──intcon (2) 
-| |   |  ├──colon (:) 
+| |   |  ├──colon
 | |   |  ├──<statement>
 | |   |  | └──<compound-statement>
-| |   |  |  ├──beginsy (begin) 
+| |   |  |  ├──beginsy
 | |   |  |  ├──<statement-list>
 | |   |  |  | ├──<statement>
-| |   |  |  | ├──semicolon (;) 
+| |   |  |  | ├──semicolon
 | |   |  |  | └──<statement>
-| |   |  |  └──endsy (end) 
-| |   |  └──semicolon (;) 
-| |   └──endsy (end) 
-| └──endsy (end) 
-└──period (.) 
+| |   |  |  └──endsy
+| |   |  └──semicolon
+| |   └──endsy
+| └──endsy
+└──period
