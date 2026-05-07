@@ -45,5 +45,5 @@ Program akan membaca kode dari `input-1.txt` dan menghasilkan pohon sintaks (Par
 | :--- | :--- | :---|
 | 13523150 | Benedictus Nelson | Mengimplementasikan parser_stmt.cpp, mengerjakan laporan. |
 | 13524117 | Rainaldi Pratama F. Sembiring | - |
-| 13524120 | Jonathan Alveraldo Bangun | Mengimplementasikan parser_decl.cpp, membuat laporan. |
+| 13524120 | Jonathan Alveraldo Bangun | Mengimplementasikan parser_decl.cpp, membantu integrasi program, membuat laporan. |
 | 13524126 | Ramadhian Nabil Firdaus Gumay | Menginisialisasi parser.h, mengimplementasikan parser_expr.cpp, integrasi program, membuat laporan. |
