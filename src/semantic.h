@@ -23,7 +23,7 @@ enum class DataType {
 };
 
 // =========================================================
-// 2. STRUKTUR SYMBOL TABLE (Sesuai Spek Hal 12-13)
+// 2. STRUKTUR SYMBOL TABLE
 // =========================================================
 
 // atab: Array Table
