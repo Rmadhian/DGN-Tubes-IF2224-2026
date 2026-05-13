@@ -119,10 +119,8 @@ ParseTreeNode* Parser::parseIfStatement() {
   return node;
 }
 
-// Grammar: <while-statement> -> whilesy + expression + dosy + statement
+// Grammar: <while-statement> -> whilesy + expression + dosy + compound-statement + semicolon
 ParseTreeNode* Parser::parseWhileStatement() {
-  ParseTreeNode* node = new ParseTreeNode("<while-statement>");
-
   node->children.push_back(match(TokenType::WHILESY));
   if (hasError) return node;
 
@@ -132,7 +130,14 @@ ParseTreeNode* Parser::parseWhileStatement() {
   node->children.push_back(match(TokenType::DOSY));
   if (hasError) return node;
 
-  node->children.push_back(parseStatement());
+  node->children.push_back(parseCompoundStatement());
+  if (hasError) return node;
+
+  if (currentToken().type == TokenType::SEMICOLON) {
+    node->children.push_back(match(TokenType::SEMICOLON));
+  } else {
+    reportError("semicolon", currentToken().value);
+  }
 
   return node;
 }
@@ -185,7 +190,7 @@ ParseTreeNode* Parser::parseCaseBlock() {
   return node;
 }
 
-// Grammar: <repeat-statement> -> repeatsy + statement-list + untilsy + expression
+// Grammar: <for-statement> -> forsy + ident + becomes + expression + (tosy|downtosy) + expression + dosy + compound-statement + semicolon
 ParseTreeNode* Parser::parseRepeatStatement() {
   ParseTreeNode* node = new ParseTreeNode("<repeat-statement>");
 
@@ -227,7 +232,16 @@ ParseTreeNode* Parser::parseForStatement() {
   if (hasError) return node;
 
   node->children.push_back(match(TokenType::DOSY));
-  node->children.push_back(parseStatement());
+  if (hasError) return node;
+
+  node->children.push_back(parseCompoundStatement());
+  if (hasError) return node;
+
+  if (currentToken().type == TokenType::SEMICOLON) {
+    node->children.push_back(match(TokenType::SEMICOLON));
+  } else {
+    reportError("semicolon", currentToken().value);
+  }
 
   return node;
 }

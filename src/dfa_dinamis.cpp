@@ -66,7 +66,7 @@ Token Lexer::scanIdentOrKeyword() {
     advance();
 
     // Terus baca selama masih alfanumerik
-    while (current_char != '\0' && isalnum(current_char)) {
+    while (current_char != '\0' && isalpha(current_char)) {
         res += current_char;
         advance();
     }
