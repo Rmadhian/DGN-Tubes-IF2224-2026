@@ -264,4 +264,23 @@ public:
     virtual void visit(FuncCallNode* node) = 0;
 };
 
+class SemanticAnalyzer : public SemanticVisitor {
+public:
+    void visit(ProgramNode* node) override;
+    void visit(VarDeclNode* node) override;
+    void visit(ConstDeclNode* node) override;
+    void visit(SubprogDeclNode* node) override;
+
+    void visit(CompoundStmtNode* node) override;
+    void visit(AssignStmtNode* node) override;
+    void visit(IfStmtNode* node) override;
+    void visit(WhileStmtNode* node) override;
+    void visit(ForStmtNode* node) override;
+
+    void visit(BinaryOpNode* node) override;
+    void visit(UnaryOpNode* node) override;
+    void visit(LiteralNode* node) override;
+    void visit(VarAccessNode* node) override;
+    void visit(FuncCallNode* node) override;
+};
 #endif // SEMANTIC_H
