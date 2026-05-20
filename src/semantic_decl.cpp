@@ -52,6 +52,22 @@ TabEntry* SymbolTable::lookupLocalTab(string name) {
     return nullptr;
 }
 
+// Fungsi untuk mencari identifier dari scope terdalam ke terluar (visible scope)
+TabEntry* SymbolTable::lookupTab(string name) {
+    for (int i = (int)tab.size() - 1; i >= 0; i--) {
+        if (tab[i].identifiers == name) {
+            return &tab[i];
+        }
+    }
+    return nullptr;
+}
+
+// Akses entry atab berdasarkan index
+ATabEntry* SymbolTable::getATab(int index) {
+    if (index < 0 || index >= (int)atab.size()) return nullptr;
+    return &atab[index];
+}
+
 // Fungsi untuk mendaftarkan detail Array ke tabel atab
 int SymbolTable::insertATab(DataType xtyp, DataType etyp, int eref, int low, int high, int elsz) {
     ATabEntry entry;
@@ -87,91 +103,89 @@ void SubprogDeclNode::accept(SemanticVisitor* visitor) {
 }
 
 // Logika visitor untuk deklarasi (Semantic Analysis)
+// Definisi metode SemanticAnalyzer untuk node deklarasi.
+// Class SemanticAnalyzer dideklarasikan di semantic.h.
 
-// Asumsi: Kelas implementasi konkret dari SemanticVisitor bernama SemanticAnalyzer
-// (Jika Anda menggunakan nama class lain untuk implementasi visitornya, silakan sesuaikan tag 'SemanticAnalyzer::')
+void SemanticAnalyzer::visit(ProgramNode* node) {
+    // 1. Inisialisasi predefined types & constants (Integer, Real, True, dll)
+    st.initPredefined();
 
-class SemanticAnalyzer : public SemanticVisitor {
-public:
-    void visit(ProgramNode* node) override {
-        // 1. Inisialisasi predefined types & constants (Integer, Real, True, dll)
-        st.initPredefined();
-        
-        // 2. Registrasi nama program ke tabel
-        st.insertTab(node->name, ObjClass::PROCEDURE, DataType::NONE);
-        
-        // 3. Masuk ke scope global
-        st.pushScope(); 
-        
-        // 4. Kunjungi semua deklarasi global (variabel, konstanta, fungsi, prosedur)
-        for (ASTNode* decl : node->declarations) {
-            decl->accept(this);
-        }
-        
-        // 5. Kunjungi block program utama
-        if (node->mainBlock) {
-            node->mainBlock->accept(this);
-        }
-        
-        // 6. Keluar scope global
-        st.popScope(); 
+    // 2. Registrasi nama program ke tabel
+    node->symRef = st.insertTab(node->name, ObjClass::PROCEDURE, DataType::NONE);
+    node->lexicalLevel = st.currentLevel;
+
+    // 3. Masuk ke scope global
+    st.pushScope();
+
+    // 4. Kunjungi semua deklarasi global (variabel, konstanta, fungsi, prosedur)
+    for (ASTNode* decl : node->declarations) {
+        decl->accept(this);
     }
 
-    void visit(VarDeclNode* node) override {
-        for (const string& ident : node->idents) {
-            // Validasi Multiple Declaration di scope yang sama
-            if (st.lookupLocalTab(ident) != nullptr) {
-                cerr << "Semantic Error: Multiple declaration of variable '" 
-                     << ident << "' in the same scope." << endl;
-                exit(EXIT_FAILURE);
-            }
-            
-            // Registrasi variabel ke tabel
-            // node->ref akan menunjuk ke atab index jika tipenya adalah ARRAY
-            node->symRef = st.insertTab(ident, ObjClass::VARIABLE, node->type, node->ref);
-            node->lexicalLevel = st.currentLevel;
-        }
+    // 5. Kunjungi block program utama
+    if (node->mainBlock) {
+        node->mainBlock->accept(this);
     }
 
-    void visit(ConstDeclNode* node) override {
+    // 6. Keluar scope global
+    st.popScope();
+}
+
+void SemanticAnalyzer::visit(VarDeclNode* node) {
+    for (const string& ident : node->idents) {
         // Validasi Multiple Declaration di scope yang sama
-        if (st.lookupLocalTab(node->name) != nullptr) {
-            cerr << "Semantic Error: Multiple declaration of constant '" 
-                 << node->name << "' in the same scope." << endl;
+        if (st.lookupLocalTab(ident) != nullptr) {
+            cerr << "Semantic Error: Multiple declaration of variable '"
+                 << ident << "' in the same scope." << endl;
             exit(EXIT_FAILURE);
         }
-        
-        // Registrasi konstanta ke tabel
-        node->symRef = st.insertTab(node->name, ObjClass::CONSTANT, node->type);
+
+        // Registrasi variabel ke tabel
+        // node->ref akan menunjuk ke atab index jika tipenya adalah ARRAY
+        node->symRef = st.insertTab(ident, ObjClass::VARIABLE, node->type, node->ref);
         node->lexicalLevel = st.currentLevel;
     }
+}
 
-    void visit(SubprogDeclNode* node) override {
-        // Validasi Multiple Declaration sebelum masuk ke scope fungsi
-        if (st.lookupLocalTab(node->name) != nullptr) {
-            cerr << "Semantic Error: Multiple declaration of subprogram '" 
-                 << node->name << "' in the same scope." << endl;
-            exit(EXIT_FAILURE);
-        }
-        
-        // Registrasi signature Prosedur/Fungsi ke tabel di level saat ini
-        ObjClass objType = node->isFunction ? ObjClass::FUNCTION : ObjClass::PROCEDURE;
-        node->symRef = st.insertTab(node->name, objType, node->retType);
-        
-        // Buka scope baru untuk parameter dan variabel lokal subprogram
-        st.pushScope(); 
-        
-        // Kunjungi dan registrasikan semua parameter
-        for (ASTNode* param : node->params) {
-            param->accept(this);
-        }
-        
-        // Kunjungi blok isi subprogram
-        if (node->block) {
-            node->block->accept(this);
-        }
-        
-        // Keluar dari scope lokal subprogram
-        st.popScope(); 
+void SemanticAnalyzer::visit(ConstDeclNode* node) {
+    // Validasi Multiple Declaration di scope yang sama
+    if (st.lookupLocalTab(node->name) != nullptr) {
+        cerr << "Semantic Error: Multiple declaration of constant '"
+             << node->name << "' in the same scope." << endl;
+        exit(EXIT_FAILURE);
     }
-};
+
+    // Registrasi konstanta ke tabel
+    node->symRef = st.insertTab(node->name, ObjClass::CONSTANT, node->type);
+    node->lexicalLevel = st.currentLevel;
+}
+
+void SemanticAnalyzer::visit(SubprogDeclNode* node) {
+    // Validasi Multiple Declaration sebelum masuk ke scope fungsi
+    if (st.lookupLocalTab(node->name) != nullptr) {
+        cerr << "Semantic Error: Multiple declaration of subprogram '"
+             << node->name << "' in the same scope." << endl;
+        exit(EXIT_FAILURE);
+    }
+
+    // Registrasi signature Prosedur/Fungsi ke tabel di level saat ini
+    ObjClass objType = node->isFunction ? ObjClass::FUNCTION : ObjClass::PROCEDURE;
+    node->symRef = st.insertTab(node->name, objType, node->retType);
+    node->lexicalLevel = st.currentLevel;
+
+    // Buka scope baru untuk parameter dan variabel lokal subprogram
+    st.pushScope();
+
+    // Kunjungi dan registrasikan semua parameter
+    for (ASTNode* param : node->params) {
+        param->accept(this);
+    }
+
+    // Kunjungi blok isi subprogram
+    if (node->block) {
+        node->block->accept(this);
+    }
+
+    // Keluar dari scope lokal subprogram
+    st.popScope();
+}

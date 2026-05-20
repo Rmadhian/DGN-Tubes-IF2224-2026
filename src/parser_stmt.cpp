@@ -53,9 +53,6 @@ ParseTreeNode* Parser::parseStatement() {
     Token tok = currentToken();
     switch (tok.type) {
         case TokenType::IDENT: {
-            // Bedakan assignment vs procedure/function call.
-            // Variable bisa diikuti '[' (array) atau '.' (field record) sebelum ':='.
-            // Procedure/function-call paling banyak punya '(' setelah ident.
             Token next = peek(1);
             if (next.type == TokenType::BECOMES ||
                 next.type == TokenType::LBRACK ||

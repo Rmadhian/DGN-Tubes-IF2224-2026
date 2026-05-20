@@ -18,8 +18,9 @@ enum class ObjClass {
 };
 
 // Tipe Data Dasar (type di tabel tab)
-enum class DataType { 
-    NONE, INTEGER, REAL, CHAR, BOOLEAN, STRING, ARRAY, RECORD
+// NOTYPE = belum diketahui/belum dianalisis, NONE = void (statement/procedure)
+enum class DataType {
+    NOTYPE, NONE, INTEGER, REAL, CHAR, BOOLEAN, STRING, ARRAY, RECORD
 };
 
 // =========================================================
@@ -262,6 +263,34 @@ public:
     virtual void visit(LiteralNode* node) = 0;
     virtual void visit(VarAccessNode* node) = 0;
     virtual void visit(FuncCallNode* node) = 0;
+};
+
+// =========================================================
+// 7. SEMANTIC ANALYZER (Implementasi Visitor)
+// =========================================================
+//
+
+class SemanticAnalyzer : public SemanticVisitor {
+public:
+    // --- Dongun (semantic_decl.cpp) ---
+    void visit(ProgramNode* node) override;
+    void visit(VarDeclNode* node) override;
+    void visit(ConstDeclNode* node) override;
+    void visit(SubprogDeclNode* node) override;
+
+    // --- Nelson (semantic_stmt.cpp) ---
+    void visit(CompoundStmtNode* node) override;
+    void visit(AssignStmtNode* node) override;
+    void visit(IfStmtNode* node) override;
+    void visit(WhileStmtNode* node) override;
+    void visit(ForStmtNode* node) override;
+
+    // --- Rama (semantic_expr.cpp) ---
+    void visit(BinaryOpNode* node) override;
+    void visit(UnaryOpNode* node) override;
+    void visit(LiteralNode* node) override;
+    void visit(VarAccessNode* node) override;
+    void visit(FuncCallNode* node) override;
 };
 
 #endif // SEMANTIC_H
