@@ -18,12 +18,13 @@ enum class ObjClass {
 };
 
 // Tipe Data Dasar (type di tabel tab)
-enum class DataType { 
-    NONE, INTEGER, REAL, CHAR, BOOLEAN, STRING, ARRAY, RECORD
+// NOTYPE = belum diketahui/belum dianalisis, NONE = void (statement/procedure)
+enum class DataType {
+    NOTYPE, NONE, INTEGER, REAL, CHAR, BOOLEAN, STRING, ARRAY, RECORD
 };
 
 // =========================================================
-// 2. STRUKTUR SYMBOL TABLE (Sesuai Spek Hal 12-13)
+// 2. STRUKTUR SYMBOL TABLE
 // =========================================================
 
 // atab: Array Table
