@@ -11,7 +11,7 @@
 
 using namespace std;
 
-// Format untuk output
+// Formatter untuk output
 
 string objToStr(ObjClass obj) {
     switch (obj) {
@@ -39,7 +39,6 @@ string typeToStr(DataType t) {
     }
 }
 
-// Fungsi Pencetak Symbol Table (tab, btab, atab)
 void printSymbolTables(const SymbolTable& st, ostream& out) {
     out << "\ntab (hanya sebagian yang relevan):\n";
     out << left << setw(4) << "idx" << setw(15) << "id" << setw(15) << "obj" 
@@ -48,11 +47,7 @@ void printSymbolTables(const SymbolTable& st, ostream& out) {
     out << string(65, '-') << "\n";
     
     for (size_t i = 0; i < st.tab.size(); i++) {
-        // Asumsi predefined identifiers ada di index awal (misal 0-6)
-        if (i == 0) {
-            out << "... (reserved words & predefined)\n";
-        }
-        // Kita lewati cetak yang predefined untuk memperingkas output, mulai cetak user-defined
+        if (i == 0) out << "... (reserved words & predefined)\n";
         if (i < 7) continue; 
         
         const auto& t = st.tab[i];
@@ -90,17 +85,17 @@ void printSymbolTables(const SymbolTable& st, ostream& out) {
     out << "\n";
 }
 
-// Fungsi Pencetak Decorated AST dengan penelusuran hierarki
 void printAST(ASTNode* node, string indent, bool isLast, ostream& out, string prefix = "") {
     if (!node) return;
 
-    string marker = isLast ? " \\_ " : " |- "; 
-    string nextIndent = indent + (isLast ? "    " : " |  ");
+    // Mengganti karakter ASCII dengan Unicode Box-Drawing
+    string marker = isLast ? " └─ " : " ├─ "; 
+    string nextIndent = indent + (isLast ? "    " : " │  ");
     
     // Siapkan Anotasi Semantik
     string anotasi = "";
     if (node->symRef != -1 || node->evalType != DataType::NOTYPE) {
-        anotasi += " \t-> ";
+        anotasi += " \t-> "; // Anda juga bisa mengubah ini menjadi " \t→ " jika ingin panah Unicode
         if (node->symRef != -1) anotasi += "tab_index:" + to_string(node->symRef) + ", ";
         anotasi += "type:" + typeToStr(node->evalType);
         if (node->lexicalLevel >= 0 && node->symRef != -1) anotasi += ", lev:" + to_string(node->lexicalLevel);
@@ -109,11 +104,11 @@ void printAST(ASTNode* node, string indent, bool isLast, ostream& out, string pr
     // Identifikasi Tipe Node dengan dynamic_cast
     if (auto p = dynamic_cast<ProgramNode*>(node)) {
         out << indent << "ProgramNode(name: '" << p->name << "')\n";
-        out << indent << " |- Declarations\n";
+        out << indent << " ├─ Declarations\n";
         for (size_t i = 0; i < p->declarations.size(); i++) {
-            printAST(p->declarations[i], indent + " |  ", (i == p->declarations.size() - 1), out);
+            printAST(p->declarations[i], indent + " │  ", (i == p->declarations.size() - 1), out);
         }
-        out << indent << " \\_ Block";
+        out << indent << " └─ Block";
         if (p->mainBlock) {
             out << " \t-> block_index:" << p->mainBlock->symRef << ", lev:" << p->mainBlock->lexicalLevel << "\n";
             auto block = dynamic_cast<CompoundStmtNode*>(p->mainBlock);
@@ -184,60 +179,27 @@ void printAST(ASTNode* node, string indent, bool isLast, ostream& out, string pr
     }
 }
 
-// Fungsi utility pembacaan file token (MILESTONE 1)
+// Utility file reader & parser helper
+
+enum class InputType { SOURCE_CODE, TOKEN_LIST, PARSE_TREE };
 
 TokenType stringToType(string s) {
     if (s == "programsy") return TokenType::PROGRAMSY;
     if (s == "constsy") return TokenType::CONSTSY;
     if (s == "typesy") return TokenType::TYPESY;
     if (s == "varsy") return TokenType::VARSY;
-    if (s == "arraysy") return TokenType::ARRAYSY;
-    if (s == "ofsy") return TokenType::OFSY;
-    if (s == "recordsy") return TokenType::RECORDSY;
     if (s == "beginsy") return TokenType::BEGINSY;
     if (s == "endsy") return TokenType::ENDSY;
-    if (s == "ifsy") return TokenType::IFSY;
-    if (s == "thensy") return TokenType::THENSY;
-    if (s == "elsesy") return TokenType::ELSESY;
-    if (s == "whilesy") return TokenType::WHILESY;
-    if (s == "dosy") return TokenType::DOSY;
-    if (s == "repeatsy") return TokenType::REPEATSY;
-    if (s == "untilsy") return TokenType::UNTILSY;
-    if (s == "forsy") return TokenType::FORSY;
-    if (s == "tosy") return TokenType::TOSY;
-    if (s == "downtosy") return TokenType::DOWNTOSY;
-    if (s == "casesy") return TokenType::CASESY;
-    if (s == "proceduresy") return TokenType::PROCEDURESY;
-    if (s == "functionsy") return TokenType::FUNCTIONSY;
     if (s == "ident") return TokenType::IDENT;
     if (s == "intcon") return TokenType::INTCON;
     if (s == "realcon") return TokenType::REALCON;
-    if (s == "charcon") return TokenType::CHARCON;
     if (s == "string") return TokenType::STRING;
     if (s == "plus") return TokenType::PLUS;
-    if (s == "minus") return TokenType::MINUS;
-    if (s == "times") return TokenType::TIMES;
-    if (s == "rdiv") return TokenType::RDIV;
-    if (s == "idiv") return TokenType::IDIV;
-    if (s == "imod") return TokenType::IMOD;
-    if (s == "eql") return TokenType::EQL;
-    if (s == "neq") return TokenType::NEQ;
-    if (s == "lss") return TokenType::LSS;
-    if (s == "leq") return TokenType::LEQ;
-    if (s == "gtr") return TokenType::GTR;
-    if (s == "geq") return TokenType::GEQ;
-    if (s == "orsy") return TokenType::ORSY;
-    if (s == "andsy") return TokenType::ANDSY;
-    if (s == "notsy") return TokenType::NOTSY;
     if (s == "becomes") return TokenType::BECOMES;
     if (s == "lparent") return TokenType::LPARENT;
     if (s == "rparent") return TokenType::RPARENT;
-    if (s == "lbrack") return TokenType::LBRACK;
-    if (s == "rbrack") return TokenType::RBRACK;
-    if (s == "period") return TokenType::PERIOD;
-    if (s == "comma") return TokenType::COMMA;
-    if (s == "colon") return TokenType::COLON;
     if (s == "semicolon") return TokenType::SEMICOLON;
+    if (s == "comma") return TokenType::COMMA;
     return TokenType::UNKNOWN;
 }
 
@@ -248,117 +210,171 @@ string trimStr(const string& str) {
     return str.substr(first, (last - first + 1));
 }
 
+InputType detectInputType(const string& content) {
+    istringstream iss(content);
+    string firstLine;
+    while(getline(iss, firstLine)) {
+        firstLine = trimStr(firstLine);
+        if (!firstLine.empty()) break;
+    }
+    
+    // Cek jika ini format Parse Tree Milestone 2
+    if (firstLine.find("<program>") != string::npos || firstLine.find("\xE2\x94") != string::npos) {
+        return InputType::PARSE_TREE;
+    }
+    // Cek jika ini format Token List Milestone 1
+    size_t openParen = firstLine.find('(');
+    string typeStr = (openParen != string::npos) ? firstLine.substr(0, openParen) : firstLine;
+    if (stringToType(trimStr(typeStr)) != TokenType::UNKNOWN) {
+        return InputType::TOKEN_LIST;
+    }
+    return InputType::SOURCE_CODE;
+}
+
 vector<Token> parseTokenFile(const string& content) {
     vector<Token> tokens;
     istringstream iss(content);
     string line;
-    
     while (getline(iss, line)) {
         line = trimStr(line);
         if (line.empty()) continue;
-
-        string typeStr = line;
-        string valueStr = "";
-
         size_t openParen = line.find('(');
         size_t closeParen = line.rfind(')');
-        
         if (openParen != string::npos && closeParen != string::npos && closeParen > openParen) {
-            typeStr = line.substr(0, openParen);
-            typeStr = trimStr(typeStr);
-            valueStr = line.substr(openParen + 1, closeParen - openParen - 1);
+            string typeStr = trimStr(line.substr(0, openParen));
+            string valueStr = line.substr(openParen + 1, closeParen - openParen - 1);
+            tokens.push_back(Token(stringToType(typeStr), valueStr));
         }
-
-        TokenType type = stringToType(typeStr);
-        tokens.push_back(Token(type, valueStr));
     }
     return tokens;
 }
 
-bool isTokenizedFile(const string& content) {
-    istringstream iss(content);
-    string firstWord;
-    iss >> firstWord;
-    firstWord = trimStr(firstWord);
+// Reconstructor parse tree (Milestone 2 -> Memori AST)
+
+// Membaca satu baris Parse Tree dan membuatnya menjadi node
+ParseTreeNode* parseTreeLine(const string& line, int& outStartIdx) {
+    int startIdx = -1;
+    for (int i = 0; i < line.length(); i++) {
+        // Cari karakter awal dari label (Bisa '<' untuk Non-terminal, atau huruf kapital untuk Terminal)
+        if (line[i] == '<' || isalnum((unsigned char)line[i])) {
+            startIdx = i; break;
+        }
+    }
+    if (startIdx == -1) return nullptr;
+
+    outStartIdx = startIdx;
+    string content = line.substr(startIdx);
+    string label = "", value = "";
     
-    size_t openParen = firstWord.find('(');
-    string typeStr = (openParen != string::npos) ? firstWord.substr(0, openParen) : firstWord;
-    
-    return (stringToType(typeStr) != TokenType::UNKNOWN);
+    if (content[0] == '<') {
+        size_t endPos = content.find('>');
+        label = (endPos != string::npos) ? content.substr(0, endPos + 1) : content;
+    } else {
+        size_t openParen = content.find('(');
+        size_t closeParen = content.rfind(')');
+        if (openParen != string::npos && closeParen != string::npos && closeParen > openParen) {
+            label = trimStr(content.substr(0, openParen));
+            value = content.substr(openParen + 1, closeParen - openParen - 1);
+        } else {
+            label = trimStr(content);
+        }
+    }
+    return new ParseTreeNode(label, value);
 }
 
-// Program utama (MAIN)
+// Membangun kembali pohon menggunakan Stack berbasis kedalaman indentasi
+ParseTreeNode* buildParseTreeFromText(const string& content) {
+    istringstream iss(content);
+    string line;
+    ParseTreeNode* root = nullptr;
+    vector<pair<int, ParseTreeNode*>> stack;
+    
+    while (getline(iss, line)) {
+        if (trimStr(line).empty()) continue;
+        
+        int startIdx = 0;
+        ParseTreeNode* node = parseTreeLine(line, startIdx);
+        if (!node) continue;
+        
+        if (stack.empty()) {
+            root = node;
+            stack.push_back({startIdx, node});
+        } else {
+            // Jika depth node saat ini lebih kecil/sama dengan elemen di stack, pop!
+            while (!stack.empty() && stack.back().first >= startIdx) {
+                stack.pop_back();
+            }
+            if (!stack.empty()) {
+                stack.back().second->children.push_back(node);
+            }
+            stack.push_back({startIdx, node});
+        }
+    }
+    return root;
+}
+
+// Main program
 
 int main(int argc, char* argv[]) {
-
     if (argc < 3) {
-        cout << "Error: Argumen Kurang" << endl;
         cout << "Usage: ./arion_compiler <file_input> <file_output>" << endl;
         return 1;
     }
 
     ifstream fileInput(argv[1]);
-    if (!fileInput.is_open()) {
-        cout << "Error: File Input Tidak Ditemukan (" << argv[1] << ")" << endl;
-        return 1;
-    }
+    if (!fileInput.is_open()) return 1;
 
     stringstream buffer;
     buffer << fileInput.rdbuf();
     string fileContent = buffer.str();
     fileInput.close();
 
-    vector<Token> tokens;
+    InputType type = detectInputType(fileContent);
+    ParseTreeNode* tree = nullptr;
+    Parser* parserPtr = nullptr; // Digunakan jika input perlu melewati parser
 
-    // 1. TAHAP LEXICAL ANALYSIS
-    if (isTokenizedFile(fileContent)) {
-        cout << "[INFO] Format file Token terdeteksi. Membaca dari hasil Milestone 1..." << endl;
-        tokens = parseTokenFile(fileContent);
+    // TAHAP 1 & 2: MEMBANGUN PARSE TREE
+    if (type == InputType::PARSE_TREE) {
+        cout << "[INFO] Format file Parse Tree terdeteksi. Melakukan rekonstruksi Tree..." << endl;
+        tree = buildParseTreeFromText(fileContent);
     } else {
-        cout << "[INFO] Format file Source Code terdeteksi. Menjalankan Lexer..." << endl;
-        Lexer lexer(fileContent);
-        tokens = lexer.tokenize();
+        vector<Token> tokens;
+        if (type == InputType::TOKEN_LIST) {
+            cout << "[INFO] Format file Token terdeteksi. Membaca Token..." << endl;
+            tokens = parseTokenFile(fileContent);
+        } else {
+            cout << "[INFO] Format file Source Code terdeteksi. Menjalankan Lexer..." << endl;
+            Lexer lexer(fileContent);
+            tokens = lexer.tokenize();
+        }
+        
+        cout << "[INFO] Menjalankan Syntax Analyzer (Parser)..." << endl;
+        parserPtr = new Parser(tokens);
+        tree = parserPtr->parse();
+        
+        if (parserPtr->isError()) {
+            cout << "Parsing gagal: terdapat syntax error." << endl;
+            delete tree;
+            delete parserPtr;
+            return 1;
+        }
     }
 
-    // 2. TAHAP SYNTAX ANALYSIS (PARSER)
-    cout << "[INFO] Menjalankan Syntax Analyzer (Parser)..." << endl;
-    Parser parser(tokens);
-    ParseTreeNode* tree = parser.parse();
-
+    // TAHAP 3: SEMANTIC ANALYSIS
     ofstream fileOutput(argv[2]);
-    if (!fileOutput.is_open()) {
-        cout << "Error: Tidak Bisa Membuat File Output (" << argv[2] << ")" << endl;
-        delete tree;
-        return 1;
-    }
+    if (!fileOutput.is_open()) return 1;
 
-    if (parser.isError()) {
-        cout << "Parsing gagal: terdapat syntax error." << endl;
-        fileOutput << "Parsing gagal: terdapat syntax error." << endl;
-        fileOutput.close();
-        delete tree;
-        return 1;
-    }
-
-    // (Opsional) Tulis parse tree dari tahap 2 ke file
-    // parser.printTree(tree, fileOutput); 
-
-    // 3. TAHAP SEMANTIC ANALYSIS
     cout << "[INFO] Memulai pembangunan AST (Syntax-Directed Translation)..." << endl;
     ASTBuilder astBuilder;
     ProgramNode* astRoot = astBuilder.build(tree);
 
     if (astRoot != nullptr) {
         cout << "[INFO] Menjalankan Semantic Analyzer (Decorating AST & Symbol Table)..." << endl;
-        
-        // Menjalankan pengecekan tipe dan scope
         SemanticAnalyzer semanticAnalyzer;
         astRoot->accept(&semanticAnalyzer); 
 
         cout << "[SUCCESS] Semantic Analysis Selesai." << endl;
-        cout << "Total Global Symbol terdaftar: " << semanticAnalyzer.st.tab.size() << endl;
         
-        // Cetak output ke file output.txt
         fileOutput << "[HASIL SEMANTIC ANALYSIS]\n";
         
         printSymbolTables(semanticAnalyzer.st, fileOutput);
@@ -368,13 +384,13 @@ int main(int argc, char* argv[]) {
         
         fileOutput << "\n[Analisis Semantik Sukses]\n";
         fileOutput << "Program berhasil lolos verifikasi tipe, scope, dan deklarasi.\n";
-
     } else {
         cout << "Error Semantik: Gagal membangun Abstract Syntax Tree dari struktur Parse Tree." << endl;
     }
 
     fileOutput.close();
-    delete tree; // Cleanup memory Parse Tree
+    delete tree; 
+    if (parserPtr) delete parserPtr; 
 
     return 0;
 }

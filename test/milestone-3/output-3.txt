@@ -4,7 +4,7 @@ tab (hanya sebagian yang relevan):
 idx id             obj            type      ref  nrm  lev  adr  link
 -----------------------------------------------------------------
 ... (reserved words & predefined)
-7   CekKelulusan   procedure      void      0    2566859360    0    -1
+7   CekKelulusan   procedure      void      0    -16807430720    0    -1
 8   nilai          variable       integer   0    7    1    0    -1
 9   lulus          variable       boolean   0    7    1    0    -1
 
@@ -20,29 +20,29 @@ atab:
 
 Decorated AST:
 ProgramNode(name: 'CekKelulusan')
- |- Declarations
- |   |- VarDecl('nilai') 	-> tab_index:8, type:notype, lev:1
- |   \_ VarDecl('lulus') 	-> tab_index:9, type:notype, lev:1
- \_ Block 	-> block_index:0, lev:2
-     |- Assign 	-> type:void
-     |   |- target 'nilai' 	-> type:integer
-     |   \_ value 75 	-> type:integer
-     \_ IfStmt 	-> type:void
-         |- condition BinOp 'geq' 	-> type:boolean
-         |   |- 'nilai' 	-> type:integer
-         |   \_ 70 	-> type:integer
-         |- CompoundStmt
-         |   |- Assign 	-> type:void
-         |   |   |- target 'lulus' 	-> type:boolean
-         |   |   \_ value 'true' 	-> type:boolean
-         |   \_ writeln(...)
-         |       \_ arg 'Selamat, Anda Lulus!'
-         \_ CompoundStmt
-             |- Assign 	-> type:void
-             |   |- target 'lulus' 	-> type:boolean
-             |   \_ value 'false' 	-> type:boolean
-             \_ writeln(...)
-                 \_ arg 'Maaf, Anda belum lulus.'
+ ├─ Declarations
+ │   ├─ VarDecl('nilai') 	-> tab_index:8, type:notype, lev:1
+ │   └─ VarDecl('lulus') 	-> tab_index:9, type:notype, lev:1
+ └─ Block 	-> block_index:0, lev:2
+     ├─ Assign 	-> type:void
+     │   ├─ target 'nilai' 	-> type:integer
+     │   └─ value 75 	-> type:integer
+     └─ IfStmt 	-> type:void
+         ├─ condition BinOp 'geq' 	-> type:boolean
+         │   ├─ 'nilai' 	-> type:integer
+         │   └─ 70 	-> type:integer
+         ├─ CompoundStmt
+         │   ├─ Assign 	-> type:void
+         │   │   ├─ target 'lulus' 	-> type:boolean
+         │   │   └─ value 'true' 	-> type:boolean
+         │   └─ writeln(...)
+         │       └─ arg 'Selamat, Anda Lulus!'
+         └─ CompoundStmt
+             ├─ Assign 	-> type:void
+             │   ├─ target 'lulus' 	-> type:boolean
+             │   └─ value 'false' 	-> type:boolean
+             └─ writeln(...)
+                 └─ arg 'Maaf, Anda belum lulus.'
 
 [Analisis Semantik Sukses]
 Program berhasil lolos verifikasi tipe, scope, dan deklarasi.

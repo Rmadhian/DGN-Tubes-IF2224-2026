@@ -1,0 +1,47 @@
+[HASIL SEMANTIC ANALYSIS]
+
+tab (hanya sebagian yang relevan):
+idx id             obj            type      ref  nrm  lev  adr  link
+-----------------------------------------------------------------
+... (reserved words & predefined)
+7   HitungExposure procedure      void      0    -1988239040    0    -1
+8   iso            variable       integer   0    7    1    0    -1
+9   shutter        variable       integer   0    7    1    0    -1
+10  aperture       variable       real      0    7    1    0    -1
+
+btab:
+idx last  lpar  psze  vsze
+------------------------------
+0   10    0     0     0
+
+atab:
+(kosong karena tidak ada array)
+
+Decorated AST:
+ProgramNode(name: 'HitungExposure')
+ ├─ Declarations
+ │   ├─ VarDecl('iso', 'shutter') 	-> tab_index:9, type:notype, lev:1
+ │   └─ VarDecl('aperture') 	-> tab_index:10, type:notype, lev:1
+ └─ Block 	-> block_index:0, lev:2
+     ├─ Assign 	-> type:void
+     │   ├─ target 'iso' 	-> type:integer
+     │   └─ value 400 	-> type:integer
+     ├─ Assign 	-> type:void
+     │   ├─ target 'shutter' 	-> type:integer
+     │   └─ value 250 	-> type:integer
+     ├─ Assign 	-> type:void
+     │   ├─ target 'aperture' 	-> type:real
+     │   └─ value 2.8 	-> type:real
+     └─ IfStmt 	-> type:void
+         ├─ condition BinOp 'andsy' 	-> type:boolean
+         │   ├─ BinOp 'geq' 	-> type:boolean
+         │   │   ├─ 'iso' 	-> type:integer
+         │   │   └─ 800 	-> type:integer
+         │   └─ BinOp 'leq' 	-> type:boolean
+         │       ├─ 'aperture' 	-> type:real
+         │       └─ 1.4 	-> type:real
+         └─ then writeln(...)
+             └─ arg 'Foto overexposed'
+
+[Analisis Semantik Sukses]
+Program berhasil lolos verifikasi tipe, scope, dan deklarasi.

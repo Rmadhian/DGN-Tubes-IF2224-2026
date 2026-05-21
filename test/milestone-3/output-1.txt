@@ -4,7 +4,7 @@ tab (hanya sebagian yang relevan):
 idx id             obj            type      ref  nrm  lev  adr  link
 -----------------------------------------------------------------
 ... (reserved words & predefined)
-7   Hello          procedure      void      0    -17978186240    0    -1
+7   Hello          procedure      void      0    -15751637280    0    -1
 8   a              variable       integer   0    7    1    0    -1
 9   b              variable       integer   0    7    1    0    -1
 
@@ -18,20 +18,20 @@ atab:
 
 Decorated AST:
 ProgramNode(name: 'Hello')
- |- Declarations
- |   \_ VarDecl('a', 'b') 	-> tab_index:9, type:notype, lev:1
- \_ Block 	-> block_index:0, lev:2
-     |- Assign 	-> type:void
-     |   |- target 'a' 	-> type:integer
-     |   \_ value 5 	-> type:integer
-     |- Assign 	-> type:void
-     |   |- target 'b' 	-> type:integer
-     |   \_ value BinOp 'plus' 	-> type:integer
-     |       |- 'a' 	-> type:integer
-     |       \_ 10 	-> type:integer
-     \_ writeln(...)
-         |- arg 'Result = '
-         \_ arg 'b'
+ ├─ Declarations
+ │   └─ VarDecl('a', 'b') 	-> tab_index:9, type:notype, lev:1
+ └─ Block 	-> block_index:0, lev:2
+     ├─ Assign 	-> type:void
+     │   ├─ target 'a' 	-> type:integer
+     │   └─ value 5 	-> type:integer
+     ├─ Assign 	-> type:void
+     │   ├─ target 'b' 	-> type:integer
+     │   └─ value BinOp 'plus' 	-> type:integer
+     │       ├─ 'a' 	-> type:integer
+     │       └─ 10 	-> type:integer
+     └─ writeln(...)
+         ├─ arg 'Result = '
+         └─ arg 'b'
 
 [Analisis Semantik Sukses]
 Program berhasil lolos verifikasi tipe, scope, dan deklarasi.

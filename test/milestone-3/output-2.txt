@@ -4,7 +4,7 @@ tab (hanya sebagian yang relevan):
 idx id             obj            type      ref  nrm  lev  adr  link
 -----------------------------------------------------------------
 ... (reserved words & predefined)
-7   HitungLuas     procedure      void      0    3840397760    0    -1
+7   HitungLuas     procedure      void      0    21304813760    0    -1
 8   panjang        variable       integer   0    7    1    0    -1
 9   lebar          variable       integer   0    7    1    0    -1
 10  luas           variable       integer   0    7    1    0    -1
@@ -19,23 +19,23 @@ atab:
 
 Decorated AST:
 ProgramNode(name: 'HitungLuas')
- |- Declarations
- |   \_ VarDecl('panjang', 'lebar', 'luas') 	-> tab_index:10, type:notype, lev:1
- \_ Block 	-> block_index:0, lev:2
-     |- Assign 	-> type:void
-     |   |- target 'panjang' 	-> type:integer
-     |   \_ value 15 	-> type:integer
-     |- Assign 	-> type:void
-     |   |- target 'lebar' 	-> type:integer
-     |   \_ value 8 	-> type:integer
-     |- Assign 	-> type:void
-     |   |- target 'luas' 	-> type:integer
-     |   \_ value BinOp 'times' 	-> type:integer
-     |       |- 'panjang' 	-> type:integer
-     |       \_ 'lebar' 	-> type:integer
-     \_ writeln(...)
-         |- arg 'Luas Persegi Panjang = '
-         \_ arg 'luas'
+ ├─ Declarations
+ │   └─ VarDecl('panjang', 'lebar', 'luas') 	-> tab_index:10, type:notype, lev:1
+ └─ Block 	-> block_index:0, lev:2
+     ├─ Assign 	-> type:void
+     │   ├─ target 'panjang' 	-> type:integer
+     │   └─ value 15 	-> type:integer
+     ├─ Assign 	-> type:void
+     │   ├─ target 'lebar' 	-> type:integer
+     │   └─ value 8 	-> type:integer
+     ├─ Assign 	-> type:void
+     │   ├─ target 'luas' 	-> type:integer
+     │   └─ value BinOp 'times' 	-> type:integer
+     │       ├─ 'panjang' 	-> type:integer
+     │       └─ 'lebar' 	-> type:integer
+     └─ writeln(...)
+         ├─ arg 'Luas Persegi Panjang = '
+         └─ arg 'luas'
 
 [Analisis Semantik Sukses]
 Program berhasil lolos verifikasi tipe, scope, dan deklarasi.

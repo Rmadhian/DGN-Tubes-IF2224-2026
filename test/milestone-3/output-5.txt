@@ -1,0 +1,24 @@
+[HASIL SEMANTIC ANALYSIS]
+
+tab (hanya sebagian yang relevan):
+idx id             obj            type      ref  nrm  lev  adr  link
+-----------------------------------------------------------------
+... (reserved words & predefined)
+7   Hello          procedure      void      0    -9685436160    0    -1
+
+btab:
+idx last  lpar  psze  vsze
+------------------------------
+0   7     0     0     0
+
+atab:
+(kosong karena tidak ada array)
+
+Decorated AST:
+ProgramNode(name: 'Hello')
+ ├─ Declarations
+ │   └─ VarDecl()
+ └─ Block 	-> block_index:0, lev:2
+
+[Analisis Semantik Sukses]
+Program berhasil lolos verifikasi tipe, scope, dan deklarasi.

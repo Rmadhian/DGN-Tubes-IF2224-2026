@@ -1,0 +1,61 @@
+<program>
+├── <program-header>
+│   ├── PROGRAMSY(program)
+│   ├── IDENT(Hello)
+│   └── SEMICOLON(;)
+├── <declaration-part>
+│   └── <var-declaration>
+│       ├── VARSY(var)
+│       ├── <identifier-list>
+│       │   ├── IDENT(a)
+│       │   ├── COMMA(,)
+│       │   └── IDENT(b)
+│       ├── COLON(:)
+│       ├── <type>
+│       │   └── IDENT(integer)
+│       └── SEMICOLON(;)
+├── <compound-statement>
+│   ├── BEGINSY(begin)
+│   ├── <statement-list>
+│   │   ├── <assignment-statement>
+│   │   │   ├── IDENT(a)
+│   │   │   ├── BECOMES(:=)
+│   │   │   └── <expression>
+│   │   │       └── <simple-expression>
+│   │   │           └── <term>
+│   │   │               └── <factor>
+│   │   │                   └── INTCON(5)
+│   │   ├── SEMICOLON(;)
+│   │   ├── <assignment-statement>
+│   │   │   ├── IDENT(b)
+│   │   │   ├── BECOMES(:=)
+│   │   │   └── <expression>
+│   │   │       ├── <simple-expression>
+│   │   │       │   ├── <term>
+│   │   │       │   │   └── <factor>
+│   │   │       │   │       └── IDENT(a)
+│   │   │       │   ├── <additive-operator>
+│   │   │       │   │   └── PLUS(+)
+│   │   │       │   └── <term>
+│   │   │       │       └── <factor>
+│   │   │       │           └── NUMBER(10)
+│   │   ├── SEMICOLON(;)
+│   │   ├── <procedure/function-call>
+│   │   │   ├── IDENT(writeln)
+│   │   │   ├── LPARENT(()
+│   │   │   ├── <parameter-list>
+│   │   │   │   ├── <expression>
+│   │   │   │   │   └── <simple-expression>
+│   │   │   │   │       └── <term>
+│   │   │   │   │           └── <factor>
+│   │   │   │   │               └── STRING('Result = ')
+│   │   │   │   ├── COMMA(,)
+│   │   │   │   └── <expression>
+│   │   │   │       └── <simple-expression>
+│   │   │   │           └── <term>
+│   │   │   │               └── <factor>
+│   │   │   │                   └── IDENT(b)
+│   │   │   ├── RPARENT())
+│   │   │   └── SEMICOLON(;)
+│   └── ENDSY(end)
+└── PERIOD(.)
