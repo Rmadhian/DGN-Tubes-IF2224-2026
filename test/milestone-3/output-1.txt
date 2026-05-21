@@ -1,12 +1,10 @@
-===========================================
 [HASIL SEMANTIC ANALYSIS]
-===========================================
 
 tab (hanya sebagian yang relevan):
 idx id             obj            type      ref  nrm  lev  adr  link
 -----------------------------------------------------------------
 ... (reserved words & predefined)
-7   Hello          procedure      void      0    6384222240    0    -1
+7   Hello          procedure      void      0    -17978186240    0    -1
 8   a              variable       integer   0    7    1    0    -1
 9   b              variable       integer   0    7    1    0    -1
 

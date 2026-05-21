@@ -355,15 +355,11 @@ int main(int argc, char* argv[]) {
         SemanticAnalyzer semanticAnalyzer;
         astRoot->accept(&semanticAnalyzer); 
 
-        cout << "===========================================" << endl;
         cout << "[SUCCESS] Semantic Analysis Selesai." << endl;
         cout << "Total Global Symbol terdaftar: " << semanticAnalyzer.st.tab.size() << endl;
-        cout << "===========================================" << endl;
         
         // Cetak output ke file output.txt
-        fileOutput << "===========================================\n";
         fileOutput << "[HASIL SEMANTIC ANALYSIS]\n";
-        fileOutput << "===========================================\n";
         
         printSymbolTables(semanticAnalyzer.st, fileOutput);
         
