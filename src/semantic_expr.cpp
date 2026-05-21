@@ -1,239 +1,406 @@
 #include "semantic.h"
+#include <iostream>
 
-void BinaryOpNode::accept(SemanticVisitor* visitor) { visitor->visit(this); }
-void UnaryOpNode::accept(SemanticVisitor* visitor)   { visitor->visit(this); }
-void LiteralNode::accept(SemanticVisitor* visitor)   { visitor->visit(this); }
-void VarAccessNode::accept(SemanticVisitor* visitor)  { visitor->visit(this); }
-void FuncCallNode::accept(SemanticVisitor* visitor)   { visitor->visit(this); }
+using namespace std;
 
-// Visitor: LiteralNode — tipe langsung diambil dari literalType
+// =========================================================
+// Accept dispatch untuk node ekspresi
+// =========================================================
 
-void SemanticAnalyzer::visit(LiteralNode* node) {
-    node->evalType = node->literalType;
-    node->lexicalLevel = st.currentLevel;
+void BinaryOpNode::accept(SemanticVisitor* v)  { v->visit(this); }
+void UnaryOpNode::accept(SemanticVisitor* v)   { v->visit(this); }
+void LiteralNode::accept(SemanticVisitor* v)   { v->visit(this); }
+void VarAccessNode::accept(SemanticVisitor* v) { v->visit(this); }
+void FuncCallNode::accept(SemanticVisitor* v)  { v->visit(this); }
+
+// =========================================================
+// Print AST untuk node ekspresi
+// =========================================================
+
+void BinaryOpNode::print(ostream& out, int indent, const SymbolTable* st) const {
+    printIndent(out, indent);
+    out << "BinaryOp('" << op << "') → type:" << dtStr(evalType) << "\n";
+    if (left)  left->print(out, indent + 1, st);
+    if (right) right->print(out, indent + 1, st);
 }
 
-// Visitor: VarAccessNode — lookup identifier dan validasi akses array
+void UnaryOpNode::print(ostream& out, int indent, const SymbolTable* st) const {
+    printIndent(out, indent);
+    out << "UnaryOp('" << op << "') → type:" << dtStr(evalType) << "\n";
+    if (operand) operand->print(out, indent + 1, st);
+}
+
+void LiteralNode::print(ostream& out, int indent, const SymbolTable* st) const {
+    printIndent(out, indent);
+    out << "Literal(" << value << ") → type:" << dtStr(evalType) << "\n";
+}
+
+void VarAccessNode::print(ostream& out, int indent, const SymbolTable* st) const {
+    printIndent(out, indent);
+    out << "VarAccess('" << name << "')";
+    if (!fieldName.empty()) out << "." << fieldName;
+    out << " → type:" << dtStr(evalType)
+        << ", tab_index:" << symRef
+        << ", lev:" << lexicalLevel;
+    if (!indices.empty()) out << ", subscripted";
+    out << "\n";
+    for (auto* idx : indices)
+        if (idx) idx->print(out, indent + 1, st);
+}
+
+void FuncCallNode::print(ostream& out, int indent, const SymbolTable* st) const {
+    printIndent(out, indent);
+    out << "FuncCall('" << name << "') → type:" << dtStr(evalType)
+        << ", tab_index:" << symRef << "\n";
+    for (auto* arg : args)
+        if (arg) arg->print(out, indent + 1, st);
+}
+
+// =========================================================
+// SemanticAnalyzer: Helper type compatibility
+// =========================================================
+
+bool SemanticAnalyzer::isAssignmentCompatible(DataType t1, DataType t2) const {
+    // NOTYPE bersifat permisif (sudah ada error sebelumnya)
+    if (t1 == DataType::NOTYPE || t2 == DataType::NOTYPE) return true;
+    // Tipe sama: selalu compatible
+    if (t1 == t2) return true;
+    // Real menerima Integer (widening / assignment-compatible)
+    if (t1 == DataType::REAL && t2 == DataType::INTEGER) return true;
+    return false;
+}
+
+bool SemanticAnalyzer::isOrdinalType(DataType t) const {
+    return t == DataType::INTEGER || t == DataType::CHAR || t == DataType::BOOLEAN;
+}
+
+bool SemanticAnalyzer::isNumericType(DataType t) const {
+    return t == DataType::INTEGER || t == DataType::REAL;
+}
+
+bool SemanticAnalyzer::isComparableType(DataType t) const {
+    return t == DataType::INTEGER || t == DataType::REAL  ||
+           t == DataType::CHAR    || t == DataType::STRING ||
+           t == DataType::BOOLEAN;
+}
+
+DataType SemanticAnalyzer::arithmeticResultType(DataType l, DataType r) const {
+    if (l == DataType::REAL || r == DataType::REAL) return DataType::REAL;
+    return DataType::INTEGER;
+}
+
+// =========================================================
+// SemanticAnalyzer: visit(LiteralNode)
+// Tipe langsung dari literalType
+// =========================================================
+
+void SemanticAnalyzer::visit(LiteralNode* node) {
+    node->evalType    = node->literalType;
+    node->lexicalLevel = st.currentLevel;
+    // symRef tidak relevan untuk literal
+}
+
+// =========================================================
+// SemanticAnalyzer: visit(VarAccessNode)
+// Lookup identifier + validasi akses array/record
+// =========================================================
 
 void SemanticAnalyzer::visit(VarAccessNode* node) {
     TabEntry* entry = st.lookupTab(node->name);
     if (entry == nullptr) {
-        cout << "Error Semantik: Identifier '" << node->name << "' belum dideklarasikan!" << endl;
+        semanticError("Identifier '" + node->name + "' belum dideklarasikan.");
         node->evalType = DataType::NOTYPE;
         return;
     }
 
-    node->symRef = entry->link;
-    node->evalType = entry->type;
-    node->lexicalLevel = st.currentLevel;
+    // Cek apakah identifier adalah variabel atau konstanta (bukan tipe/prosedur)
+    if (entry->obj == ObjClass::TYPE_DEF) {
+        semanticError("'" + node->name + "' adalah nama tipe, bukan variabel.");
+        node->evalType = DataType::NOTYPE;
+        return;
+    }
 
-    // Validasi akses array (jika ada subscript)
+    // Dapatkan indeks di tab untuk symRef
+    // (Cari indeks dengan scan dari belakang — sama dengan lookupTab)
+    for (int i = (int)st.tab.size() - 1; i >= 0; i--) {
+        if (st.tab[i].identifiers == node->name) {
+            node->symRef = i;
+            break;
+        }
+    }
+
+    node->evalType    = entry->type;
+    node->lexicalLevel = entry->lev;
+
+    // Validasi akses array (ada subscript)
     if (!node->indices.empty()) {
         if (entry->type != DataType::ARRAY) {
-            cout << "Error Semantik: '" << node->name << "' bukan sebuah Array!" << endl;
+            semanticError("'" + node->name + "' bukan array, tidak bisa disubscript.");
             node->evalType = DataType::NOTYPE;
-        } else {
-            for (ASTNode* idxNode : node->indices) {
-                idxNode->accept(this);
-                if (idxNode->evalType != DataType::INTEGER)
-                    cout << "Error Semantik: Indeks Array harus bernilai Integer!" << endl;
-            }
-            // Tipe hasil = tipe elemen array
-            ATabEntry* arrayInfo = st.getATab(entry->ref);
-            if (arrayInfo != nullptr)
-                node->evalType = arrayInfo->etyp;
+            return;
         }
+        // Kunjungi setiap ekspresi indeks
+        for (ASTNode* idxNode : node->indices) {
+            idxNode->accept(this);
+            if (idxNode->evalType != DataType::INTEGER &&
+                idxNode->evalType != DataType::NOTYPE) {
+                semanticError("Indeks array pada '" + node->name +
+                              "' harus bertipe Integer.");
+            }
+        }
+        // Tipe hasil = tipe elemen array
+        ATabEntry* arrInfo = st.getATab(entry->ref);
+        if (arrInfo != nullptr)
+            node->evalType = arrInfo->etyp;
+        else
+            node->evalType = DataType::NOTYPE;
     }
 }
 
-// Visitor: FuncCallNode — validasi deklarasi dan tipe callable
+// =========================================================
+// SemanticAnalyzer: visit(FuncCallNode)
+// Validasi deklarasi, jumlah argumen, dan tipe argumen
+// =========================================================
 
 void SemanticAnalyzer::visit(FuncCallNode* node) {
     TabEntry* entry = st.lookupTab(node->name);
     if (entry == nullptr) {
-        cout << "Error Semantik: Prosedur/Fungsi '" << node->name << "' belum dideklarasikan!" << endl;
+        semanticError("Prosedur/Fungsi '" + node->name + "' belum dideklarasikan.");
         node->evalType = DataType::NOTYPE;
+        // Tetap kunjungi argumen untuk deteksi error lanjutan
+        for (ASTNode* arg : node->args) if (arg) arg->accept(this);
         return;
     }
 
     if (entry->obj != ObjClass::FUNCTION && entry->obj != ObjClass::PROCEDURE) {
-        cout << "Error Semantik: '" << node->name << "' bukan Prosedur atau Fungsi!" << endl;
+        semanticError("'" + node->name + "' bukan prosedur atau fungsi.");
+        node->evalType = DataType::NOTYPE;
+        for (ASTNode* arg : node->args) if (arg) arg->accept(this);
+        return;
+    }
+
+    // Dapatkan tab index untuk symRef
+    for (int i = (int)st.tab.size() - 1; i >= 0; i--) {
+        if (st.tab[i].identifiers == node->name) {
+            node->symRef = i;
+            break;
+        }
+    }
+
+    node->evalType    = entry->type;   // NONE untuk procedure, return type untuk function
+    node->lexicalLevel = st.currentLevel;
+
+    // Kunjungi semua argumen terlebih dahulu
+    for (ASTNode* arg : node->args)
+        if (arg) arg->accept(this);
+
+    // Pengecualian built-in variadic (writeln, readln, write, read):
+    // tidak divalidasi jumlah/tipe parameternya
+    if (node->name == "writeln" || node->name == "readln" ||
+        node->name == "write"   || node->name == "read") {
+        return;
+    }
+
+    // Validasi parameter via btab
+    BTabEntry* blockInfo = st.getBTab(entry->ref);
+    if (blockInfo == nullptr) {
+        // Prosedur/fungsi tanpa btab (predefined non-I/O): skip validasi
+        return;
+    }
+
+    // Kumpulkan parameter dari linked list (berjalan mundur dari lpar)
+    vector<TabEntry*> params;
+    int currIdx = blockInfo->lpar;
+    while (currIdx > 0) {
+        TabEntry* pe = st.getTab(currIdx);
+        if (!pe) break;
+        params.push_back(pe);
+        currIdx = pe->link;
+    }
+    reverse(params.begin(), params.end());
+
+    // Validasi jumlah argumen
+    if (node->args.size() != params.size()) {
+        semanticError("Jumlah argumen pada pemanggilan '" + node->name +
+                      "' tidak cocok. Diharapkan " + to_string(params.size()) +
+                      " argumen, diberikan " + to_string(node->args.size()) + ".");
         node->evalType = DataType::NOTYPE;
         return;
     }
 
-    // Tipe evaluasi = tipe kembalian (NOTYPE untuk procedure)
-    node->evalType = entry->type;
+    // Validasi tipe argumen
+    for (size_t i = 0; i < node->args.size(); i++) {
+        DataType argType   = node->args[i]->evalType;
+        DataType paramType = params[i]->type;
 
-    for (ASTNode* arg : node->args)
-        arg->accept(this);
+        if (argType == DataType::NOTYPE) continue; // Error sudah dicatat sebelumnya
 
-    // Pengecualian khusus untuk fungsi/prosedur bawaan (predefined) seperti writeln, readln
-    // Biasanya ini bersifat variadic dan tidak memiliki blok parameter yang terdefinisi ketat di btab
-    if (node->name == "writeln" || node->name == "readln" || node->name == "write" || node->name == "read") {
-        return; 
-    }
+        bool paramByRef = (params[i]->nrm == 0); // 0 = pass-by-reference (VAR param)
 
-    // --- Implementasi Validasi Jumlah dan Tipe Parameter ---
-    
-    // Ambil detail blok prosedur/fungsi dari btab menggunakan referensi dari tab
-    BTabEntry* blockInfo = st.getBTab(entry->ref);
-    
-    if (blockInfo != nullptr) {
-        std::vector<TabEntry*> params;
-        int currParamIdx = blockInfo->lpar; // lpar menunjuk ke parameter *terakhir* di deklarasi
-        
-        // Kumpulkan parameter dari tab. Kita berjalan mundur dari parameter terakhir.
-        while (currParamIdx != 0) {
-            TabEntry* paramEntry = st.getTab(currParamIdx);
-            if (paramEntry == nullptr) break;
-            
-            params.push_back(paramEntry);
-            currParamIdx = paramEntry->link; // Lanjut ke parameter sebelumnya
-        }
-        
-        // Karena parameter dikumpulkan dari belakang ke depan, kita harus balik (reverse)
-        // agar indeks argumen (kiri ke kanan) cocok dengan indeks parameter.
-        std::reverse(params.begin(), params.end());
-
-        // 1. Validasi Jumlah Argumen
-        if (node->args.size() != params.size()) {
-            cout << "Error Semantik: Jumlah argumen pada pemanggilan '" << node->name 
-                 << "' tidak cocok! Diharapkan " << params.size() 
-                 << " argumen, tapi diberikan " << node->args.size() << "." << endl;
-            node->evalType = DataType::NOTYPE;
-            return;
-        }
-
-        // 2. Validasi Tipe Data (Type Compatibility)
-        for (size_t i = 0; i < node->args.size(); ++i) {
-            DataType argType = node->args[i]->evalType;
-            DataType paramType = params[i]->type;
-
-            // Jika node argumen memiliki NOTYPE (berarti ada error sebelumnya pada ekspresi tersebut)
-            if (argType == DataType::NOTYPE) continue;
-
-            bool isCompatible = false;
-            
-            // Aturan type compatibility sederhana sesuai spesifikasi:
-            // a. Tipe sama persis
-            if (argType == paramType) {
-                isCompatible = true;
-            } 
-            // b. Assignment compatibility: Parameter Real menerima argumen Integer
-            else if (paramType == DataType::REAL && argType == DataType::INTEGER) {
-                // Namun, valid hanya jika itu parameter by-value (variabel normal, nrm == 1)
-                // Jika itu parameter by-reference (var parameter, nrm == 0), tipe harus sama persis.
-                if (params[i]->nrm == 1) { 
-                    isCompatible = true;
-                } else {
-                    cout << "Error Semantik: Argumen ke-" << i+1 
-                         << " pada '" << node->name << "' adalah pass-by-reference (VAR), tipe tidak boleh di-cast dan harus sama persis!" << endl;
-                }
+        if (paramByRef) {
+            // VAR parameter: tipe harus sama persis
+            if (argType != paramType) {
+                semanticError("Argumen ke-" + to_string(i+1) +
+                              " pada '" + node->name +
+                              "' adalah VAR parameter, tipe harus sama persis. Diharapkan " +
+                              ASTNode::dtStr(paramType) + ", diberikan " +
+                              ASTNode::dtStr(argType) + ".");
+                node->evalType = DataType::NOTYPE;
             }
-            
-            if (!isCompatible) {
-                cout << "Error Semantik: Tipe data argumen ke-" << i+1 
-                     << " tidak sepadan dengan deklarasi parameter pada '" << node->name << "'!" << endl;
+        } else {
+            // Value parameter: gunakan assignment-compatibility
+            if (!isAssignmentCompatible(paramType, argType)) {
+                semanticError("Tipe argumen ke-" + to_string(i+1) +
+                              " pada '" + node->name + "' tidak kompatibel. Diharapkan " +
+                              ASTNode::dtStr(paramType) + ", diberikan " +
+                              ASTNode::dtStr(argType) + ".");
                 node->evalType = DataType::NOTYPE;
             }
         }
-    } else {
-         cout << "Error Semantik: Definisi blok eksekusi untuk '" << node->name << "' gagal ditemukan di dalam btab!" << endl;
-         node->evalType = DataType::NOTYPE;
     }
 }
 
-// Visitor: BinaryOpNode — type checking operasi biner
+// =========================================================
+// SemanticAnalyzer: visit(BinaryOpNode)
+// Type checking operasi biner sesuai spek Lampiran C
+// =========================================================
 
 void SemanticAnalyzer::visit(BinaryOpNode* node) {
-    node->left->accept(this);
-    node->right->accept(this);
+    // Kunjungi operand kiri dan kanan
+    if (node->left)  node->left->accept(this);
+    if (node->right) node->right->accept(this);
 
-    DataType lType = node->left->evalType;
-    DataType rType = node->right->evalType;
-    string op = node->op;
+    DataType lType = node->left  ? node->left->evalType  : DataType::NOTYPE;
+    DataType rType = node->right ? node->right->evalType : DataType::NOTYPE;
+    const string& op = node->op;
 
-    // Aritmatika: +, -, *
-    if (op == "plus" || op == "minus" || op == "times" || op == "+" || op == "-" || op == "*") {
-        if ((lType == DataType::INTEGER || lType == DataType::REAL) &&
-            (rType == DataType::INTEGER || rType == DataType::REAL)) {
-            // Promosi ke Real jika salah satu operand Real
-            node->evalType = (lType == DataType::REAL || rType == DataType::REAL)
-                           ? DataType::REAL : DataType::INTEGER;
+    // Jika salah satu operand NOTYPE (error sebelumnya), propagasi NOTYPE
+    if (lType == DataType::NOTYPE || rType == DataType::NOTYPE) {
+        node->evalType = DataType::NOTYPE;
+        return;
+    }
+
+    // --- Operator Aritmatika: +, -, * ---
+    // Operand: Integer atau Real → Hasil: Integer atau Real (promosi ke Real jika perlu)
+    if (op == "plus" || op == "minus" || op == "times" ||
+        op == "+"    || op == "-"     || op == "*") {
+        if (isNumericType(lType) && isNumericType(rType)) {
+            node->evalType = arithmeticResultType(lType, rType);
         } else {
-            cout << "Error Semantik: Tipe data tidak cocok untuk operasi aritmatika '" << op << "'!" << endl;
+            semanticError("Operasi aritmatika '" + op +
+                          "' membutuhkan operand Integer atau Real. Diberikan " +
+                          ASTNode::dtStr(lType) + " dan " + ASTNode::dtStr(rType) + ".");
             node->evalType = DataType::NOTYPE;
         }
     }
-    // Pembagian real (/)
+
+    // --- Operator Pembagian Real: / (rdiv) ---
+    // Operand: Integer atau Real → Hasil: Real (selalu)
     else if (op == "rdiv" || op == "/") {
-        if ((lType == DataType::INTEGER || lType == DataType::REAL) &&
-            (rType == DataType::INTEGER || rType == DataType::REAL)) {
+        if (isNumericType(lType) && isNumericType(rType)) {
             node->evalType = DataType::REAL;
         } else {
-            cout << "Error Semantik: Operasi '/' hanya menerima tipe Integer/Real!" << endl;
+            semanticError("Operator '/' membutuhkan operand Integer atau Real.");
             node->evalType = DataType::NOTYPE;
         }
     }
-    // Pembagian bulat dan modulo (div, mod) — khusus Integer
-    else if (op == "idiv" || op == "imod") {
+
+    // --- Operator Pembagian Bulat: div, mod ---
+    // Operand: Integer saja → Hasil: Integer
+    else if (op == "idiv" || op == "imod" || op == "div" || op == "mod") {
         if (lType == DataType::INTEGER && rType == DataType::INTEGER) {
             node->evalType = DataType::INTEGER;
         } else {
-            cout << "Error Semantik: Operasi '" << op << "' wajib menggunakan dua tipe Integer!" << endl;
+            semanticError("Operator '" + op +
+                          "' membutuhkan dua operand Integer. Diberikan " +
+                          ASTNode::dtStr(lType) + " dan " + ASTNode::dtStr(rType) + ".");
             node->evalType = DataType::NOTYPE;
         }
     }
-    // Relasional (=, <>, <, >, <=, >=) — hasil Boolean
+
+    // --- Operator Relasional: =, <>, <, >, <=, >= ---
+    // Operand: Integer, Real, Char, atau String (kompatibel) → Hasil: Boolean
     else if (op == "eql" || op == "neq" || op == "lss" || op == "gtr" ||
-             op == "leq" || op == "geq" || op == "=" || op == "<" || op == ">") {
-        if (lType == rType && (lType == DataType::INTEGER || lType == DataType::REAL ||
-            lType == DataType::CHAR || lType == DataType::STRING)) {
-             node->evalType = DataType::BOOLEAN;
-        } else if ((lType == DataType::INTEGER || lType == DataType::REAL) &&
-                   (rType == DataType::INTEGER || rType == DataType::REAL)) {
-             node->evalType = DataType::BOOLEAN;
+             op == "leq" || op == "geq"  ||
+             op == "="   || op == "<>"   || op == "<"   ||
+             op == ">"   || op == "<="   || op == ">=") {
+        bool leftOk  = isComparableType(lType);
+        bool rightOk = isComparableType(rType);
+        bool typesCompatible = (lType == rType) ||
+                               (isNumericType(lType) && isNumericType(rType));
+        if (leftOk && rightOk && typesCompatible) {
+            node->evalType = DataType::BOOLEAN;
         } else {
-             cout << "Error Semantik: Tipe tidak sepadan untuk operator relasional '" << op << "'!" << endl;
-             node->evalType = DataType::NOTYPE;
+            semanticError("Operator relasional '" + op +
+                          "' membutuhkan operand yang kompatibel (Integer/Real/Char/String). "
+                          "Diberikan " + ASTNode::dtStr(lType) + " dan " +
+                          ASTNode::dtStr(rType) + ".");
+            node->evalType = DataType::NOTYPE;
         }
     }
-    // Logika (and, or) — khusus Boolean
+
+    // --- Operator Logika: and, or ---
+    // Operand: Boolean saja → Hasil: Boolean
     else if (op == "andsy" || op == "orsy" || op == "and" || op == "or") {
         if (lType == DataType::BOOLEAN && rType == DataType::BOOLEAN) {
             node->evalType = DataType::BOOLEAN;
         } else {
-            cout << "Error Semantik: Operasi logika '" << op << "' wajib menggunakan tipe Boolean!" << endl;
+            semanticError("Operator logika '" + op +
+                          "' membutuhkan operand Boolean. Diberikan " +
+                          ASTNode::dtStr(lType) + " dan " + ASTNode::dtStr(rType) + ".");
+            node->evalType = DataType::NOTYPE;
+        }
+    }
+
+    else {
+        semanticError("Operator tidak dikenal: '" + op + "'.");
+        node->evalType = DataType::NOTYPE;
+    }
+
+    node->lexicalLevel = st.currentLevel;
+}
+
+// =========================================================
+// SemanticAnalyzer: visit(UnaryOpNode)
+// Type checking operasi unary sesuai spek Lampiran C
+// =========================================================
+
+void SemanticAnalyzer::visit(UnaryOpNode* node) {
+    if (node->operand) node->operand->accept(this);
+    DataType opType = node->operand ? node->operand->evalType : DataType::NOTYPE;
+
+    if (opType == DataType::NOTYPE) {
+        node->evalType = DataType::NOTYPE;
+        return;
+    }
+
+    const string& op = node->op;
+
+    // not: operand harus Boolean → hasil Boolean
+    if (op == "notsy" || op == "not") {
+        if (opType == DataType::BOOLEAN) {
+            node->evalType = DataType::BOOLEAN;
+        } else {
+            semanticError("Operator 'not' membutuhkan operand Boolean, diberikan " +
+                          ASTNode::dtStr(opType) + ".");
+            node->evalType = DataType::NOTYPE;
+        }
+    }
+    // Unary + atau -: operand harus Integer atau Real → hasil sama dengan operand
+    else if (op == "plus" || op == "minus" || op == "+" || op == "-") {
+        if (isNumericType(opType)) {
+            node->evalType = opType;
+        } else {
+            semanticError("Unary '" + op +
+                          "' membutuhkan operand Integer atau Real, diberikan " +
+                          ASTNode::dtStr(opType) + ".");
             node->evalType = DataType::NOTYPE;
         }
     }
     else {
+        semanticError("Operator unary tidak dikenal: '" + op + "'.");
         node->evalType = DataType::NOTYPE;
     }
-}
 
-// Visitor: UnaryOpNode — type checking operasi unary
-
-void SemanticAnalyzer::visit(UnaryOpNode* node) {
-    node->operand->accept(this);
-    DataType opType = node->operand->evalType;
-    string op = node->op;
-
-    if (op == "notsy" || op == "not") {
-        if (opType == DataType::BOOLEAN)
-            node->evalType = DataType::BOOLEAN;
-        else {
-            cout << "Error Semantik: Operator 'not' membutuhkan operand Boolean!" << endl;
-            node->evalType = DataType::NOTYPE;
-        }
-    } 
-    else if (op == "plus" || op == "minus" || op == "+" || op == "-") {
-        if (opType == DataType::INTEGER || opType == DataType::REAL)
-            node->evalType = opType;
-        else {
-            cout << "Error Semantik: Unary sign membutuhkan operand Integer atau Real!" << endl;
-            node->evalType = DataType::NOTYPE;
-        }
-    }
+    node->lexicalLevel = st.currentLevel;
 }

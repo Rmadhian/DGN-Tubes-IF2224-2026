@@ -1,191 +1,264 @@
 #include "semantic.h"
 #include <iostream>
-#include <cstdlib>
 
 using namespace std;
 
-// Dispatch accept() untuk node statement
+// =========================================================
+// Accept dispatch untuk node statement
+// =========================================================
 
-void CompoundStmtNode::accept(SemanticVisitor* visitor) { visitor->visit(this); }
-void AssignStmtNode::accept(SemanticVisitor* visitor)   { visitor->visit(this); }
-void IfStmtNode::accept(SemanticVisitor* visitor)       { visitor->visit(this); }
-void WhileStmtNode::accept(SemanticVisitor* visitor)    { visitor->visit(this); }
-void ForStmtNode::accept(SemanticVisitor* visitor)      { visitor->visit(this); }
+void CompoundStmtNode::accept(SemanticVisitor* v) { v->visit(this); }
+void AssignStmtNode::accept(SemanticVisitor* v)   { v->visit(this); }
+void IfStmtNode::accept(SemanticVisitor* v)       { v->visit(this); }
+void WhileStmtNode::accept(SemanticVisitor* v)    { v->visit(this); }
+void ForStmtNode::accept(SemanticVisitor* v)      { v->visit(this); }
 
-// Operasi btab (Block Table)
+// =========================================================
+// Print AST untuk node statement
+// =========================================================
 
-int SymbolTable::insertBTab() {
-    BTabEntry entry;
-    entry.blocks = btab.size();
-    entry.last = 0;
-    entry.lpar = 0;
-    entry.psze = 0;
-    entry.vsze = 0;
-    btab.push_back(entry);
-    return (int)btab.size() - 1;
+void CompoundStmtNode::print(ostream& out, int indent, const SymbolTable* st) const {
+    printIndent(out, indent);
+    out << "CompoundStatement → block_index:" << symRef
+        << ", lev:" << lexicalLevel << "\n";
+    for (auto* s : statements)
+        if (s) s->print(out, indent + 1, st);
 }
 
-void SymbolTable::updateBTab(int bIndex, int last, int lpar, int psze, int vsze) {
-    if (bIndex < 0 || bIndex >= (int)btab.size()) return;
-    btab[bIndex].last = last;
-    btab[bIndex].lpar = lpar;
-    btab[bIndex].psze = psze;
-    btab[bIndex].vsze = vsze;
-}
-
-BTabEntry* SymbolTable::getBTab(int index) {
-    if (index < 0 || index >= (int)btab.size()) return nullptr;
-    return &btab[index];
-}
-
-// Helper konversi DataType ke string (untuk pesan error)
-
-static const char* dataTypeName(DataType t) {
-    switch (t) {
-        case DataType::INTEGER: return "Integer";
-        case DataType::REAL:    return "Real";
-        case DataType::CHAR:    return "Char";
-        case DataType::BOOLEAN: return "Boolean";
-        case DataType::STRING:  return "String";
-        case DataType::ARRAY:   return "Array";
-        case DataType::RECORD:  return "Record";
-        case DataType::NONE:    return "None";
-        case DataType::NOTYPE:  return "Unknown";
-        default:                return "?";
+void AssignStmtNode::print(ostream& out, int indent, const SymbolTable* st) const {
+    printIndent(out, indent);
+    out << "Assign → type:" << dtStr(evalType) << "\n";
+    if (left) {
+        printIndent(out, indent + 1);
+        out << "target:\n";
+        left->print(out, indent + 2, st);
+    }
+    if (right) {
+        printIndent(out, indent + 1);
+        out << "value:\n";
+        right->print(out, indent + 2, st);
     }
 }
 
-// Tipe ordinal: valid sebagai iterator for-loop
-static bool isOrdinalType(DataType t) {
-    return t == DataType::INTEGER || t == DataType::CHAR || t == DataType::BOOLEAN;
+void IfStmtNode::print(ostream& out, int indent, const SymbolTable* st) const {
+    printIndent(out, indent);
+    out << "IfStatement\n";
+    if (condition) {
+        printIndent(out, indent + 1);
+        out << "condition:\n";
+        condition->print(out, indent + 2, st);
+    }
+    if (thenStmt) {
+        printIndent(out, indent + 1);
+        out << "then:\n";
+        thenStmt->print(out, indent + 2, st);
+    }
+    if (elseStmt) {
+        printIndent(out, indent + 1);
+        out << "else:\n";
+        elseStmt->print(out, indent + 2, st);
+    }
 }
 
-// Kompatibilitas assignment: Real menerima Integer (widening), NOTYPE permisif
-static bool isAssignmentCompatible(DataType target, DataType value) {
-    if (target == DataType::NOTYPE || value == DataType::NOTYPE) return true;
-    if (target == value) return true;
-    if (target == DataType::REAL && value == DataType::INTEGER) return true;
-    return false;
+void WhileStmtNode::print(ostream& out, int indent, const SymbolTable* st) const {
+    printIndent(out, indent);
+    out << "WhileStatement\n";
+    if (condition) {
+        printIndent(out, indent + 1);
+        out << "condition:\n";
+        condition->print(out, indent + 2, st);
+    }
+    if (body) {
+        printIndent(out, indent + 1);
+        out << "body:\n";
+        body->print(out, indent + 2, st);
+    }
 }
 
-// Visitor: CompoundStmtNode
+void ForStmtNode::print(ostream& out, int indent, const SymbolTable* st) const {
+    printIndent(out, indent);
+    out << "ForStatement('" << iterVar << "' "
+        << (isDownto ? "downto" : "to") << ")\n";
+    if (startExpr) {
+        printIndent(out, indent + 1);
+        out << "from:\n";
+        startExpr->print(out, indent + 2, st);
+    }
+    if (endExpr) {
+        printIndent(out, indent + 1);
+        out << "to:\n";
+        endExpr->print(out, indent + 2, st);
+    }
+    if (body) {
+        printIndent(out, indent + 1);
+        out << "body:\n";
+        body->print(out, indent + 2, st);
+    }
+}
+
+// =========================================================
+// SemanticAnalyzer: visit(CompoundStmtNode)
+// Blok pernyataan — tidak membuat scope baru sendiri
+// (scope sudah dikelola oleh ProgramNode/SubprogDeclNode)
+// =========================================================
 
 void SemanticAnalyzer::visit(CompoundStmtNode* node) {
-    st.pushScope();
+    // Buat btab entry untuk compound statement ini (untuk tracking vsze)
     int blockIdx    = st.insertBTab();
     int startTabIdx = (int)st.tab.size() - 1;
 
     node->symRef      = blockIdx;
     node->lexicalLevel = st.currentLevel;
 
+    // Kunjungi setiap statement
     for (ASTNode* stmt : node->statements)
         if (stmt) stmt->accept(this);
 
-    // Hitung variabel lokal yang dideklarasikan dalam blok ini
+    // Hitung jumlah variabel lokal yang dideklarasikan dalam compound statement ini
+    // (tidak berlaku karena deklarasi ada di declaration-part, bukan di dalam begin..end)
     int endTabIdx = (int)st.tab.size() - 1;
     int vsze = 0;
     for (int i = startTabIdx + 1; i <= endTabIdx; i++) {
-        if (st.tab[i].obj == ObjClass::VARIABLE &&
-            st.tab[i].lev == st.currentLevel &&
-            st.tab[i].nrm == 1)
+        if (st.tab[i].obj == ObjClass::VARIABLE && st.tab[i].lev == st.currentLevel)
             vsze++;
     }
     st.updateBTab(blockIdx, endTabIdx, 0, 0, vsze);
 
     node->evalType = DataType::NONE;
-    st.popScope();
 }
 
-// Visitor: AssignStmtNode
+// =========================================================
+// SemanticAnalyzer: visit(AssignStmtNode)
+// Validasi assignment compatibility sesuai spek Type Compatibility
+// =========================================================
 
 void SemanticAnalyzer::visit(AssignStmtNode* node) {
+    // Kunjungi sisi kiri (target) dan kanan (value)
     if (node->left)  node->left->accept(this);
     if (node->right) node->right->accept(this);
 
     DataType targetType = node->left  ? node->left->evalType  : DataType::NOTYPE;
     DataType valueType  = node->right ? node->right->evalType : DataType::NOTYPE;
 
-    if (!isAssignmentCompatible(targetType, valueType))
-        cerr << "Semantic Error: Type mismatch in assignment. Cannot assign "
-             << dataTypeName(valueType) << " value to "
-             << dataTypeName(targetType) << " target." << endl;
+    // Validasi: target harus variabel (bukan konstanta atau tipe)
+    if (node->left) {
+        VarAccessNode* var = dynamic_cast<VarAccessNode*>(node->left);
+        if (var) {
+            TabEntry* e = st.lookupTab(var->name);
+            if (e && e->obj == ObjClass::CONSTANT) {
+                semanticError("Tidak bisa assign ke konstanta '" + var->name + "'.");
+            }
+        }
+    }
 
-    node->evalType     = DataType::NONE;
+    // Validasi type compatibility (assignment-compatible)
+    if (!isAssignmentCompatible(targetType, valueType)) {
+        semanticError("Type mismatch dalam assignment: tidak bisa assign " +
+                      ASTNode::dtStr(valueType) + " ke " +
+                      ASTNode::dtStr(targetType) + ".");
+    }
+
+    node->evalType    = DataType::NONE;
     node->lexicalLevel = st.currentLevel;
 }
 
-// Visitor: IfStmtNode
+// =========================================================
+// SemanticAnalyzer: visit(IfStmtNode)
+// Kondisi harus bertipe Boolean
+// =========================================================
 
 void SemanticAnalyzer::visit(IfStmtNode* node) {
     if (node->condition) {
         node->condition->accept(this);
         if (node->condition->evalType != DataType::BOOLEAN &&
-            node->condition->evalType != DataType::NOTYPE)
-            cerr << "Semantic Error: 'if' condition must be Boolean (got "
-                 << dataTypeName(node->condition->evalType) << ")." << endl;
+            node->condition->evalType != DataType::NOTYPE) {
+            semanticError("Kondisi 'if' harus bertipe Boolean, diberikan " +
+                          ASTNode::dtStr(node->condition->evalType) + ".");
+        }
+    } else {
+        semanticError("Statement 'if' tidak memiliki kondisi.");
     }
 
     if (node->thenStmt) node->thenStmt->accept(this);
     if (node->elseStmt) node->elseStmt->accept(this);
 
-    node->evalType     = DataType::NONE;
+    node->evalType    = DataType::NONE;
     node->lexicalLevel = st.currentLevel;
 }
 
-// Visitor: WhileStmtNode
+// =========================================================
+// SemanticAnalyzer: visit(WhileStmtNode)
+// Kondisi harus bertipe Boolean (sesuai spek revisi: while expr do compound)
+// =========================================================
 
 void SemanticAnalyzer::visit(WhileStmtNode* node) {
     if (node->condition) {
         node->condition->accept(this);
         if (node->condition->evalType != DataType::BOOLEAN &&
-            node->condition->evalType != DataType::NOTYPE)
-            cerr << "Semantic Error: 'while' condition must be Boolean (got "
-                 << dataTypeName(node->condition->evalType) << ")." << endl;
+            node->condition->evalType != DataType::NOTYPE) {
+            semanticError("Kondisi 'while' harus bertipe Boolean, diberikan " +
+                          ASTNode::dtStr(node->condition->evalType) + ".");
+        }
+    } else {
+        semanticError("Statement 'while' tidak memiliki kondisi.");
     }
 
     if (node->body) node->body->accept(this);
 
-    node->evalType     = DataType::NONE;
+    node->evalType    = DataType::NONE;
     node->lexicalLevel = st.currentLevel;
 }
 
-// Visitor: ForStmtNode
+// =========================================================
+// SemanticAnalyzer: visit(ForStmtNode)
+// Iterator harus ordinal; ekspresi start/end harus kompatibel dengan iterator
+// (sesuai spek revisi: for ident := expr to/downto expr do compound)
+// =========================================================
 
 void SemanticAnalyzer::visit(ForStmtNode* node) {
-    TabEntry* iter   = st.lookupTab(node->iterVar);
+    // Lookup variabel iterator
+    TabEntry* iter = st.lookupTab(node->iterVar);
     DataType iterType = DataType::NOTYPE;
 
     if (!iter) {
-        cerr << "Semantic Error: For loop iterator '" << node->iterVar
-             << "' is not declared." << endl;
+        semanticError("Variabel iterator '" + node->iterVar +
+                      "' pada 'for' belum dideklarasikan.");
     } else {
         iterType = iter->type;
-        if (!isOrdinalType(iterType))
-            cerr << "Semantic Error: For loop iterator '" << node->iterVar
-                 << "' must be of ordinal type (Integer/Char/Boolean), got "
-                 << dataTypeName(iterType) << "." << endl;
+        // Iterator harus bertipe ordinal (Integer, Char, atau Boolean)
+        if (!isOrdinalType(iterType)) {
+            semanticError("Variabel iterator '" + node->iterVar +
+                          "' harus bertipe ordinal (Integer/Char/Boolean), diberikan " +
+                          ASTNode::dtStr(iterType) + ".");
+        }
     }
 
+    // Kunjungi ekspresi start dan end
     if (node->startExpr) node->startExpr->accept(this);
     if (node->endExpr)   node->endExpr->accept(this);
 
-    // Validasi kompatibilitas tipe start/end dengan iterator
-    if (iter) {
-        if (node->startExpr && !isAssignmentCompatible(iterType, node->startExpr->evalType))
-            cerr << "Semantic Error: 'for' start expression type ("
-                 << dataTypeName(node->startExpr->evalType)
-                 << ") incompatible with iterator type ("
-                 << dataTypeName(iterType) << ")." << endl;
+    // Validasi kompatibilitas tipe start expression dengan iterator
+    if (iter && node->startExpr) {
+        if (!isAssignmentCompatible(iterType, node->startExpr->evalType)) {
+            semanticError("Ekspresi awal 'for' bertipe " +
+                          ASTNode::dtStr(node->startExpr->evalType) +
+                          " tidak kompatibel dengan iterator bertipe " +
+                          ASTNode::dtStr(iterType) + ".");
+        }
+    }
 
-        if (node->endExpr && !isAssignmentCompatible(iterType, node->endExpr->evalType))
-            cerr << "Semantic Error: 'for' end expression type ("
-                 << dataTypeName(node->endExpr->evalType)
-                 << ") incompatible with iterator type ("
-                 << dataTypeName(iterType) << ")." << endl;
+    // Validasi kompatibilitas tipe end expression dengan iterator
+    if (iter && node->endExpr) {
+        if (!isAssignmentCompatible(iterType, node->endExpr->evalType)) {
+            semanticError("Ekspresi akhir 'for' bertipe " +
+                          ASTNode::dtStr(node->endExpr->evalType) +
+                          " tidak kompatibel dengan iterator bertipe " +
+                          ASTNode::dtStr(iterType) + ".");
+        }
     }
 
     if (node->body) node->body->accept(this);
 
-    node->evalType     = DataType::NONE;
+    node->evalType    = DataType::NONE;
     node->lexicalLevel = st.currentLevel;
 }
