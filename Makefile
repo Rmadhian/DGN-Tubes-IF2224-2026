@@ -1,6 +1,6 @@
 CXX = g++
 TARGET = arion_lexer
-SRCS = src/main.cpp src/dfa_dinamis.cpp src/dfa_statis.cpp src/lexer.cpp src/parser_expr.cpp src/parser_stmt.cpp src/parser_decl.cpp
+SRCS = src/main.cpp src/dfa_dinamis.cpp src/dfa_statis.cpp src/lexer.cpp src/parser_expr.cpp src/parser_stmt.cpp src/parser_decl.cpp src/ast_builder.cpp src/semantic_decl.cpp src/semantic_expr.cpp src/semantic_stmt.cpp
 
 $(TARGET): $(SRCS)
 	$(CXX) $(SRCS) -o $(TARGET)

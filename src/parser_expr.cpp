@@ -121,6 +121,8 @@ ParseTreeNode* Parser::parseIfStatement() {
 
 // Grammar: <while-statement> -> whilesy + expression + dosy + compound-statement + semicolon
 ParseTreeNode* Parser::parseWhileStatement() {
+  ParseTreeNode* node = new ParseTreeNode("<while-statement>");
+  
   node->children.push_back(match(TokenType::WHILESY));
   if (hasError) return node;
 
