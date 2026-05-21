@@ -5,10 +5,8 @@ ProgramNode* ASTBuilder::build(ParseTreeNode* root) {
     
     ProgramNode* progNode = new ProgramNode();
     
-    // Iterasi child dari node <program> secara dinamis
     for (auto child : root->children) {
         if (child->label == "<program-header>") {
-            // Anak ke-1 dari header adalah IDENT program
             if (child->children.size() > 1) {
                 progNode->name = child->children[1]->value;
             }
@@ -25,27 +23,23 @@ ProgramNode* ASTBuilder::build(ParseTreeNode* root) {
 
 void ASTBuilder::buildDeclarations(ParseTreeNode* declPart, vector<ASTNode*>& declList) {
     for (auto child : declPart->children) {
-        if (child->label == "<var-declaration>") {
+        if (child->label == "<var-declaration>")
             buildVarDeclaration(child, declList);
-        } 
-        else if (child->label == "<const-declaration>") {
+        else if (child->label == "<const-declaration>")
             buildConstDeclaration(child, declList);
-        }
-        else if (child->label == "<subprogram-declaration>") {
+        else if (child->label == "<subprogram-declaration>")
             buildSubprogramDeclaration(child, declList);
-        }
-        // Catatan: Anda bisa menambahkan untuk type-declaration jika dibutuhkan
     }
 }
 
 void ASTBuilder::buildVarDeclaration(ParseTreeNode* varDecl, vector<ASTNode*>& declList) {
-    // Struktur: varsy + (<identifier-list> + colon + <type> + semicolon)*
+    // Parse tree: varsy + (<identifier-list> colon <type> semicolon)*
     for (size_t i = 1; i < varDecl->children.size(); i++) {
         if (varDecl->children[i]->label == "<identifier-list>") {
             VarDeclNode* vNode = new VarDeclNode();
             vNode->idents = extractIdentifierList(varDecl->children[i]);
             
-            // Ambil tipe (lompat colon)
+            // Tipe ada 2 posisi setelah identifier-list (lewat colon)
             if (i + 2 < varDecl->children.size() && varDecl->children[i+2]->label == "<type>") {
                 ParseTreeNode* typeNode = varDecl->children[i+2];
                 if (!typeNode->children.empty()) {
@@ -58,7 +52,7 @@ void ASTBuilder::buildVarDeclaration(ParseTreeNode* varDecl, vector<ASTNode*>& d
 }
 
 void ASTBuilder::buildConstDeclaration(ParseTreeNode* constDecl, vector<ASTNode*>& declList) {
-    // Struktur: constsy + (ident + eql + constant + semicolon)*
+    // Parse tree: constsy + (ident eql <constant> semicolon)*
     for (size_t i = 1; i < constDecl->children.size(); i++) {
         if (constDecl->children[i]->label == "ident") {
             ConstDeclNode* cNode = new ConstDeclNode();
@@ -68,7 +62,6 @@ void ASTBuilder::buildConstDeclaration(ParseTreeNode* constDecl, vector<ASTNode*
                 ParseTreeNode* valNode = constDecl->children[i+2];
                 if (!valNode->children.empty()) {
                     cNode->value = valNode->children[0]->value;
-                    // Asumsikan tipe dari nama label child (contoh: intcon, string)
                     cNode->type = stringToDataType(valNode->children[0]->label);
                 }
             }
@@ -91,17 +84,14 @@ void ASTBuilder::buildSubprogramDeclaration(ParseTreeNode* subprogDecl, vector<A
 
     for (auto child : subNode->children) {
         if (child->label == "ident" && funcNode->name.empty()) {
-            funcNode->name = child->value; // Ambil nama subprogram
+            funcNode->name = child->value;
         }
         else if (child->label == "<block>") {
-            // <block> -> <declaration-part> + <compound-statement>
             for (auto blockChild : child->children) {
-                if (blockChild->label == "<declaration-part>") {
-                    buildDeclarations(blockChild, funcNode->params); // Local decl gabung ke params/local scope
-                }
-                else if (blockChild->label == "<compound-statement>") {
+                if (blockChild->label == "<declaration-part>")
+                    buildDeclarations(blockChild, funcNode->params);
+                else if (blockChild->label == "<compound-statement>")
                     funcNode->block = buildCompoundStatement(blockChild);
-                }
             }
         }
     }
@@ -149,9 +139,8 @@ AssignStmtNode* ASTBuilder::buildAssignment(ParseTreeNode* assignStmt) {
 IfStmtNode* ASTBuilder::buildIf(ParseTreeNode* ifStmt) {
     IfStmtNode* node = new IfStmtNode();
     for (size_t i = 0; i < ifStmt->children.size(); i++) {
-        if (ifStmt->children[i]->label == "<expression>") {
+        if (ifStmt->children[i]->label == "<expression>")
             node->condition = buildExpression(ifStmt->children[i]);
-        }
         else if (ifStmt->children[i]->label == "thensy") {
             if (i + 1 < ifStmt->children.size()) 
                 node->thenStmt = buildStatement(ifStmt->children[i+1]);
@@ -167,12 +156,10 @@ IfStmtNode* ASTBuilder::buildIf(ParseTreeNode* ifStmt) {
 WhileStmtNode* ASTBuilder::buildWhile(ParseTreeNode* whileStmt) {
     WhileStmtNode* node = new WhileStmtNode();
     for (size_t i = 0; i < whileStmt->children.size(); i++) {
-        if (whileStmt->children[i]->label == "<expression>") {
+        if (whileStmt->children[i]->label == "<expression>")
             node->condition = buildExpression(whileStmt->children[i]);
-        }
-        else if (whileStmt->children[i]->label == "<compound-statement>") {
+        else if (whileStmt->children[i]->label == "<compound-statement>")
             node->body = buildCompoundStatement(whileStmt->children[i]);
-        }
     }
     return node;
 }
@@ -189,9 +176,8 @@ ForStmtNode* ASTBuilder::buildFor(ParseTreeNode* forStmt) {
             else node->endExpr = buildExpression(child);
             exprCount++;
         }
-        else if (child->label == "<compound-statement>") {
+        else if (child->label == "<compound-statement>")
             node->body = buildCompoundStatement(child);
-        }
     }
     return node;
 }
@@ -199,13 +185,12 @@ ForStmtNode* ASTBuilder::buildFor(ParseTreeNode* forStmt) {
 FuncCallNode* ASTBuilder::buildProcedureFunctionCall(ParseTreeNode* callStmt) {
     FuncCallNode* node = new FuncCallNode();
     for (auto child : callStmt->children) {
-        if (child->label == "ident") {
+        if (child->label == "ident")
             node->name = child->value;
-        } else if (child->label == "<parameter-list>") {
+        else if (child->label == "<parameter-list>") {
             for (auto param : child->children) {
-                if (param->label == "<expression>") {
+                if (param->label == "<expression>")
                     node->args.push_back(buildExpression(param));
-                }
             }
         }
     }
@@ -213,12 +198,14 @@ FuncCallNode* ASTBuilder::buildProcedureFunctionCall(ParseTreeNode* callStmt) {
 }
 
 ASTNode* ASTBuilder::buildExpression(ParseTreeNode* expr) {
-    if (expr->children.size() == 1) {
+    if (expr->children.size() == 1)
         return buildSimpleExpression(expr->children[0]);
-    } else if (expr->children.size() == 3) {
+
+    if (expr->children.size() == 3) {
+        // simple-expr <relop> simple-expr
         BinaryOpNode* bNode = new BinaryOpNode();
         bNode->left = buildSimpleExpression(expr->children[0]);
-        ParseTreeNode* op = expr->children[1]; // <relational-operator>
+        ParseTreeNode* op = expr->children[1];
         if (!op->children.empty()) bNode->op = op->children[0]->label; 
         bNode->right = buildSimpleExpression(expr->children[2]);
         return bNode;
@@ -233,9 +220,10 @@ ASTNode* ASTBuilder::buildSimpleExpression(ParseTreeNode* simpleExpr) {
     string pendingOp = "";
     bool isFirstUnary = false;
     
-    // Menangani operator unary awal (contoh: -5)
+    // Tangani sign unary di awal (misal: -5, +x)
     size_t startIndex = 0;
-    if (simpleExpr->children[0]->label == "plus" || simpleExpr->children[0]->label == "minus") {
+    if (simpleExpr->children[0]->label == "plus" ||
+        simpleExpr->children[0]->label == "minus") {
         pendingOp = simpleExpr->children[0]->label;
         isFirstUnary = true;
         startIndex = 1;
@@ -245,7 +233,6 @@ ASTNode* ASTBuilder::buildSimpleExpression(ParseTreeNode* simpleExpr) {
         ParseTreeNode* child = simpleExpr->children[i];
         if (child->label == "<term>") {
             ASTNode* termNode = buildTerm(child);
-            
             if (isFirstUnary) {
                 UnaryOpNode* uNode = new UnaryOpNode();
                 uNode->op = pendingOp;
@@ -262,7 +249,8 @@ ASTNode* ASTBuilder::buildSimpleExpression(ParseTreeNode* simpleExpr) {
                 currentLeft = bNode;
             }
         } else if (child->label == "<additive-operator>") {
-            if (!child->children.empty()) pendingOp = child->children[0]->label;
+            if (!child->children.empty())
+                pendingOp = child->children[0]->label;
         }
     }
     return currentLeft;
@@ -286,7 +274,8 @@ ASTNode* ASTBuilder::buildTerm(ParseTreeNode* term) {
                 currentLeft = bNode;
             }
         } else if (child->label == "<multiplicative-operator>") {
-            if (!child->children.empty()) pendingOp = child->children[0]->label;
+            if (!child->children.empty())
+                pendingOp = child->children[0]->label;
         }
     }
     return currentLeft;
@@ -294,72 +283,63 @@ ASTNode* ASTBuilder::buildTerm(ParseTreeNode* term) {
 
 ASTNode* ASTBuilder::buildFactor(ParseTreeNode* factor) {
     if (factor->children.empty()) return nullptr;
-    ParseTreeNode* realFactor = factor->children[0];
+    ParseTreeNode* first = factor->children[0];
 
-    if (realFactor->label == "intcon" || realFactor->label == "realcon" || 
-        realFactor->label == "string" || realFactor->label == "charcon") {
+    if (first->label == "intcon" || first->label == "realcon" || 
+        first->label == "string" || first->label == "charcon") {
         LiteralNode* lit = new LiteralNode();
-        lit->value = realFactor->value;
-        lit->literalType = stringToDataType(realFactor->label);
+        lit->value = first->value;
+        lit->literalType = stringToDataType(first->label);
         return lit;
     } 
-    else if (realFactor->label == "<variable>") {
-        return buildVariable(realFactor);
-    }
-    else if (realFactor->label == "<procedure/function-call>") {
-        return buildProcedureFunctionCall(realFactor);
-    }
-    else if (realFactor->label == "ident") {
+    else if (first->label == "<variable>")
+        return buildVariable(first);
+    else if (first->label == "<procedure/function-call>")
+        return buildProcedureFunctionCall(first);
+    else if (first->label == "ident") {
         VarAccessNode* vNode = new VarAccessNode();
-        vNode->name = realFactor->value;
+        vNode->name = first->value;
         return vNode;
     }
-    else if (realFactor->label == "notsy") {
+    else if (first->label == "notsy") {
         UnaryOpNode* uNode = new UnaryOpNode();
         uNode->op = "not";
-        if (factor->children.size() > 1) {
+        if (factor->children.size() > 1)
             uNode->operand = buildFactor(factor->children[1]);
-        }
         return uNode;
     }
-    else if (realFactor->label == "lparent" && factor->children.size() > 1) {
-        // Ekstrak ekspresi di dalam kurung
+    else if (first->label == "lparent" && factor->children.size() > 1)
         return buildExpression(factor->children[1]);
-    }
+
     return nullptr;
 }
 
 VarAccessNode* ASTBuilder::buildVariable(ParseTreeNode* varNode) {
     VarAccessNode* vNode = new VarAccessNode();
     for (auto child : varNode->children) {
-        if (child->label == "ident") {
+        if (child->label == "ident")
             vNode->name = child->value;
-        }
         else if (child->label == "<component-variable>") {
-            // Bisa diekspan untuk array/record. Saat ini ditambahkan sebagai penanda/stub.
-            // Membutuhkan penelusuran lebih dalam ke ParseTreeNode index-list jika berupa Array.
+            // TODO: implementasi akses array subscript dan record field
         }
     }
     return vNode;
 }
 
-// Helper pengolahan Identifier list
 vector<string> ASTBuilder::extractIdentifierList(ParseTreeNode* idList) {
     vector<string> ids;
     for (auto child : idList->children) {
-        if (child->label == "ident") {
+        if (child->label == "ident")
             ids.push_back(child->value);
-        }
     }
     return ids;
 }
 
-// Helper pemetaan DataType Semantic
 DataType ASTBuilder::stringToDataType(string typeStr) {
     if (typeStr == "integer" || typeStr == "intcon") return DataType::INTEGER;
-    if (typeStr == "real" || typeStr == "realcon") return DataType::REAL;
-    if (typeStr == "char" || typeStr == "charcon") return DataType::CHAR;
+    if (typeStr == "real"    || typeStr == "realcon") return DataType::REAL;
+    if (typeStr == "char"    || typeStr == "charcon") return DataType::CHAR;
     if (typeStr == "boolean") return DataType::BOOLEAN;
-    if (typeStr == "string") return DataType::STRING;
+    if (typeStr == "string")  return DataType::STRING;
     return DataType::NOTYPE;
 }

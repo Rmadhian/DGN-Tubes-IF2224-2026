@@ -10,17 +10,17 @@ using namespace std;
 
 class ASTBuilder {
 public:
-    // Fungsi utama untuk mengubah ParseTreeNode root (<program>) menjadi ProgramNode AST
+    // Entry point: konversi parse tree <program> menjadi AST
     ProgramNode* build(ParseTreeNode* parseTreeRoot);
 
 private:
-    // --- Pembentuk Deklarasi ---
+    // Deklarasi
     void buildDeclarations(ParseTreeNode* declPart, vector<ASTNode*>& declList);
     void buildVarDeclaration(ParseTreeNode* varDecl, vector<ASTNode*>& declList);
     void buildConstDeclaration(ParseTreeNode* constDecl, vector<ASTNode*>& declList);
     void buildSubprogramDeclaration(ParseTreeNode* subprogDecl, vector<ASTNode*>& declList);
 
-    // --- Pembentuk Statement ---
+    // Statement
     CompoundStmtNode* buildCompoundStatement(ParseTreeNode* compStmt);
     ASTNode* buildStatement(ParseTreeNode* stmt);
     AssignStmtNode* buildAssignment(ParseTreeNode* assignStmt);
@@ -29,13 +29,13 @@ private:
     ForStmtNode* buildFor(ParseTreeNode* forStmt);
     FuncCallNode* buildProcedureFunctionCall(ParseTreeNode* callStmt);
     
-    // --- Pembentuk Ekspresi ---
+    // Ekspresi
     ASTNode* buildExpression(ParseTreeNode* expr);
     ASTNode* buildSimpleExpression(ParseTreeNode* simpleExpr);
     ASTNode* buildTerm(ParseTreeNode* term);
     ASTNode* buildFactor(ParseTreeNode* factor);
     
-    // --- Helper / Evaluator Dasar ---
+    // Helper
     VarAccessNode* buildVariable(ParseTreeNode* varNode);
     DataType stringToDataType(string typeStr);
     vector<string> extractIdentifierList(ParseTreeNode* idList);

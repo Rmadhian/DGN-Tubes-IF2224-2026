@@ -4,7 +4,7 @@
 
 using namespace std;
 
-// --- AST accept dispatch ---
+// Dispatch accept() untuk node statement
 
 void CompoundStmtNode::accept(SemanticVisitor* visitor) { visitor->visit(this); }
 void AssignStmtNode::accept(SemanticVisitor* visitor)   { visitor->visit(this); }
@@ -12,7 +12,7 @@ void IfStmtNode::accept(SemanticVisitor* visitor)       { visitor->visit(this); 
 void WhileStmtNode::accept(SemanticVisitor* visitor)    { visitor->visit(this); }
 void ForStmtNode::accept(SemanticVisitor* visitor)      { visitor->visit(this); }
 
-// --- Symbol Table: btab management ---
+// Operasi btab (Block Table)
 
 int SymbolTable::insertBTab() {
     BTabEntry entry;
@@ -38,7 +38,7 @@ BTabEntry* SymbolTable::getBTab(int index) {
     return &btab[index];
 }
 
-// --- Type helpers (local, not exposed in header) ---
+// Helper konversi DataType ke string (untuk pesan error)
 
 static const char* dataTypeName(DataType t) {
     switch (t) {
@@ -55,12 +55,12 @@ static const char* dataTypeName(DataType t) {
     }
 }
 
-// Integer, Char, Boolean can be used as for-loop iterators
+// Tipe ordinal: valid sebagai iterator for-loop
 static bool isOrdinalType(DataType t) {
     return t == DataType::INTEGER || t == DataType::CHAR || t == DataType::BOOLEAN;
 }
 
-// Real accepts Integer (widening); NOTYPE is permissive to avoid cascading errors
+// Kompatibilitas assignment: Real menerima Integer (widening), NOTYPE permisif
 static bool isAssignmentCompatible(DataType target, DataType value) {
     if (target == DataType::NOTYPE || value == DataType::NOTYPE) return true;
     if (target == value) return true;
@@ -68,7 +68,7 @@ static bool isAssignmentCompatible(DataType target, DataType value) {
     return false;
 }
 
-// --- Statement visitors ---
+// Visitor: CompoundStmtNode
 
 void SemanticAnalyzer::visit(CompoundStmtNode* node) {
     st.pushScope();
@@ -81,7 +81,7 @@ void SemanticAnalyzer::visit(CompoundStmtNode* node) {
     for (ASTNode* stmt : node->statements)
         if (stmt) stmt->accept(this);
 
-    // count local variables declared inside this block
+    // Hitung variabel lokal yang dideklarasikan dalam blok ini
     int endTabIdx = (int)st.tab.size() - 1;
     int vsze = 0;
     for (int i = startTabIdx + 1; i <= endTabIdx; i++) {
@@ -95,6 +95,8 @@ void SemanticAnalyzer::visit(CompoundStmtNode* node) {
     node->evalType = DataType::NONE;
     st.popScope();
 }
+
+// Visitor: AssignStmtNode
 
 void SemanticAnalyzer::visit(AssignStmtNode* node) {
     if (node->left)  node->left->accept(this);
@@ -112,6 +114,8 @@ void SemanticAnalyzer::visit(AssignStmtNode* node) {
     node->lexicalLevel = st.currentLevel;
 }
 
+// Visitor: IfStmtNode
+
 void SemanticAnalyzer::visit(IfStmtNode* node) {
     if (node->condition) {
         node->condition->accept(this);
@@ -128,6 +132,8 @@ void SemanticAnalyzer::visit(IfStmtNode* node) {
     node->lexicalLevel = st.currentLevel;
 }
 
+// Visitor: WhileStmtNode
+
 void SemanticAnalyzer::visit(WhileStmtNode* node) {
     if (node->condition) {
         node->condition->accept(this);
@@ -142,6 +148,8 @@ void SemanticAnalyzer::visit(WhileStmtNode* node) {
     node->evalType     = DataType::NONE;
     node->lexicalLevel = st.currentLevel;
 }
+
+// Visitor: ForStmtNode
 
 void SemanticAnalyzer::visit(ForStmtNode* node) {
     TabEntry* iter   = st.lookupTab(node->iterVar);
@@ -161,6 +169,7 @@ void SemanticAnalyzer::visit(ForStmtNode* node) {
     if (node->startExpr) node->startExpr->accept(this);
     if (node->endExpr)   node->endExpr->accept(this);
 
+    // Validasi kompatibilitas tipe start/end dengan iterator
     if (iter) {
         if (node->startExpr && !isAssignmentCompatible(iterType, node->startExpr->evalType))
             cerr << "Semantic Error: 'for' start expression type ("
