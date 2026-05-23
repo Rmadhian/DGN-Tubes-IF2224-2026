@@ -47,33 +47,33 @@ void ASTBuilder::buildVarDeclaration(ParseTreeNode* varDecl, vector<ASTNode*>& d
                 if (vNode->type == DataType::ARRAY) {
                     ParseTreeNode* curr = typeNode;
                     
-                    // Menelusuri pohon kebawah hingga menemukan node spesifik <array-type>
+                    // Cari node <array-type>
                     while(curr->children.size() == 1 && curr->label != "<array-type>") {
                         curr = curr->children[0];
                     }
                     
                     if (curr->label == "<array-type>") {
-                        // Memeriksa anak-anak dari node <array-type> untuk mencari informasi dimensi dan tipe elemen
+                        // Cari info dimensi dan tipe elemen
                         for(size_t j=0; j<curr->children.size(); j++){
                             if(curr->children[j]->label == "<range>") {
                                 ParseTreeNode* rangeNode = curr->children[j];
                                 
-                                // Ekstrak nilai batas bawah dan batas atas dari format: <constant> period period <constant>
+                                // Ekstrak batas bawah dan atas
                                 if (rangeNode->children.size() >= 4) {
                                     ParseTreeNode* leftConst = rangeNode->children[0];
                                     ParseTreeNode* rightConst = rangeNode->children[3];
                                     
-                                    // Ambil nilai batas dan konversi ke integer untuk batas bawah
+                                    // Ambil nilai batas bawah
                                     if(!leftConst->children.empty()) {
                                         vNode->lowBound = stoi(leftConst->children[0]->value);
                                     }
-                                    // Ambil nilai batas dan konversi ke integer untuk batas atas
+                                    // Ambil nilai batas atas
                                     if(!rightConst->children.empty()) {
                                         vNode->highBound = stoi(rightConst->children[0]->value);
                                     }
                                 }
                             } else if(curr->children[j]->label == "<type>") {
-                                // Ekstrak tipe data elemen yang disimpan di dalam array
+                                // Ambil tipe data elemen
                                 vNode->elementType = resolveType(curr->children[j]);
                             }
                         }
@@ -117,9 +117,11 @@ void ASTBuilder::buildSubprogramDeclaration(ParseTreeNode* subprogDecl, vector<A
     }
 
     for (auto child : subNode->children) {
+        // Ambil nama subprogram
         if (child->label == "ident" && funcNode->name.empty()) {
             funcNode->name = child->value;
         }
+        // Proses blok parameter dan isi kode
         else if (child->label == "<block>") {
             for (auto blockChild : child->children) {
                 if (blockChild->label == "<declaration-part>")
@@ -136,6 +138,7 @@ CompoundStmtNode* ASTBuilder::buildCompoundStatement(ParseTreeNode* compStmt) {
     CompoundStmtNode* cStmtNode = new CompoundStmtNode();
     for (auto child : compStmt->children) {
         if (child->label == "<statement-list>") {
+            // Evaluasi setiap statement di dalam blok berurutan
             for (auto stmtChild : child->children) {
                 if (stmtChild->label == "<statement>") {
                     ASTNode* s = buildStatement(stmtChild);
@@ -267,15 +270,19 @@ ASTNode* ASTBuilder::buildSimpleExpression(ParseTreeNode* simpleExpr) {
         ParseTreeNode* child = simpleExpr->children[i];
         if (child->label == "<term>") {
             ASTNode* termNode = buildTerm(child);
+            
             if (isFirstUnary) {
+                // Jadikan unary node sebagai node pertama
                 UnaryOpNode* uNode = new UnaryOpNode();
                 uNode->op = pendingOp;
                 uNode->operand = termNode;
                 currentLeft = uNode;
                 isFirstUnary = false;
             } else if (currentLeft == nullptr) {
+                // Inisialisasi node paling kiri
                 currentLeft = termNode;
             } else {
+                // Gabungkan node sebelumnya dengan node term saat ini menggunakan operator
                 BinaryOpNode* bNode = new BinaryOpNode();
                 bNode->left = currentLeft;
                 bNode->op = pendingOp;
@@ -283,6 +290,7 @@ ASTNode* ASTBuilder::buildSimpleExpression(ParseTreeNode* simpleExpr) {
                 currentLeft = bNode;
             }
         } else if (child->label == "<additive-operator>") {
+            // Simpan operator penambahan/pengurangan untuk node term berikutnya
             if (!child->children.empty())
                 pendingOp = child->children[0]->label;
         }
@@ -298,9 +306,12 @@ ASTNode* ASTBuilder::buildTerm(ParseTreeNode* term) {
     for (auto child : term->children) {
         if (child->label == "<factor>") {
             ASTNode* factorNode = buildFactor(child);
+            
             if (currentLeft == nullptr) {
+                // Inisialisasi node factor paling kiri
                 currentLeft = factorNode;
             } else {
+                // Gabungkan factor sebelumnya dan sekarang menggunakan operator perkalian
                 BinaryOpNode* bNode = new BinaryOpNode();
                 bNode->left = currentLeft;
                 bNode->op = pendingOp;
@@ -308,6 +319,7 @@ ASTNode* ASTBuilder::buildTerm(ParseTreeNode* term) {
                 currentLeft = bNode;
             }
         } else if (child->label == "<multiplicative-operator>") {
+            // Simpan operator perkalian/pembagian untuk factor selanjutnya
             if (!child->children.empty())
                 pendingOp = child->children[0]->label;
         }

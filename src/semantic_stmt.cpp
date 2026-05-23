@@ -5,7 +5,6 @@
 using namespace std;
 
 // Dispatch accept() untuk node statement
-
 void CompoundStmtNode::accept(SemanticVisitor* visitor) { visitor->visit(this); }
 void AssignStmtNode::accept(SemanticVisitor* visitor)   { visitor->visit(this); }
 void IfStmtNode::accept(SemanticVisitor* visitor)       { visitor->visit(this); }
@@ -13,7 +12,6 @@ void WhileStmtNode::accept(SemanticVisitor* visitor)    { visitor->visit(this); 
 void ForStmtNode::accept(SemanticVisitor* visitor)      { visitor->visit(this); }
 
 // Operasi btab (Block Table)
-
 int SymbolTable::insertBTab() {
     BTabEntry entry;
     entry.blocks = btab.size();
@@ -39,7 +37,6 @@ BTabEntry* SymbolTable::getBTab(int index) {
 }
 
 // Helper konversi DataType ke string (untuk pesan error)
-
 static const char* dataTypeName(DataType t) {
     switch (t) {
         case DataType::INTEGER: return "Integer";
@@ -74,7 +71,6 @@ static bool isAssignmentCompatible(DataType target, DataType value) {
 }
 
 // Visitor: CompoundStmtNode
-
 void SemanticAnalyzer::visit(CompoundStmtNode* node) {
     st.pushScope();
     int blockIdx    = st.insertBTab();
@@ -104,7 +100,6 @@ void SemanticAnalyzer::visit(CompoundStmtNode* node) {
 }
 
 // Visitor: AssignStmtNode
-
 void SemanticAnalyzer::visit(AssignStmtNode* node) {
     if (node->left)  node->left->accept(this);
     if (node->right) node->right->accept(this);
@@ -122,7 +117,6 @@ void SemanticAnalyzer::visit(AssignStmtNode* node) {
 }
 
 // Visitor: IfStmtNode
-
 void SemanticAnalyzer::visit(IfStmtNode* node) {
     if (node->condition) {
         node->condition->accept(this);
@@ -140,7 +134,6 @@ void SemanticAnalyzer::visit(IfStmtNode* node) {
 }
 
 // Visitor: WhileStmtNode
-
 void SemanticAnalyzer::visit(WhileStmtNode* node) {
     if (node->condition) {
         node->condition->accept(this);
@@ -157,7 +150,6 @@ void SemanticAnalyzer::visit(WhileStmtNode* node) {
 }
 
 // Visitor: ForStmtNode
-
 void SemanticAnalyzer::visit(ForStmtNode* node) {
     TabEntry* iter   = st.lookupTab(node->iterVar);
     DataType iterType = DataType::NOTYPE;

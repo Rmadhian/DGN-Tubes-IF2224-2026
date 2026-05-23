@@ -89,13 +89,12 @@ public:
 };
 
 // Base Class AST & Visitor Interface
-
 class SemanticVisitor;
 
 class ASTNode {
 public:
-    DataType evalType;  // Tipe hasil evaluasi node
-    int symRef;         // Indeks ke tab
+    DataType evalType; 
+    int symRef;        
     int lexicalLevel;
 
     ASTNode() : evalType(DataType::NOTYPE), symRef(-1), lexicalLevel(0) {}
@@ -105,7 +104,7 @@ public:
 
 // AST Node Definitions
 
-// --- Deklarasi & Program Root ---
+// Deklarasi & Program Root 
 
 class ProgramNode : public ASTNode {
 public:
@@ -119,7 +118,7 @@ class VarDeclNode : public ASTNode {
 public:
     vector<string> idents;
     DataType type;
-    int ref; // Indeks atab jika array/record
+    int ref;
     DataType elementType = DataType::NOTYPE;
     int lowBound = 0;
     int highBound = 0;
@@ -138,13 +137,13 @@ class SubprogDeclNode : public ASTNode {
 public:
     string name;
     bool isFunction; 
-    DataType retType; // NONE jika procedure
+    DataType retType;
     vector<ASTNode*> params;
     ASTNode* block;
     void accept(SemanticVisitor* visitor) override;
 };
 
-// --- Statement & Control Flow ---
+// Statement & Control Flow
 
 class CompoundStmtNode : public ASTNode {
 public:
@@ -184,7 +183,7 @@ public:
     void accept(SemanticVisitor* visitor) override;
 };
 
-// --- Ekspresi & Type Checking ---
+// Ekspresi & Type Checking
 
 class BinaryOpNode : public ASTNode {
 public:

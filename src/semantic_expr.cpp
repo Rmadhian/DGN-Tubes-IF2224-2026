@@ -58,7 +58,7 @@ void SemanticAnalyzer::visit(VarAccessNode* node) {
             int bIndex = entry->ref; 
             if (bIndex > 0) {
                 BTabEntry* recBlock = st.getBTab(bIndex);
-                int currField = recBlock->last; // Menunjuk ke field terakhir yang dideklarasikan
+                int currField = recBlock->last;
                 bool found = false;
                 
                 // Menelusuri semua field yang terdaftar dalam scope record secara mundur (dari akhir ke awal)
@@ -67,8 +67,7 @@ void SemanticAnalyzer::visit(VarAccessNode* node) {
                     
                     // Jika nama field cocok dengan yang diakses oleh node
                     if (fieldEntry->identifiers == node->fieldName) {
-                        node->evalType = fieldEntry->type; // Update tipe data node dengan tipe field
-                        node->symRef = currField; // Arahkan referensi simbol ke field tersebut
+                        node->evalType = fieldEntry->type; 
                         found = true;
                         break;
                     }
@@ -108,34 +107,33 @@ void SemanticAnalyzer::visit(FuncCallNode* node) {
     for (ASTNode* arg : node->args)
         arg->accept(this);
 
-    // Pengecualian khusus untuk fungsi/prosedur bawaan (predefined) seperti writeln, readln
-    // Biasanya ini bersifat variadic dan tidak memiliki blok parameter yang terdefinisi ketat di btab
+    // Skip type checking untuk fungsi bawaan
     if (node->name == "writeln" || node->name == "readln" || node->name == "write" || node->name == "read") {
         return; 
     }
 
-    // Implementasi Validasi Jumlah dan Tipe Parameter
+    // --- Validasi Parameter ---
     
-    // Ambil detail blok prosedur/fungsi dari btab menggunakan referensi dari tab
+    // Ambil detail blok prosedur/fungsi dari btab
     BTabEntry* blockInfo = st.getBTab(entry->ref);
     
     if (blockInfo != nullptr) {
         std::vector<TabEntry*> params;
-        int currParamIdx = blockInfo->lpar; // lpar menunjuk ke parameter *terakhir* di deklarasi
+        int currParamIdx = blockInfo->lpar; 
         
-        // Kumpulkan parameter dari tab. Kita berjalan mundur dari parameter terakhir.
+        // Kumpulkan parameter dari tabel
         while (currParamIdx != 0) {
             TabEntry* paramEntry = st.getTab(currParamIdx);
             if (paramEntry == nullptr) break;
             
             params.push_back(paramEntry);
-            currParamIdx = paramEntry->link; // Lanjut ke parameter sebelumnya
+            currParamIdx = paramEntry->link; 
         }
         
-        // Karena parameter dikumpulkan dari belakang ke depan, kita harus balik (reverse) agar indeks argumen (kiri ke kanan) cocok dengan indeks parameter.
+        // Sesuaikan urutan parameter agar urut dari kiri ke kanan
         std::reverse(params.begin(), params.end());
 
-        // Memeriksa kesesuaian jumlah parameter fungsi/prosedur yang dipanggil node->args adalah argumen dari pemanggilan, params adalah deklarasi formal
+        // Periksa kesesuaian jumlah parameter
         if (node->args.size() != params.size()) {
             cout << "Error Semantik: Jumlah argumen pada pemanggilan '" << node->name 
                  << "' tidak cocok! Diharapkan " << params.size() 
@@ -144,24 +142,21 @@ void SemanticAnalyzer::visit(FuncCallNode* node) {
             return;
         }
 
-        // Memastikan kompatibilitas tipe setiap parameter dan argumen
+        // Periksa kompatibilitas tipe argumen
         for (size_t i = 0; i < node->args.size(); ++i) {
             DataType argType = node->args[i]->evalType;
             DataType paramType = params[i]->type;
 
-            // Abaikan tipe argumen yang gagal dievaluasi sebelumnya untuk menghindari error berganda
             if (argType == DataType::NOTYPE) continue;
 
             bool isCompatible = false;
             
-            // Cek kompatibilitas ketat: Tipe data harus sama persis (misal Integer ke Integer)
+            // Tipe data sama persis
             if (argType == paramType) {
                 isCompatible = true;
             } 
-            // Cek kompatibilitas pelonggaran (assignment compatibility): Parameter bertipe Real secara otomatis menerima argumen bertipe Integer
+            // Assignment compatibility: Integer bisa di-passing ke parameter Real
             else if (paramType == DataType::REAL && argType == DataType::INTEGER) {
-                // Konversi implisit dari Integer ke Real hanya berlaku pada pass-by-value (nrm == 1).
-                // Pass-by-reference (pointer) membutuhkan kepastian alokasi memori yang identik, jadi tidak boleh cast.
                 if (params[i]->nrm == 1) { 
                     isCompatible = true;
                 } else {
