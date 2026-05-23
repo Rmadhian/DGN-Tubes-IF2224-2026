@@ -1,5 +1,3 @@
-Berikut adalah draf README untuk Milestone 3 berdasarkan spesifikasi yang Anda berikan:
-
 # Arion Compiler - Tugas Besar IF2224 TBFO (Milestone 3)
 
 ## Identitas Kelompok
