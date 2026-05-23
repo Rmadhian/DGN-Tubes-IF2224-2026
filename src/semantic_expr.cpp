@@ -7,14 +7,12 @@ void VarAccessNode::accept(SemanticVisitor* visitor)  { visitor->visit(this); }
 void FuncCallNode::accept(SemanticVisitor* visitor)   { visitor->visit(this); }
 
 // Visitor: LiteralNode — tipe langsung diambil dari literalType
-
 void SemanticAnalyzer::visit(LiteralNode* node) {
     node->evalType = node->literalType;
     node->lexicalLevel = st.currentLevel;
 }
 
 // Visitor: VarAccessNode — lookup identifier dan validasi akses array
-
 void SemanticAnalyzer::visit(VarAccessNode* node) {
     TabEntry* entry = st.lookupTab(node->name);
     if (entry == nullptr) {
@@ -27,46 +25,55 @@ void SemanticAnalyzer::visit(VarAccessNode* node) {
     node->evalType = entry->type;
     node->lexicalLevel = st.currentLevel;
 
-    // Validasi akses array (jika ada subscript)
+    // Memeriksa dan mengevaluasi akses indeks array (jika identifier memiliki subscript)
     if (!node->indices.empty()) {
         if (entry->type != DataType::ARRAY) {
             cout << "Error Semantik: '" << node->name << "' bukan sebuah Array!" << endl;
             node->evalType = DataType::NOTYPE;
         } else {
+            // Evaluasi setiap ekspresi indeks yang diberikan
             for (ASTNode* idxNode : node->indices) {
                 idxNode->accept(this);
                 DataType idxt = idxNode->evalType;
+                
+                // Indeks array pada Pascal hanya boleh berupa tipe ordinal sederhana (Integer/Char/Boolean/Enum)
                 if (idxt == DataType::REAL || idxt == DataType::ARRAY || idxt == DataType::RECORD) {
                     cout << "Error Semantik: Indeks Array harus bertipe simple (bukan Real/Komposit)!" << endl;
                 }
             }
-            // Tipe hasil = tipe elemen array
+            // Setelah semua indeks valid, tetapkan tipe hasil evaluasi menjadi tipe elemen dari array tersebut
             ATabEntry* arrayInfo = st.getATab(entry->ref);
             if (arrayInfo != nullptr)
                 node->evalType = arrayInfo->etyp;
         }
     }
 
+    // Mengevaluasi akses field pada tipe record (contoh: myRecord.myField)
     if (!node->fieldName.empty()) {
         if (node->evalType != DataType::RECORD) {
             cout << "Error Semantik: '" << node->name << "' bukan sebuah Record!" << endl;
             node->evalType = DataType::NOTYPE;
         } else {
-            int bIndex = entry->ref; // ambil referensi block record di btab
+            // Ambil referensi ke block table (btab) yang menyimpan definisi field record ini
+            int bIndex = entry->ref; 
             if (bIndex > 0) {
                 BTabEntry* recBlock = st.getBTab(bIndex);
-                int currField = recBlock->last;
+                int currField = recBlock->last; // Menunjuk ke field terakhir yang dideklarasikan
                 bool found = false;
                 
-                // Traverse backwards di dalam definisi record
+                // Menelusuri semua field yang terdaftar dalam scope record secara mundur (dari akhir ke awal)
                 while (currField > 0) {
                     TabEntry* fieldEntry = st.getTab(currField);
+                    
+                    // Jika nama field cocok dengan yang diakses oleh node
                     if (fieldEntry->identifiers == node->fieldName) {
-                        node->evalType = fieldEntry->type; // Update tipe
-                        node->symRef = currField; // Arahkan symRef ke field ini
+                        node->evalType = fieldEntry->type; // Update tipe data node dengan tipe field
+                        node->symRef = currField; // Arahkan referensi simbol ke field tersebut
                         found = true;
                         break;
                     }
+                    
+                    // Lanjut periksa field sebelumnya melalui tautan link
                     currField = fieldEntry->link;
                 }
                 
@@ -81,7 +88,6 @@ void SemanticAnalyzer::visit(VarAccessNode* node) {
 }
 
 // Visitor: FuncCallNode — validasi deklarasi dan tipe callable
-
 void SemanticAnalyzer::visit(FuncCallNode* node) {
     TabEntry* entry = st.lookupTab(node->name);
     if (entry == nullptr) {
@@ -108,7 +114,7 @@ void SemanticAnalyzer::visit(FuncCallNode* node) {
         return; 
     }
 
-    // --- Implementasi Validasi Jumlah dan Tipe Parameter ---
+    // Implementasi Validasi Jumlah dan Tipe Parameter
     
     // Ambil detail blok prosedur/fungsi dari btab menggunakan referensi dari tab
     BTabEntry* blockInfo = st.getBTab(entry->ref);
@@ -126,11 +132,10 @@ void SemanticAnalyzer::visit(FuncCallNode* node) {
             currParamIdx = paramEntry->link; // Lanjut ke parameter sebelumnya
         }
         
-        // Karena parameter dikumpulkan dari belakang ke depan, kita harus balik (reverse)
-        // agar indeks argumen (kiri ke kanan) cocok dengan indeks parameter.
+        // Karena parameter dikumpulkan dari belakang ke depan, kita harus balik (reverse) agar indeks argumen (kiri ke kanan) cocok dengan indeks parameter.
         std::reverse(params.begin(), params.end());
 
-        // 1. Validasi Jumlah Argumen
+        // Memeriksa kesesuaian jumlah parameter fungsi/prosedur yang dipanggil node->args adalah argumen dari pemanggilan, params adalah deklarasi formal
         if (node->args.size() != params.size()) {
             cout << "Error Semantik: Jumlah argumen pada pemanggilan '" << node->name 
                  << "' tidak cocok! Diharapkan " << params.size() 
@@ -139,25 +144,24 @@ void SemanticAnalyzer::visit(FuncCallNode* node) {
             return;
         }
 
-        // 2. Validasi Tipe Data (Type Compatibility)
+        // Memastikan kompatibilitas tipe setiap parameter dan argumen
         for (size_t i = 0; i < node->args.size(); ++i) {
             DataType argType = node->args[i]->evalType;
             DataType paramType = params[i]->type;
 
-            // Jika node argumen memiliki NOTYPE (berarti ada error sebelumnya pada ekspresi tersebut)
+            // Abaikan tipe argumen yang gagal dievaluasi sebelumnya untuk menghindari error berganda
             if (argType == DataType::NOTYPE) continue;
 
             bool isCompatible = false;
             
-            // Aturan type compatibility sederhana sesuai spesifikasi:
-            // a. Tipe sama persis
+            // Cek kompatibilitas ketat: Tipe data harus sama persis (misal Integer ke Integer)
             if (argType == paramType) {
                 isCompatible = true;
             } 
-            // b. Assignment compatibility: Parameter Real menerima argumen Integer
+            // Cek kompatibilitas pelonggaran (assignment compatibility): Parameter bertipe Real secara otomatis menerima argumen bertipe Integer
             else if (paramType == DataType::REAL && argType == DataType::INTEGER) {
-                // Namun, valid hanya jika itu parameter by-value (variabel normal, nrm == 1)
-                // Jika itu parameter by-reference (var parameter, nrm == 0), tipe harus sama persis.
+                // Konversi implisit dari Integer ke Real hanya berlaku pada pass-by-value (nrm == 1).
+                // Pass-by-reference (pointer) membutuhkan kepastian alokasi memori yang identik, jadi tidak boleh cast.
                 if (params[i]->nrm == 1) { 
                     isCompatible = true;
                 } else {
@@ -179,7 +183,6 @@ void SemanticAnalyzer::visit(FuncCallNode* node) {
 }
 
 // Visitor: BinaryOpNode — type checking operasi biner
-
 void SemanticAnalyzer::visit(BinaryOpNode* node) {
     node->left->accept(this);
     node->right->accept(this);
@@ -248,7 +251,6 @@ void SemanticAnalyzer::visit(BinaryOpNode* node) {
 }
 
 // Visitor: UnaryOpNode — type checking operasi unary
-
 void SemanticAnalyzer::visit(UnaryOpNode* node) {
     node->operand->accept(this);
     DataType opType = node->operand->evalType;

@@ -159,24 +159,29 @@ ParseTreeNode* Parser::parseCaseStatement() {
 ParseTreeNode* Parser::parseCaseBlock() {
   ParseTreeNode* node = new ParseTreeNode("<case-block>");
 
+  // Membaca konstanta pertama yang menjadi kriteria case
   node->children.push_back(parseConstant());
 
-  // Menangani multiple konstan yang dipisahkan koma (contoh: 1, 2, 3: statement)
+  // Menangani multiple konstan yang dipisahkan koma pada satu blok statement 
+  // (contoh: 1, 2, 3: statement)
   while (!hasError && currentToken().type == TokenType::COMMA) {
     node->children.push_back(match(TokenType::COMMA));
     node->children.push_back(parseConstant());
   }
 
+  // Membaca titik dua diikuti statement yang dieksekusi jika kondisi case terpenuhi
   if (!hasError) {
     node->children.push_back(match(TokenType::COLON));
     node->children.push_back(parseStatement());
   }
 
-  // Rekursif ke case-block selanjutnya jika dipisahkan oleh titik koma
+  // Mengeksekusi blok case selanjutnya jika dipisahkan oleh titik koma
+  // Parsing dilakukan secara rekursif karena case-block dapat muncul berulang kali
   while (!hasError && currentToken().type == TokenType::SEMICOLON) {
     node->children.push_back(match(TokenType::SEMICOLON));
 
-    // Jika setelah titik koma adalah endsy, berarti blok case telah selesai
+    // Jika setelah titik koma adalah endsy, berarti blok deklarasi case telah selesai 
+    // dan tidak ada blok case lain di bawahnya
     if (currentToken().type == TokenType::ENDSY) {
       break;
     }
@@ -241,7 +246,11 @@ ParseTreeNode* Parser::parseFactor() {
 
   if (type == TokenType::IDENT) {
     Token next = peek(1);
-    // Lookahead untuk membedakan Identifier biasa, Variabel (Array/Record), dan Pemanggilan Fungsi
+    
+    // Lookahead (melihat 1 token ke depan) untuk membedakan antara:
+    // 1. Identifier biasa (variabel tunggal)
+    // 2. Akses komponen array/record (LBRACK '[' atau PERIOD '.')
+    // 3. Pemanggilan fungsi (LPARENT '(')
     if (next.type == TokenType::LBRACK || next.type == TokenType::PERIOD) {
       node->children.push_back(parseVariable());
     } else if (next.type == TokenType::LPARENT) {
@@ -250,11 +259,14 @@ ParseTreeNode* Parser::parseFactor() {
       node->children.push_back(match(TokenType::IDENT));
     }
   } else if (type == TokenType::INTCON || type == TokenType::REALCON || type == TokenType::CHARCON || type == TokenType::STRING) {
+    // Menangani nilai literal/konstanta dasar
     node->children.push_back(match(type));
   } else if (type == TokenType::NOTSY) {
+    // Menangani operator unary boolean (NOT)
     node->children.push_back(match(TokenType::NOTSY));
     node->children.push_back(parseFactor());
   } else if (type == TokenType::LPARENT) {
+    // Menangani sub-ekspresi yang diapit kurung (memiliki prioritas tertinggi)
     node->children.push_back(match(TokenType::LPARENT));
     node->children.push_back(parseExpression());
 

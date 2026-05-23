@@ -46,22 +46,34 @@ void ASTBuilder::buildVarDeclaration(ParseTreeNode* varDecl, vector<ASTNode*>& d
 
                 if (vNode->type == DataType::ARRAY) {
                     ParseTreeNode* curr = typeNode;
+                    
+                    // Menelusuri pohon kebawah hingga menemukan node spesifik <array-type>
                     while(curr->children.size() == 1 && curr->label != "<array-type>") {
                         curr = curr->children[0];
                     }
                     
                     if (curr->label == "<array-type>") {
+                        // Memeriksa anak-anak dari node <array-type> untuk mencari informasi dimensi dan tipe elemen
                         for(size_t j=0; j<curr->children.size(); j++){
                             if(curr->children[j]->label == "<range>") {
                                 ParseTreeNode* rangeNode = curr->children[j];
-                                // Ekstrak bounds dari <constant> period period <constant>
+                                
+                                // Ekstrak nilai batas bawah dan batas atas dari format: <constant> period period <constant>
                                 if (rangeNode->children.size() >= 4) {
                                     ParseTreeNode* leftConst = rangeNode->children[0];
                                     ParseTreeNode* rightConst = rangeNode->children[3];
-                                    if(!leftConst->children.empty()) vNode->lowBound = stoi(leftConst->children[0]->value);
-                                    if(!rightConst->children.empty()) vNode->highBound = stoi(rightConst->children[0]->value);
+                                    
+                                    // Ambil nilai batas dan konversi ke integer untuk batas bawah
+                                    if(!leftConst->children.empty()) {
+                                        vNode->lowBound = stoi(leftConst->children[0]->value);
+                                    }
+                                    // Ambil nilai batas dan konversi ke integer untuk batas atas
+                                    if(!rightConst->children.empty()) {
+                                        vNode->highBound = stoi(rightConst->children[0]->value);
+                                    }
                                 }
                             } else if(curr->children[j]->label == "<type>") {
+                                // Ekstrak tipe data elemen yang disimpan di dalam array
                                 vNode->elementType = resolveType(curr->children[j]);
                             }
                         }
@@ -395,13 +407,12 @@ DataType ASTBuilder::resolveType(ParseTreeNode* typeNode) {
         curr = curr->children[0];
     }
 
-    // Kasus 1: Tipe Data Dasar (Integer, Real, Boolean, dsb)
+    // Resolusi untuk tipe data dasar (Integer, Real, Boolean, dsb.)
     if (curr->children.empty()) {
         return stringToDataType(curr->value.empty() ? curr->label : curr->value);
     }
 
-    // Kasus 2: Subrange (Biasanya polanya: <constant> dotdot <constant>)
-    // Kita cari apakah ada node dengan label "dotdot" (..) di anak-anaknya
+    // Deteksi tipe subrange dari keberadaan token '..' (dotdot)
     bool isSubrange = false;
     ParseTreeNode* leftConst = nullptr;
     ParseTreeNode* rightConst = nullptr;
@@ -423,19 +434,19 @@ DataType ASTBuilder::resolveType(ParseTreeNode* typeNode) {
         DataType leftType = stringToDataType(leftValNode->label);
         DataType rightType = stringToDataType(rightValNode->label);
 
-        // VALIDASI 1: Tidak boleh bertipe Real (Spek Halaman 15)
+        // Pastikan tipe subrange bukan bilangan real (hanya boleh ordinal/diskrit)
         if (leftType == DataType::REAL || rightType == DataType::REAL) {
             std::cerr << "Error Semantik: Tipe Subrange tidak boleh menggunakan Real!" << std::endl;
             return DataType::NOTYPE;
         }
 
-        // VALIDASI 2: Tipe batas kiri dan kanan harus sama (keduanya integer atau keduanya char)
+        // Pastikan batas bawah dan batas atas memiliki tipe data yang sama
         if (leftType != rightType) {
             std::cerr << "Error Semantik: Batas kiri dan kanan Subrange harus memiliki tipe yang sama!" << std::endl;
             return DataType::NOTYPE;
         }
 
-        // VALIDASI 3: Batas Kiri <= Batas Kanan
+        // Pastikan nilai batas bawah tidak lebih besar dari batas atas
         if (leftType == DataType::INTEGER) {
             int leftVal = std::stoi(leftValNode->value);
             int rightVal = std::stoi(rightValNode->value);
@@ -456,7 +467,7 @@ DataType ASTBuilder::resolveType(ParseTreeNode* typeNode) {
         return DataType::SUBRANGE;
     }
 
-    // Kasus 3: Array atau Record (Kembalikan tipe dasarnya dulu jika sudah ada di enum)
+    // Tangani tipe bentukan lain (Array atau Record)
     string label = curr->label;
     if (label == "array" || label == "<array-type>") return DataType::ARRAY;
     if (label == "record" || label == "<record-type>") return DataType::RECORD;

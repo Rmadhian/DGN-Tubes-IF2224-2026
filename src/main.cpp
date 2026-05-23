@@ -165,7 +165,7 @@ int main(int argc, char* argv[]) {
     ParseTreeNode* tree = nullptr;
     Parser* parserPtr = nullptr; // Digunakan jika input perlu melewati parser
 
-    // TAHAP 1 & 2: MEMBANGUN PARSE TREE
+    // Proses Parsing: Membangun Parse Tree dari input
     if (type == InputType::PARSE_TREE) {
         cout << "[INFO] Format file Parse Tree terdeteksi. Melakukan rekonstruksi Tree..." << endl;
         tree = buildParseTreeFromText(fileContent);
@@ -192,7 +192,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    // TAHAP 3: SEMANTIC ANALYSIS
+    // Proses Semantik: Membangun AST dan Symbol Table
     ofstream fileOutput(argv[2]);
     if (!fileOutput.is_open()) return 1;
 

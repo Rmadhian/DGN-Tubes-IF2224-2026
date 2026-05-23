@@ -9,9 +9,7 @@
 
 using namespace std;
 
-// =========================================================
 // Enumerasi Semantik
-// =========================================================
 
 enum class ObjClass { 
     CONSTANT, VARIABLE, TYPE_DEF, PROCEDURE, FUNCTION
@@ -22,9 +20,7 @@ enum class DataType {
     NOTYPE, NONE, INTEGER, REAL, CHAR, BOOLEAN, STRING, ARRAY, RECORD, SUBRANGE, ENUMERATED
 };
 
-// =========================================================
 // Struktur Symbol Table
-// =========================================================
 
 // Array Table: menyimpan metadata tipe array
 struct ATabEntry {
@@ -59,9 +55,7 @@ struct TabEntry {
     int adr;            // Alamat/offset/nilai
 };
 
-// =========================================================
 // Symbol Table Manager
-// =========================================================
 
 class SymbolTable {
 public:
@@ -94,9 +88,7 @@ public:
     void initPredefined();
 };
 
-// =========================================================
 // Base Class AST & Visitor Interface
-// =========================================================
 
 class SemanticVisitor;
 
@@ -111,9 +103,7 @@ public:
     virtual void accept(SemanticVisitor* visitor) = 0;
 };
 
-// =========================================================
 // AST Node Definitions
-// =========================================================
 
 // --- Deklarasi & Program Root ---
 
@@ -233,10 +223,7 @@ public:
     void accept(SemanticVisitor* visitor) override;
 };
 
-// =========================================================
 // Semantic Visitor Interface
-// =========================================================
-
 class SemanticVisitor {
 public:
     SymbolTable st;

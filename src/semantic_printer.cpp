@@ -40,9 +40,7 @@ static string exprToString(ASTNode* node) {
     return "...";
 }
 
-// =========================================================================
-// 1. SYMBOL TABLE PRINTER (Sesuai Format Spek)
-// =========================================================================
+// Symbol Table Printer (Sesuai Spesifikasi)
 
 string objToStr(ObjClass obj, string name) {
     if (name == "Hello" || name == "program") return "program"; 
@@ -111,9 +109,7 @@ void printSymbolTables(const SymbolTable& st, std::ostream& out) {
     }
 }
 
-// =========================================================================
-// 2. AST PRINTER (Decorated AST dengan Box-Drawing Characters)
-// =========================================================================
+// AST Printer (Menggunakan Box-Drawing Characters)
 
 void PrintASTVisitor::printPrefix(bool isLast) {
     out << " ";
@@ -151,8 +147,7 @@ void PrintASTVisitor::visit(ProgramNode* node) {
         
         isLastChildStack.push_back(isLast);
         for (size_t i = 0; i < node->declarations.size(); i++) {
-            // Kita harus kirim informasi ke VarDecl bahwa dia anak dari Declarations
-            // Tapi kita handle indentasi di dalam VarDecl sendiri
+            // Panggil accept pada deklarasi (indentasi dihandle dalam VarDecl)
             node->declarations[i]->accept(this);
         }
         isLastChildStack.pop_back();
@@ -179,13 +174,13 @@ void PrintASTVisitor::visit(ProgramNode* node) {
 
 void PrintASTVisitor::visit(VarDeclNode* node) {
     for (size_t i = 0; i < node->idents.size(); i++) {
-        // 1. Cetak prefix dari stack parent
+        // Cetak prefix dari parent
         for (size_t j = 0; j < isLastChildStack.size(); j++) {
             if (isLastChildStack[j]) out << "    "; 
             else out << " │   ";
         }
         
-        // 2. Tentukan simbol ranting: └─ kalau terakhir, ├─ kalau belum
+        // Tentukan simbol cabang
         bool isLastVar = (i == node->idents.size() - 1);
         if (isLastVar) {
             out << " └─ ";
@@ -193,7 +188,7 @@ void PrintASTVisitor::visit(VarDeclNode* node) {
             out << " ├─ ";
         }
         
-        // 3. Cetak isi node
+        // Cetak isi node
         out << "VarDecl('" << node->idents[i] << "') \t\t→ tab_index:" 
             << (node->symRef - (int)node->idents.size() + 1 + i) 
             << ", type:" << typeToStr(node->evalType) << ", lev:" << node->lexicalLevel << "\n";
@@ -382,23 +377,23 @@ void PrintASTVisitor::visit(SubprogDeclNode* node) {
     };
     vector<ChildComponent> children;
 
-    // 1. Kumpulkan semua parameter fungsi/prosedur jika ada
+    // Kumpulkan parameter jika ada
     for (auto param : node->params) {
         if (param) {
             children.push_back({"param ", param});
         }
     }
 
-    // 2. Kumpulkan body block utama milik fungsi/prosedur jika ada
+    // Kumpulkan body block utama
     if (node->block) {
         children.push_back({"body ", node->block});
     }
 
-    // 3. Cetak seluruh komponen secara rekursif dengan tree prefix yang presisi
+    // Cetak komponen child
     for (size_t i = 0; i < children.size(); i++) {
         bool isLast = (i == children.size() - 1);
         
-        // Cetak garis branch sesuai kedalaman stack saat ini
+        // Prefix tree
         printPrefix(isLast);
         out << children[i].label;
         
