@@ -5,6 +5,41 @@
 
 using namespace std;
 
+static string opToSym(string op) {
+    if (op == "plus" || op == "+") return "+";
+    if (op == "minus" || op == "-") return "-";
+    if (op == "times" || op == "*") return "*";
+    if (op == "idiv" || op == "div" || op == "/") return "div";
+    if (op == "mod") return "mod";
+    if (op == "eql" || op == "=" || op == "==") return "=";
+    if (op == "neq" || op == "<>") return "<>";
+    if (op == "lss" || op == "<") return "<";
+    if (op == "leq" || op == "<=") return "<=";
+    if (op == "gtr" || op == ">") return ">";
+    if (op == "geq" || op == ">=") return ">=";
+    return op;
+}
+
+static string exprToString(ASTNode* node) {
+    if (!node) return "";
+    if (auto lit = dynamic_cast<LiteralNode*>(node)) {
+        return lit->value;
+    } else if (auto var = dynamic_cast<VarAccessNode*>(node)) {
+        string res = var->name;
+        for (auto idx : var->indices) {
+            res += "[" + exprToString(idx) + "]";
+        }
+        return res;
+    } else if (auto bin = dynamic_cast<BinaryOpNode*>(node)) {
+        return exprToString(bin->left) + " " + opToSym(bin->op) + " " + exprToString(bin->right);
+    } else if (auto un = dynamic_cast<UnaryOpNode*>(node)) {
+        return opToSym(un->op) + exprToString(un->operand);
+    } else if (auto call = dynamic_cast<FuncCallNode*>(node)) {
+        return call->name + "(...)";
+    }
+    return "...";
+}
+
 // =========================================================================
 // 1. SYMBOL TABLE PRINTER (Sesuai Format Spek)
 // =========================================================================
@@ -105,15 +140,19 @@ string PrintASTVisitor::typeToStr(DataType t) {
 void PrintASTVisitor::visit(ProgramNode* node) {
     out << "ProgramNode(name: '" << node->name << "')\n";
     
+    bool hasDecl = !node->declarations.empty();
     bool hasBlock = node->mainBlock != nullptr;
     
     // Declarations
-    if (!node->declarations.empty()) {
-        out << (hasBlock ? " ├─ Declarations\n" : " └─ Declarations\n");
-        isLastChildStack.push_back(hasBlock ? false : true);
+    if (hasDecl) {
+        bool isLast = !hasBlock; // Kalau nggak ada block, decl ini adalah anak terakhir
+        printPrefix(isLast);
+        out << "Declarations\n";
         
+        isLastChildStack.push_back(isLast);
         for (size_t i = 0; i < node->declarations.size(); i++) {
-            printPrefix(i == node->declarations.size() - 1);
+            // Kita harus kirim informasi ke VarDecl bahwa dia anak dari Declarations
+            // Tapi kita handle indentasi di dalam VarDecl sendiri
             node->declarations[i]->accept(this);
         }
         isLastChildStack.pop_back();
@@ -139,21 +178,39 @@ void PrintASTVisitor::visit(ProgramNode* node) {
 }
 
 void PrintASTVisitor::visit(VarDeclNode* node) {
-    out << "VarDecl(";
     for (size_t i = 0; i < node->idents.size(); i++) {
-        out << "'" << node->idents[i] << "'";
-        if (i < node->idents.size() - 1) out << ", ";
+        // 1. Cetak prefix dari stack parent
+        for (size_t j = 0; j < isLastChildStack.size(); j++) {
+            if (isLastChildStack[j]) out << "    "; 
+            else out << " │   ";
+        }
+        
+        // 2. Tentukan simbol ranting: └─ kalau terakhir, ├─ kalau belum
+        bool isLastVar = (i == node->idents.size() - 1);
+        if (isLastVar) {
+            out << " └─ ";
+        } else {
+            out << " ├─ ";
+        }
+        
+        // 3. Cetak isi node
+        out << "VarDecl('" << node->idents[i] << "') \t\t→ tab_index:" 
+            << (node->symRef - (int)node->idents.size() + 1 + i) 
+            << ", type:" << typeToStr(node->evalType) << ", lev:" << node->lexicalLevel << "\n";
     }
-    out << ")      → tab_index:" << node->symRef << ", type:" << typeToStr(node->type) << ", lev:" << node->lexicalLevel << "\n";
 }
 
 void PrintASTVisitor::visit(AssignStmtNode* node) {
-    out << "Assign(...)           → type:" << typeToStr(node->evalType) << "\n";
+    string leftStr = exprToString(node->left);
+    string rightStr = exprToString(node->right);
+    out << "Assign('" << leftStr << "' := " << rightStr << ") \t→ type:" << typeToStr(node->evalType) << "\n";
     
     if (node->left) {
         printPrefix(false);
         out << "target ";
+        isLastChildStack.push_back(false);
         node->left->accept(this); 
+        isLastChildStack.pop_back();
     }
     if (node->right) {
         printPrefix(true);
@@ -165,15 +222,24 @@ void PrintASTVisitor::visit(AssignStmtNode* node) {
 }
 
 void PrintASTVisitor::visit(VarAccessNode* node) {
-    out << "'" << node->name << "'         → tab_index:" << node->symRef << ", type:" << typeToStr(node->evalType) << "\n";
+    out << "'" << node->name << "' \t\t→ tab_index:" << node->symRef << ", type:" << typeToStr(node->evalType) << "\n";
+
+    for (size_t i = 0; i < node->indices.size(); i++) {
+        bool isLast = (i == node->indices.size() - 1);
+        printPrefix(isLast);
+        out << "index ";
+        isLastChildStack.push_back(isLast);
+        node->indices[i]->accept(this);
+        isLastChildStack.pop_back();
+    }
 }
 
 void PrintASTVisitor::visit(LiteralNode* node) {
-    out << node->value << "             → type:" << typeToStr(node->evalType) << "\n";
+    out << node->value << " \t\t→ type:" << typeToStr(node->evalType) << "\n";
 }
 
 void PrintASTVisitor::visit(BinaryOpNode* node) {
-    out << "BinOp '" << node->op << "'         → type:" << typeToStr(node->evalType) << "\n";
+    out << "BinOp '" << node->op << "' \t\t→ type:" << typeToStr(node->evalType) << "\n";
     if (node->left) {
         printPrefix(false);
         isLastChildStack.push_back(false);
@@ -189,11 +255,21 @@ void PrintASTVisitor::visit(BinaryOpNode* node) {
 }
 
 void PrintASTVisitor::visit(FuncCallNode* node) {
-    out << node->name << "(...)          → ";
-    if (node->symRef < 38) out << "predefined, "; // Hardcode asumsi predefined words
-    out << "tab_index:" << node->symRef << "\n";
+    if (node->name == "writeln" || node->name == "readln" || node->name == "write" || node->name == "read") {
+        out << node->name << "(...) \t\t→ predefined, tab_index:" << node->symRef << "\n";
+    } else {
+        out << "FuncCall('" << node->name << "') \t→ tab_index:" << node->symRef << ", type:" << typeToStr(node->evalType) << "\n";
+    }
+    
+    for (size_t i = 0; i < node->args.size(); i++) {
+        bool isLast = (i == node->args.size() - 1);
+        printPrefix(isLast);
+        out << "arg ";
+        isLastChildStack.push_back(isLast);
+        node->args[i]->accept(this);
+        isLastChildStack.pop_back();
+    }
 }
-
 void PrintASTVisitor::visit(CompoundStmtNode* node) {
     out << "CompoundStmt\n";
     for (size_t i = 0; i < node->statements.size(); i++) {
@@ -291,9 +367,44 @@ void PrintASTVisitor::visit(ConstDeclNode* node) {
 }
 
 void PrintASTVisitor::visit(SubprogDeclNode* node) {
-    string typStr = node->isFunction ? "function" : "procedure";
+    string typStr = node->isFunction ? "Function" : "Procedure";
     out << "SubprogDecl(" << typStr << " '" << node->name << "') → tab_index:" 
-        << node->symRef << ", lev:" << node->lexicalLevel << "\n";
+        << node->symRef << ", lev:" << node->lexicalLevel;
+    if (node->isFunction) {
+        out << ", ret_type:" << typeToStr(node->retType);
+    }
+    out << "\n";
+
+    // Struktur pembantu untuk mengumpulkan semua child node (params + block body)
+    struct ChildComponent {
+        string label;
+        ASTNode* node;
+    };
+    vector<ChildComponent> children;
+
+    // 1. Kumpulkan semua parameter fungsi/prosedur jika ada
+    for (auto param : node->params) {
+        if (param) {
+            children.push_back({"param ", param});
+        }
+    }
+
+    // 2. Kumpulkan body block utama milik fungsi/prosedur jika ada
+    if (node->block) {
+        children.push_back({"body ", node->block});
+    }
+
+    // 3. Cetak seluruh komponen secara rekursif dengan tree prefix yang presisi
+    for (size_t i = 0; i < children.size(); i++) {
+        bool isLast = (i == children.size() - 1);
         
-    // Opsional: Jika ingin mencetak block/isi prosedur ke depannya
+        // Cetak garis branch sesuai kedalaman stack saat ini
+        printPrefix(isLast);
+        out << children[i].label;
+        
+        // Push status ke stack sebelum turun ke anak node
+        isLastChildStack.push_back(isLast);
+        children[i].node->accept(this);
+        isLastChildStack.pop_back();
+    }
 }

@@ -58,15 +58,14 @@ atab: (kosong karena tidak ada array)
 Decorated AST:
 ProgramNode(name: 'Hello')
  ├─ Declarations
- │   └─ VarDecl('a', 'b')      → tab_index:44, type:integer, lev:0
+ │   └─ VarDecl('a', 'b') 		→ tab_index:44, type:unknown, lev:0
  └─ Block                  → block_index:42, lev:0
-     ├─ Assign(...)           → type:void
-     │   ├─ target 'a'         → tab_index:42, type:integer
-     │   └─ value 5             → type:integer
-     ├─ Assign(...)           → type:void
-     │   ├─ target 'b'         → tab_index:43, type:integer
-     │   └─ value BinOp 'plus'         → type:integer
-     │       ├─ 'a'         → tab_index:42, type:integer
-     │       └─ 10             → type:integer
-     └─ writeln(...)          →          ├─ arg 'Result = '             → type:string
-         └─ arg 'b'         → tab_index:43, type:integer
+     ├─ Assign('a' := 5) 	→ type:void
+     │   ├─ target 'a' 		→ tab_index:42, type:integer
+     │   └─ value 5 		→ type:integer
+     ├─ Assign('b' := aplus10) 	→ type:void
+     │   ├─ target 'b' 		→ tab_index:43, type:integer
+     │   └─ value BinOp 'plus' 		→ type:integer
+     │       ├─ 'a' 		→ tab_index:42, type:integer
+     │       └─ 10 		→ type:integer
+     └─ writeln(...) 		→ predefined, tab_index:-1

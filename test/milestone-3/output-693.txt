@@ -1,7 +1,6 @@
 tab:
 idx  id          obj       type  ref  nrm  lev  adr  link
 -------------------------------------------------------
-...  (reserved words 0-32)
 0    empty       const     1     0    0    0    0    0
 1    and         const     1     0    0    0    0    0
 2    array       const     1     0    0    0    0    0
@@ -40,10 +39,10 @@ idx  id          obj       type  ref  nrm  lev  adr  link
 35   char        type      4     0    0    0    0    34
 36   boolean     type      5     0    0    0    0    35
 37   string      type      6     0    0    0    0    36
-38   true        const     5     0    1    0    1    37  ... (predefined)
-39   false       const     5     0    1    0    0    38  ... (predefined)
-40   writeln     procedure 1     0    0    0    0    39  ... (predefined)
-41   readln      procedure 1     0    0    0    0    40  ... (predefined)
+38   true        const     5     0    1    0    1    37
+39   false       const     5     0    1    0    0    38
+40   writeln     procedure 1     0    0    0    0    39
+41   readln      procedure 1     0    0    0    0    40
 42   UjiArray    procedure 1     0    0    0    0    41
 43   nilai       variable  7     0    1    0    0    42
 44   huruf       variable  7     1    1    0    0    43
@@ -62,23 +61,28 @@ idx  xtyp  etyp  eref  low  high  elsz  size
 0    2     2     0     1    5     1     5
 1    2     4     0     0    9     1     10
 
-Decorated AST (contoh anotasi minimal):
+Decorated AST:
 ProgramNode(name: 'UjiArray')
  ├─ Declarations
- │   ├─ VarDecl('nilai')      → tab_index:43, type:unknown, lev:0
- │   ├─ VarDecl('huruf')      → tab_index:44, type:unknown, lev:0
- │   └─ VarDecl('i', 'sum')      → tab_index:46, type:integer, lev:0
+ │    └─ VarDecl('nilai') 		→ tab_index:43, type:unknown, lev:0
+ │    └─ VarDecl('huruf') 		→ tab_index:44, type:unknown, lev:0
+ │    ├─ VarDecl('i') 		→ tab_index:45, type:unknown, lev:0
+ │    └─ VarDecl('sum') 		→ tab_index:46, type:unknown, lev:0
  └─ Block                  → block_index:42, lev:0
-     ├─ Assign(...)           → type:void
-     │   ├─ target 'sum'         → tab_index:45, type:integer
-     │   └─ value 0             → type:integer
-     ├─      ├─ Assign(...)           → type:void
-     │   ├─ target 'huruf'         → tab_index:43, type:char
-     │   └─ value 'A'             → type:char
-     ├─ Assign(...)           → type:void
-     │   ├─ target 'huruf'         → tab_index:43, type:char
-     │   └─ value 'B'             → type:char
-     └─ writeln(...)          → predefined, tab_index:-1
-
-[Analisis Semantik Sukses]
-Program berhasil lolos verifikasi tipe, scope, dan deklarasi.
+     ├─ Assign('sum' := 0) 	→ type:void
+     │   ├─ target 'sum' 		→ tab_index:45, type:integer
+     │   └─ value 0 		→ type:integer
+     ├─ ForStmt(iter: 'i')  → type:void
+     │   ├─ start 1 		→ type:integer
+     │   ├─ end 5 		→ type:integer
+     ├─ Assign('huruf[0]' := 'A') 	→ type:void
+     │   ├─ target 'huruf' 		→ tab_index:43, type:char
+     │   │   └─ index 0 		→ type:integer
+     │   └─ value 'A' 		→ type:char
+     ├─ Assign('huruf[1]' := 'B') 	→ type:void
+     │   ├─ target 'huruf' 		→ tab_index:43, type:char
+     │   │   └─ index 1 		→ type:integer
+     │   └─ value 'B' 		→ type:char
+     └─ writeln(...) 		→ predefined, tab_index:-1
+         ├─ arg 'Total sum array = ' 		→ type:string
+         └─ arg 'sum' 		→ tab_index:45, type:integer
