@@ -40,7 +40,7 @@ string typeToStr(DataType t) {
 }
 
 void printSymbolTables(const SymbolTable& st, ostream& out) {
-    out << "\ntab (hanya sebagian yang relevan):\n";
+    out << "\ntab:\n";
     out << left << setw(4) << "idx" << setw(15) << "id" << setw(15) << "obj" 
         << setw(10) << "type" << setw(5) << "ref" << setw(5) << "nrm" 
         << setw(5) << "lev" << setw(5) << "adr" << "link\n";
@@ -48,7 +48,7 @@ void printSymbolTables(const SymbolTable& st, ostream& out) {
     
     for (size_t i = 0; i < st.tab.size(); i++) {
         if (i == 0) out << "... (reserved words & predefined)\n";
-        if (i < 7) continue; 
+        // if (i < 7) continue; 
         
         const auto& t = st.tab[i];
         out << left << setw(4) << i << setw(15) << t.identifiers 
