@@ -1,0 +1,103 @@
+[HASIL SEMANTIC ANALYSIS]
+
+tab:
+idx id             obj            type      ref  nrm  lev  adr  link
+-----------------------------------------------------------------
+... (reserved words & predefined)
+0   empty          constant       void      0    0    0    0    0
+1   and            constant       void      0    0    0    0    0
+2   array          constant       void      0    0    0    0    0
+3   begin          constant       void      0    0    0    0    0
+4   case           constant       void      0    0    0    0    0
+5   const          constant       void      0    0    0    0    0
+6   div            constant       void      0    0    0    0    0
+7   downto         constant       void      0    0    0    0    0
+8   do             constant       void      0    0    0    0    0
+9   else           constant       void      0    0    0    0    0
+10  end            constant       void      0    0    0    0    0
+11  for            constant       void      0    0    0    0    0
+12  function       constant       void      0    0    0    0    0
+13  if             constant       void      0    0    0    0    0
+14  mod            constant       void      0    0    0    0    0
+15  not            constant       void      0    0    0    0    0
+16  of             constant       void      0    0    0    0    0
+17  or             constant       void      0    0    0    0    0
+18  procedure      constant       void      0    0    0    0    0
+19  program        constant       void      0    0    0    0    0
+20  record         constant       void      0    0    0    0    0
+21  repeat         constant       void      0    0    0    0    0
+22  integer        constant       void      0    0    0    0    0
+23  real           constant       void      0    0    0    0    0
+24  boolean        constant       void      0    0    0    0    0
+25  char           constant       void      0    0    0    0    0
+26  string         constant       void      0    0    0    0    0
+27  then           constant       void      0    0    0    0    0
+28  to             constant       void      0    0    0    0    0
+29  type           constant       void      0    0    0    0    0
+30  until          constant       void      0    0    0    0    0
+31  var            constant       void      0    0    0    0    0
+32  while          constant       void      0    0    0    0    0
+33  integer        type_def       integer   0    0    0    0    0
+34  real           type_def       real      0    0    0    0    33
+35  char           type_def       char      0    0    0    0    34
+36  boolean        type_def       boolean   0    0    0    0    35
+37  string         type_def       string    0    0    0    0    36
+38  true           constant       boolean   0    1    0    1    37
+39  false          constant       boolean   0    1    0    0    38
+40  writeln        procedure      void      0    0    0    0    39
+41  readln         procedure      void      0    0    0    0    40
+42  UjiArray       procedure      void      0    0    0    0    41
+43  nilai          variable       array     0    1    0    0    42
+44  huruf          variable       array     1    1    0    0    43
+45  i              variable       integer   0    1    0    0    44
+46  sum            variable       integer   0    1    0    0    45
+
+btab:
+idx  last  lpar  psze  vsze  keterangan
+--------------------------------------------------------------------------------
+0    46    0     0     4       <- global block (program), vsze=4 (nilai, huruf, i dan sum)
+1    46    0     0     0       <- main block (kosong variabel lokal)
+2    46    0     0     0       <- local block (procedure/function)
+
+atab:
+arraysxtyp  etyp  eref  low   high  elsz  size
+-------------------------------------------------------
+0     2     2     0     1     5     1     5
+1     2     4     0     0     9     1     10
+
+Decorated AST:
+ProgramNode(name: 'UjiArray')
+ ├─ Declarations
+ │   ├─ VarDecl('nilai') [Array 1..5 of integer] 	-> tab_index:43, type:notype, lev:0
+ │   ├─ VarDecl('huruf') [Array 0..9 of char] 	-> tab_index:44, type:notype, lev:0
+ │   └─ VarDecl('i', 'sum') 	-> tab_index:46, type:notype, lev:0
+ └─ Block 	-> block_index:1, lev:1
+     ├─ Assign 	-> type:void
+     │   ├─ target 'sum' 	-> tab_index:45, type:integer, lev:1
+     │   └─ value 0 	-> type:integer
+     ├─ ForStmt(iter: 'i') 	-> type:void
+     │   ├─ start 1 	-> type:integer
+     │   ├─ end 5 	-> type:integer
+     │   └─ CompoundStmt
+     │       ├─ Assign 	-> type:void
+     │       │   ├─ target 'nilai' 	-> tab_index:42, type:array, lev:2
+     │       │   └─ value BinOp 'times' 	-> type:integer
+     │       │       ├─ 'i' 	-> tab_index:44, type:integer, lev:2
+     │       │       └─ 10 	-> type:integer
+     │       └─ Assign 	-> type:void
+     │           ├─ target 'sum' 	-> tab_index:45, type:integer, lev:2
+     │           └─ value BinOp 'plus'
+     │               ├─ 'sum' 	-> tab_index:45, type:integer, lev:2
+     │               └─ 'nilai' 	-> tab_index:42, type:array, lev:2
+     ├─ Assign 	-> type:void
+     │   ├─ target 'huruf' 	-> tab_index:43, type:array, lev:1
+     │   └─ value 'A' 	-> type:char
+     ├─ Assign 	-> type:void
+     │   ├─ target 'huruf' 	-> tab_index:43, type:array, lev:1
+     │   └─ value 'B' 	-> type:char
+     └─ writeln(...) 	-> type:void
+         ├─ arg 'Total sum array = ' 	-> type:string
+         └─ arg 'sum' 	-> tab_index:45, type:integer, lev:1
+
+[Analisis Semantik Sukses]
+Program berhasil lolos verifikasi tipe, scope, dan deklarasi.

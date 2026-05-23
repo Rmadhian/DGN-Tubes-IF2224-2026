@@ -40,10 +40,6 @@ void printSymbolTables(const SymbolTable& st, std::ostream& out) {
             << setw(5) << t.adr 
             << t.link;
             
-        // Anotasi tambahan untuk predefined identifiers
-        if (t.identifiers == "writeln" || t.identifiers == "readln" || t.identifiers == "true" || t.identifiers == "false") {
-            out << "  ... (predefined)";
-        }
         out << "\n";
     }
 
@@ -198,11 +194,106 @@ void PrintASTVisitor::visit(FuncCallNode* node) {
     out << "tab_index:" << node->symRef << "\n";
 }
 
-// Implementasi kosong untuk Node lain agar tidak error (bisa kamu lengkapi sesuai kebutuhan logika di atas)
-void PrintASTVisitor::visit(CompoundStmtNode* node) {}
-void PrintASTVisitor::visit(ConstDeclNode* node) {}
-void PrintASTVisitor::visit(SubprogDeclNode* node) {}
-void PrintASTVisitor::visit(IfStmtNode* node) {}
-void PrintASTVisitor::visit(WhileStmtNode* node) {}
-void PrintASTVisitor::visit(ForStmtNode* node) {}
-void PrintASTVisitor::visit(UnaryOpNode* node) {}
+void PrintASTVisitor::visit(CompoundStmtNode* node) {
+    out << "CompoundStmt\n";
+    for (size_t i = 0; i < node->statements.size(); i++) {
+        bool isLast = (i == node->statements.size() - 1);
+        printPrefix(isLast);
+        isLastChildStack.push_back(isLast);
+        node->statements[i]->accept(this);
+        isLastChildStack.pop_back();
+    }
+}
+
+void PrintASTVisitor::visit(IfStmtNode* node) {
+    out << "IfStmt                → type:" << typeToStr(node->evalType) << "\n";
+    
+    if (node->condition) {
+        printPrefix(false);
+        out << "condition ";
+        isLastChildStack.push_back(false);
+        node->condition->accept(this);
+        isLastChildStack.pop_back();
+    }
+    if (node->thenStmt) {
+        bool isLast = (node->elseStmt == nullptr);
+        printPrefix(isLast);
+        out << "then ";
+        isLastChildStack.push_back(isLast);
+        node->thenStmt->accept(this);
+        isLastChildStack.pop_back();
+    }
+    if (node->elseStmt) {
+        printPrefix(true);
+        out << "else ";
+        isLastChildStack.push_back(true);
+        node->elseStmt->accept(this);
+        isLastChildStack.pop_back();
+    }
+}
+
+void PrintASTVisitor::visit(WhileStmtNode* node) {
+    out << "WhileStmt             → type:" << typeToStr(node->evalType) << "\n";
+    if (node->condition) {
+        printPrefix(false);
+        out << "condition ";
+        isLastChildStack.push_back(false);
+        node->condition->accept(this);
+        isLastChildStack.pop_back();
+    }
+    if (node->body) {
+        printPrefix(true);
+        out << "body ";
+        isLastChildStack.push_back(true);
+        node->body->accept(this);
+        isLastChildStack.pop_back();
+    }
+}
+
+void PrintASTVisitor::visit(ForStmtNode* node) {
+    out << "ForStmt(iter: '" << node->iterVar << "')  → type:" << typeToStr(node->evalType) << "\n";
+    if (node->startExpr) {
+        printPrefix(false);
+        out << "start ";
+        isLastChildStack.push_back(false);
+        node->startExpr->accept(this);
+        isLastChildStack.pop_back();
+    }
+    if (node->endExpr) {
+        printPrefix(false);
+        out << "end ";
+        isLastChildStack.push_back(false);
+        node->endExpr->accept(this);
+        isLastChildStack.pop_back();
+    }
+    if (node->body) {
+        printPrefix(true);
+        out << "body ";
+        isLastChildStack.push_back(true);
+        node->body->accept(this);
+        isLastChildStack.pop_back();
+    }
+}
+
+void PrintASTVisitor::visit(UnaryOpNode* node) {
+    out << "UnaryOp '" << node->op << "'          → type:" << typeToStr(node->evalType) << "\n";
+    if (node->operand) {
+        printPrefix(true);
+        isLastChildStack.push_back(true);
+        node->operand->accept(this);
+        isLastChildStack.pop_back();
+    }
+}
+
+void PrintASTVisitor::visit(ConstDeclNode* node) {
+    out << "ConstDecl('" << node->name << "' = " << node->value << ") → tab_index:" 
+        << node->symRef << ", type:" << typeToStr(node->type) << "\n";
+}
+
+void PrintASTVisitor::visit(SubprogDeclNode* node) {
+    string typStr = node->isFunction ? "function" : "procedure";
+    out << "SubprogDecl(" << typStr << " '" << node->name << "') → tab_index:" 
+        << node->symRef << ", lev:" << node->lexicalLevel << "\n";
+        
+    // Opsional: Jika ingin mencetak block/isi prosedur ke depannya
+}
