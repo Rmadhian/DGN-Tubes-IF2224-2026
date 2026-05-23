@@ -11,174 +11,6 @@
 
 using namespace std;
 
-// Formatter untuk output
-
-string objToStr(ObjClass obj) {
-    switch (obj) {
-        case ObjClass::CONSTANT: return "constant";
-        case ObjClass::VARIABLE: return "variable";
-        case ObjClass::TYPE_DEF: return "type_def";
-        case ObjClass::PROCEDURE: return "procedure";
-        case ObjClass::FUNCTION: return "function";
-        default: return "unknown";
-    }
-}
-
-string typeToStr(DataType t) {
-    switch (t) {
-        case DataType::INTEGER: return "integer";
-        case DataType::REAL: return "real";
-        case DataType::CHAR: return "char";
-        case DataType::BOOLEAN: return "boolean";
-        case DataType::STRING: return "string";
-        case DataType::ARRAY: return "array";
-        case DataType::RECORD: return "record";
-        case DataType::NONE: return "void";
-        case DataType::NOTYPE: return "notype";
-        default: return "?";
-    }
-}
-
-void printSymbolTables(const SymbolTable& st, ostream& out) {
-    out << "\ntab:\n";
-    out << left << setw(4) << "idx" << setw(15) << "id" << setw(15) << "obj" 
-        << setw(10) << "type" << setw(5) << "ref" << setw(5) << "nrm" 
-        << setw(5) << "lev" << setw(5) << "adr" << "link\n";
-    out << string(65, '-') << "\n";
-    
-    for (size_t i = 0; i < st.tab.size(); i++) {
-        if (i == 0) out << "... (reserved words & predefined)\n";
-        // if (i < 7) continue; 
-        
-        const auto& t = st.tab[i];
-        out << left << setw(4) << i << setw(15) << t.identifiers 
-            << setw(15) << objToStr(t.obj) << setw(10) << typeToStr(t.type) 
-            << setw(5) << t.ref << setw(5) << t.nrm << setw(5) << t.lev 
-            << setw(5) << t.adr << t.link << "\n";
-    }
-
-    out << "\nbtab:\n";
-    out << left << setw(4) << "idx" << setw(6) << "last" << setw(6) << "lpar" 
-        << setw(6) << "psze" << "vsze\n";
-    out << string(30, '-') << "\n";
-    for(size_t i = 0; i < st.btab.size(); i++) {
-        const auto& b = st.btab[i];
-        out << left << setw(4) << i << setw(6) << b.last << setw(6) << b.lpar 
-            << setw(6) << b.psze << b.vsze << "\n";
-    }
-
-    out << "\natab:\n";
-    if (st.atab.empty()) {
-        out << "(kosong karena tidak ada array)\n";
-    } else {
-        out << left << setw(6) << "arrays" << setw(6) << "xtyp" << setw(6) << "etyp" 
-            << setw(6) << "eref" << setw(6) << "low" << setw(6) << "high" 
-            << setw(6) << "elsz" << "size\n";
-        out << string(55, '-') << "\n";
-        for(size_t i = 0; i < st.atab.size(); i++) {
-            const auto& a = st.atab[i];
-            out << left << setw(6) << a.arrays << setw(6) << (int)a.xtyp << setw(6) << (int)a.etyp 
-                << setw(6) << a.eref << setw(6) << a.low << setw(6) << a.high 
-                << setw(6) << a.elsz << a.size << "\n";
-        }
-    }
-    out << "\n";
-}
-
-void printAST(ASTNode* node, string indent, bool isLast, ostream& out, string prefix = "") {
-    if (!node) return;
-
-    // Mengganti karakter ASCII dengan Unicode Box-Drawing
-    string marker = isLast ? " └─ " : " ├─ "; 
-    string nextIndent = indent + (isLast ? "    " : " │  ");
-    
-    // Siapkan Anotasi Semantik
-    string anotasi = "";
-    if (node->symRef != -1 || node->evalType != DataType::NOTYPE) {
-        anotasi += " \t-> "; // Anda juga bisa mengubah ini menjadi " \t→ " jika ingin panah Unicode
-        if (node->symRef != -1) anotasi += "tab_index:" + to_string(node->symRef) + ", ";
-        anotasi += "type:" + typeToStr(node->evalType);
-        if (node->lexicalLevel >= 0 && node->symRef != -1) anotasi += ", lev:" + to_string(node->lexicalLevel);
-    }
-
-    // Identifikasi Tipe Node dengan dynamic_cast
-    if (auto p = dynamic_cast<ProgramNode*>(node)) {
-        out << indent << "ProgramNode(name: '" << p->name << "')\n";
-        out << indent << " ├─ Declarations\n";
-        for (size_t i = 0; i < p->declarations.size(); i++) {
-            printAST(p->declarations[i], indent + " │  ", (i == p->declarations.size() - 1), out);
-        }
-        out << indent << " └─ Block";
-        if (p->mainBlock) {
-            out << " \t-> block_index:" << p->mainBlock->symRef << ", lev:" << p->mainBlock->lexicalLevel << "\n";
-            auto block = dynamic_cast<CompoundStmtNode*>(p->mainBlock);
-            for (size_t i = 0; block && i < block->statements.size(); i++) {
-                printAST(block->statements[i], indent + "    ", (i == block->statements.size() - 1), out);
-            }
-        } else out << "\n";
-    } 
-    else if (auto v = dynamic_cast<VarDeclNode*>(node)) {
-        out << indent << marker << "VarDecl(";
-        for(size_t i=0; i<v->idents.size(); i++) out << "'" << v->idents[i] << "'" << (i+1==v->idents.size()?"":", ");
-        out << ")" << anotasi << "\n";
-    }
-    else if (auto c = dynamic_cast<ConstDeclNode*>(node)) {
-        out << indent << marker << "ConstDecl('" << c->name << "' = " << c->value << ")" << anotasi << "\n";
-    }
-    else if (auto a = dynamic_cast<AssignStmtNode*>(node)) {
-        out << indent << marker << "Assign" << anotasi << "\n";
-        printAST(a->left, nextIndent, false, out, "target ");
-        printAST(a->right, nextIndent, true, out, "value ");
-    }
-    else if (auto b = dynamic_cast<BinaryOpNode*>(node)) {
-        out << indent << marker << prefix << "BinOp '" << b->op << "'" << anotasi << "\n";
-        printAST(b->left, nextIndent, false, out);
-        printAST(b->right, nextIndent, true, out);
-    }
-    else if (auto u = dynamic_cast<UnaryOpNode*>(node)) {
-        out << indent << marker << prefix << "UnaryOp '" << u->op << "'" << anotasi << "\n";
-        printAST(u->operand, nextIndent, true, out);
-    }
-    else if (auto va = dynamic_cast<VarAccessNode*>(node)) {
-        out << indent << marker << prefix << "'" << va->name << "'" << anotasi << "\n";
-    }
-    else if (auto lit = dynamic_cast<LiteralNode*>(node)) {
-        out << indent << marker << prefix << lit->value << anotasi << "\n";
-    }
-    else if (auto fc = dynamic_cast<FuncCallNode*>(node)) {
-        out << indent << marker << prefix << fc->name << "(...)" << anotasi << "\n";
-        for (size_t i = 0; i < fc->args.size(); i++) {
-            printAST(fc->args[i], nextIndent, (i == fc->args.size() - 1), out, "arg ");
-        }
-    }
-    else if (auto comp = dynamic_cast<CompoundStmtNode*>(node)) {
-        out << indent << marker << "CompoundStmt\n";
-        for (size_t i = 0; i < comp->statements.size(); i++) {
-            printAST(comp->statements[i], nextIndent, (i == comp->statements.size() - 1), out);
-        }
-    }
-    else if (auto iff = dynamic_cast<IfStmtNode*>(node)) {
-        out << indent << marker << "IfStmt" << anotasi << "\n";
-        printAST(iff->condition, nextIndent, false, out, "condition ");
-        printAST(iff->thenStmt, nextIndent, (iff->elseStmt == nullptr), out, "then ");
-        if (iff->elseStmt) printAST(iff->elseStmt, nextIndent, true, out, "else ");
-    }
-    else if (auto wh = dynamic_cast<WhileStmtNode*>(node)) {
-        out << indent << marker << "WhileStmt" << anotasi << "\n";
-        printAST(wh->condition, nextIndent, false, out, "condition ");
-        printAST(wh->body, nextIndent, true, out, "body ");
-    }
-    else if (auto fr = dynamic_cast<ForStmtNode*>(node)) {
-        out << indent << marker << "ForStmt(iter: '" << fr->iterVar << "')" << anotasi << "\n";
-        printAST(fr->startExpr, nextIndent, false, out, "start ");
-        printAST(fr->endExpr, nextIndent, false, out, "end ");
-        printAST(fr->body, nextIndent, true, out, "body ");
-    }
-    else {
-        out << indent << marker << "UnknownNode\n";
-    }
-}
-
 // Utility file reader & parser helper
 
 enum class InputType { SOURCE_CODE, TOKEN_LIST, PARSE_TREE };
@@ -370,20 +202,21 @@ int main(int argc, char* argv[]) {
 
     if (astRoot != nullptr) {
         cout << "[INFO] Menjalankan Semantic Analyzer (Decorating AST & Symbol Table)..." << endl;
+        
         SemanticAnalyzer semanticAnalyzer;
         astRoot->accept(&semanticAnalyzer); 
 
         cout << "[SUCCESS] Semantic Analysis Selesai." << endl;
         
-        fileOutput << "[HASIL SEMANTIC ANALYSIS]\n";
-        
+        // Panggil fungsi printSymbolTables
         printSymbolTables(semanticAnalyzer.st, fileOutput);
         
         fileOutput << "Decorated AST:\n";
-        printAST(astRoot, "", true, fileOutput);
         
-        fileOutput << "\n[Analisis Semantik Sukses]\n";
-        fileOutput << "Program berhasil lolos verifikasi tipe, scope, dan deklarasi.\n";
+        // Panggil Visitor PrintASTVisitor dengan meneruskan stream fileOutput
+        PrintASTVisitor astPrinter(fileOutput);
+        astRoot->accept(&astPrinter);
+        
     } else {
         cout << "Error Semantik: Gagal membangun Abstract Syntax Tree dari struktur Parse Tree." << endl;
     }

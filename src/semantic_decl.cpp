@@ -36,6 +36,9 @@ void SymbolTable::initPredefined() {
     insertTab("false", ObjClass::CONSTANT, DataType::BOOLEAN, 0, 0, 0);
     insertTab("writeln", ObjClass::PROCEDURE, DataType::NONE, 0, 0, 0);
     insertTab("readln", ObjClass::PROCEDURE, DataType::NONE, 0, 0, 0);
+
+    int globalBlockIdx = insertBTab();
+    activeBlocks.push_back(globalBlockIdx);
 }
 
 // Insert entry baru ke tab dengan link yang tepat, return indeks
@@ -79,10 +82,25 @@ TabEntry* SymbolTable::getTab(int index) {
 }
 
 TabEntry* SymbolTable::lookupTab(string name) {
-    for (int i = (int)tab.size() - 1; i >= 33; i--) {
+    // Mulai dari blok paling dalam (scope saat ini) ke blok global
+    for (int i = activeBlocks.size() - 1; i >= 0; i--) {
+        int blockIdx = activeBlocks[i];
+        int currIdx = btab[blockIdx].last; // Mulai dari identifier terakhir di blok ini
+        
+        while (currIdx > 0 && currIdx < tab.size()) {
+            if (tab[currIdx].identifiers == name) {
+                return &tab[currIdx];
+            }
+            currIdx = tab[currIdx].link; // Lompat ke identifier sebelumnya di scope yang sama
+        }
+    }
+    
+    // Fallback: periksa reserved words (indeks 0 - 32)
+    for (int i = 32; i >= 0; i--) {
         if (tab[i].identifiers == name) return &tab[i];
     }
-    return nullptr;
+    
+    return nullptr; // Tidak ditemukan di scope manapun
 }
 
 ATabEntry* SymbolTable::getATab(int index) {
@@ -113,8 +131,7 @@ void SubprogDeclNode::accept(SemanticVisitor* visitor) { visitor->visit(this); }
 void SemanticAnalyzer::visit(ProgramNode* node) {
     st.initPredefined();
 
-    // Buat btab[0] untuk global block
-    int globalBlockIdx = st.insertBTab(); 
+    int globalBlockIdx = 0;
     
     node->symRef = st.insertTab(node->name, ObjClass::PROCEDURE, DataType::NONE);
     node->lexicalLevel = st.currentLevel;
@@ -145,6 +162,10 @@ void SemanticAnalyzer::visit(VarDeclNode* node) {
                  << ident << "' in the same scope." << endl;
             // Dihilangkan exit(EXIT_FAILURE) agar memenuhi syarat error handling tidak crash
         } else {
+            if (node->type == DataType::ARRAY) {
+                // Parameter: tipe index (INTEGER), tipe elemen, array ref(0), low, high, elsz(1)
+                node->ref = st.insertATab(DataType::INTEGER, node->elementType, 0, node->lowBound, node->highBound, 1);
+            }
             node->symRef = st.insertTab(ident, ObjClass::VARIABLE, node->type, node->ref);
             node->lexicalLevel = st.currentLevel;
         }
@@ -175,17 +196,47 @@ void SemanticAnalyzer::visit(SubprogDeclNode* node) {
 
     st.pushScope();
     int blockIdx = st.insertBTab(); 
+    st.activeBlocks.push_back(blockIdx);
     
     // Hubungkan prosedur/fungsi di tab ke btab blocknya melalui referensi (ref)
     if (node->symRef != -1) {
         st.tab[node->symRef].ref = blockIdx;
     }
 
-    for (ASTNode* param : node->params)
+    for (ASTNode* param : node->params) {
         if (param) param->accept(this);
+    }
 
-    if (node->block)
-        node->block->accept(this);
+    int lastParamIdx = 0;
+    int paramSize = 0;
+    
+    // Cari parameter terakhir dari belakang tab
+    for (int i = st.tab.size() - 1; i >= 33; i--) {
+        if (st.tab[i].lev == st.currentLevel) {
+            if (lastParamIdx == 0) lastParamIdx = i; // Ini parameter terakhir
+            paramSize++; // Asumsi 1 param = 1 ukuran dasar
+        } else if (st.tab[i].lev < st.currentLevel) {
+            break;
+        }
+    }
 
+    if (node->block) node->block->accept(this);
+
+    // Sekarang, cari last identifier (termasuk variabel lokal yang di-declare di dalam block)
+    int lastVarIdx = 0;
+    int vsze = 0;
+    for (int i = st.tab.size() - 1; i >= 33; i--) {
+        if (st.tab[i].lev == st.currentLevel) {
+            if (lastVarIdx == 0) lastVarIdx = i;
+            if (st.tab[i].obj == ObjClass::VARIABLE) vsze++;
+        } else if (st.tab[i].lev < st.currentLevel) {
+            break;
+        }
+    }
+
+    // Update BTab untuk lpar, psze, dan last
+    st.updateBTab(blockIdx, lastVarIdx, lastParamIdx, paramSize, vsze);
+
+    st.activeBlocks.pop_back(); // Keluar dari scope
     st.popScope();
 }

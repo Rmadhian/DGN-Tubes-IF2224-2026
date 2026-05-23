@@ -1,0 +1,47 @@
+tab (hanya sebagian yang relevan):
+idx  id          obj       type  ref  nrm  lev  adr  link
+-------------------------------------------------------
+...  (reserved words 0-32)
+33   integer     type      2     0    0    0    0    0
+34   real        type      3     0    0    0    0    33
+35   char        type      4     0    0    0    0    34
+36   boolean     type      5     0    0    0    0    35
+37   string      type      6     0    0    0    0    36
+38   true        const     5     0    1    0    1    37  ... (predefined)
+39   false       const     5     0    1    0    0    38  ... (predefined)
+40   writeln     procedure 1     0    0    0    0    39  ... (predefined)
+41   readln      procedure 1     0    0    0    0    40  ... (predefined)
+42   UjiArray    procedure 1     0    0    0    0    41
+43   nilai       variable  7     0    1    0    0    42
+44   huruf       variable  7     0    1    0    0    43
+45   i           variable  2     0    1    0    0    44
+46   sum         variable  2     0    1    0    0    45
+
+btab:
+idx  last  lpar  psze  vsze
+---------------------------
+0    46    0     0     4   <- global block (program), vsze=4
+1    46    0     0     0   <- main block (kosong variabel lokal)
+
+atab: (kosong karena tidak ada array)
+
+Decorated AST (contoh anotasi minimal):
+ProgramNode(name: 'UjiArray')
+ ├─ Declarations
+ │   ├─ VarDecl('nilai')      → tab_index:43, type:unknown, lev:0
+ │   ├─ VarDecl('huruf')      → tab_index:44, type:unknown, lev:0
+ │   └─ VarDecl('i', 'sum')      → tab_index:46, type:integer, lev:0
+ └─ Block                  → block_index:42, lev:0
+     ├─ Assign(...)           → type:void
+     │   ├─ target 'sum'         → tab_index:45, type:integer
+     │   └─ value 0             → type:integer
+     ├─      ├─ Assign(...)           → type:void
+     │   ├─ target 'huruf'         → tab_index:43, type:unknown
+     │   └─ value 'A'             → type:char
+     ├─ Assign(...)           → type:void
+     │   ├─ target 'huruf'         → tab_index:43, type:unknown
+     │   └─ value 'B'             → type:char
+     └─ writeln(...)          → predefined, tab_index:-1
+
+[Analisis Semantik Sukses]
+Program berhasil lolos verifikasi tipe, scope, dan deklarasi.

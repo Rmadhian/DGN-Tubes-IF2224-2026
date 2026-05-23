@@ -35,13 +35,47 @@ void SemanticAnalyzer::visit(VarAccessNode* node) {
         } else {
             for (ASTNode* idxNode : node->indices) {
                 idxNode->accept(this);
-                if (idxNode->evalType != DataType::INTEGER)
-                    cout << "Error Semantik: Indeks Array harus bernilai Integer!" << endl;
+                DataType idxt = idxNode->evalType;
+                if (idxt == DataType::REAL || idxt == DataType::ARRAY || idxt == DataType::RECORD) {
+                    cout << "Error Semantik: Indeks Array harus bertipe simple (bukan Real/Komposit)!" << endl;
+                }
             }
             // Tipe hasil = tipe elemen array
             ATabEntry* arrayInfo = st.getATab(entry->ref);
             if (arrayInfo != nullptr)
                 node->evalType = arrayInfo->etyp;
+        }
+    }
+
+    if (!node->fieldName.empty()) {
+        if (node->evalType != DataType::RECORD) {
+            cout << "Error Semantik: '" << node->name << "' bukan sebuah Record!" << endl;
+            node->evalType = DataType::NOTYPE;
+        } else {
+            int bIndex = entry->ref; // ambil referensi block record di btab
+            if (bIndex > 0) {
+                BTabEntry* recBlock = st.getBTab(bIndex);
+                int currField = recBlock->last;
+                bool found = false;
+                
+                // Traverse backwards di dalam definisi record
+                while (currField > 0) {
+                    TabEntry* fieldEntry = st.getTab(currField);
+                    if (fieldEntry->identifiers == node->fieldName) {
+                        node->evalType = fieldEntry->type; // Update tipe
+                        node->symRef = currField; // Arahkan symRef ke field ini
+                        found = true;
+                        break;
+                    }
+                    currField = fieldEntry->link;
+                }
+                
+                if (!found) {
+                    cout << "Error Semantik: Field '" << node->fieldName 
+                         << "' tidak ditemukan dalam record '" << node->name << "'!" << endl;
+                    node->evalType = DataType::NOTYPE;
+                }
+            }
         }
     }
 }

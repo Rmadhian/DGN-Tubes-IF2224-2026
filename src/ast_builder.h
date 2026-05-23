@@ -38,6 +38,7 @@ private:
     // Helper
     VarAccessNode* buildVariable(ParseTreeNode* varNode);
     DataType stringToDataType(string typeStr);
+    DataType resolveType(ParseTreeNode* typeNode);
     vector<string> extractIdentifierList(ParseTreeNode* idList);
 };
 

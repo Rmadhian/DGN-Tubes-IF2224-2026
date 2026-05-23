@@ -42,8 +42,30 @@ void ASTBuilder::buildVarDeclaration(ParseTreeNode* varDecl, vector<ASTNode*>& d
             // Tipe ada 2 posisi setelah identifier-list (lewat colon)
             if (i + 2 < varDecl->children.size() && varDecl->children[i+2]->label == "<type>") {
                 ParseTreeNode* typeNode = varDecl->children[i+2];
-                if (!typeNode->children.empty()) {
-                    vNode->type = stringToDataType(typeNode->children[0]->value); 
+                vNode->type = resolveType(typeNode);
+
+                if (vNode->type == DataType::ARRAY) {
+                    ParseTreeNode* curr = typeNode;
+                    while(curr->children.size() == 1 && curr->label != "<array-type>") {
+                        curr = curr->children[0];
+                    }
+                    
+                    if (curr->label == "<array-type>") {
+                        for(size_t j=0; j<curr->children.size(); j++){
+                            if(curr->children[j]->label == "<range>") {
+                                ParseTreeNode* rangeNode = curr->children[j];
+                                // Ekstrak bounds dari <constant> period period <constant>
+                                if (rangeNode->children.size() >= 4) {
+                                    ParseTreeNode* leftConst = rangeNode->children[0];
+                                    ParseTreeNode* rightConst = rangeNode->children[3];
+                                    if(!leftConst->children.empty()) vNode->lowBound = stoi(leftConst->children[0]->value);
+                                    if(!rightConst->children.empty()) vNode->highBound = stoi(rightConst->children[0]->value);
+                                }
+                            } else if(curr->children[j]->label == "<type>") {
+                                vNode->elementType = resolveType(curr->children[j]);
+                            }
+                        }
+                    }
                 }
             }
             declList.push_back(vNode);
@@ -320,7 +342,26 @@ VarAccessNode* ASTBuilder::buildVariable(ParseTreeNode* varNode) {
         if (child->label == "ident")
             vNode->name = child->value;
         else if (child->label == "<component-variable>") {
-            // TODO: implementasi akses array subscript dan record field
+            for (auto compChild : child->children) {
+                if (compChild->label == "<index-list>") {
+                    // Ekstrak semua indeks di dalam kurung siku
+                    for (auto idxChild : compChild->children) {
+                        if (idxChild->label == "intcon" || idxChild->label == "charcon") {
+                            LiteralNode* lit = new LiteralNode();
+                            lit->value = idxChild->value;
+                            lit->literalType = stringToDataType(idxChild->label);
+                            vNode->indices.push_back(lit);
+                        } else if (idxChild->label == "ident") {
+                            VarAccessNode* vAcc = new VarAccessNode();
+                            vAcc->name = idxChild->value;
+                            vNode->indices.push_back(vAcc);
+                        }
+                    }
+                } else if (compChild->label == "ident") { 
+                    // Akses field record (contoh: record.field)
+                    vNode->fieldName = compChild->value;
+                }
+            }
         }
     }
     return vNode;
@@ -341,5 +382,84 @@ DataType ASTBuilder::stringToDataType(string typeStr) {
     if (typeStr == "char"    || typeStr == "charcon") return DataType::CHAR;
     if (typeStr == "boolean") return DataType::BOOLEAN;
     if (typeStr == "string")  return DataType::STRING;
+    return DataType::NOTYPE;
+}
+
+DataType ASTBuilder::resolveType(ParseTreeNode* typeNode) {
+    if (!typeNode || typeNode->children.empty()) return DataType::NOTYPE;
+
+    // Telusuri ke bawah untuk berjaga-jaga jika grammar berjenjang 
+    // (misal: <type> -> <simple-type> -> <subrange-type>)
+    ParseTreeNode* curr = typeNode;
+    while (curr->children.size() == 1 && curr->label != "ident") {
+        curr = curr->children[0];
+    }
+
+    // Kasus 1: Tipe Data Dasar (Integer, Real, Boolean, dsb)
+    if (curr->children.empty()) {
+        return stringToDataType(curr->value.empty() ? curr->label : curr->value);
+    }
+
+    // Kasus 2: Subrange (Biasanya polanya: <constant> dotdot <constant>)
+    // Kita cari apakah ada node dengan label "dotdot" (..) di anak-anaknya
+    bool isSubrange = false;
+    ParseTreeNode* leftConst = nullptr;
+    ParseTreeNode* rightConst = nullptr;
+
+    for (size_t i = 0; i < curr->children.size(); i++) {
+        if (curr->children[i]->label == "dotdot" || curr->children[i]->value == "..") {
+            isSubrange = true;
+            if (i > 0) leftConst = curr->children[i-1];
+            if (i + 1 < curr->children.size()) rightConst = curr->children[i+1];
+            break;
+        }
+    }
+
+    if (isSubrange && leftConst && rightConst) {
+        // Ekstrak tipe dan nilai dari node <constant>
+        ParseTreeNode* leftValNode = leftConst->children.empty() ? leftConst : leftConst->children[0];
+        ParseTreeNode* rightValNode = rightConst->children.empty() ? rightConst : rightConst->children[0];
+
+        DataType leftType = stringToDataType(leftValNode->label);
+        DataType rightType = stringToDataType(rightValNode->label);
+
+        // VALIDASI 1: Tidak boleh bertipe Real (Spek Halaman 15)
+        if (leftType == DataType::REAL || rightType == DataType::REAL) {
+            std::cerr << "Error Semantik: Tipe Subrange tidak boleh menggunakan Real!" << std::endl;
+            return DataType::NOTYPE;
+        }
+
+        // VALIDASI 2: Tipe batas kiri dan kanan harus sama (keduanya integer atau keduanya char)
+        if (leftType != rightType) {
+            std::cerr << "Error Semantik: Batas kiri dan kanan Subrange harus memiliki tipe yang sama!" << std::endl;
+            return DataType::NOTYPE;
+        }
+
+        // VALIDASI 3: Batas Kiri <= Batas Kanan
+        if (leftType == DataType::INTEGER) {
+            int leftVal = std::stoi(leftValNode->value);
+            int rightVal = std::stoi(rightValNode->value);
+            if (leftVal > rightVal) {
+                std::cerr << "Error Semantik: Batas kiri (" << leftVal 
+                          << ") lebih besar dari batas kanan (" << rightVal << ") pada Subrange!" << std::endl;
+                return DataType::NOTYPE;
+            }
+        } else if (leftType == DataType::CHAR) {
+            char leftVal = leftValNode->value.empty() ? ' ' : leftValNode->value[0];
+            char rightVal = rightValNode->value.empty() ? ' ' : rightValNode->value[0];
+            if (leftVal > rightVal) {
+                std::cerr << "Error Semantik: Batas karakter kiri lebih besar dari batas kanan pada Subrange!" << std::endl;
+                return DataType::NOTYPE;
+            }
+        }
+
+        return DataType::SUBRANGE;
+    }
+
+    // Kasus 3: Array atau Record (Kembalikan tipe dasarnya dulu jika sudah ada di enum)
+    string label = curr->label;
+    if (label == "array" || label == "<array-type>") return DataType::ARRAY;
+    if (label == "record" || label == "<record-type>") return DataType::RECORD;
+
     return DataType::NOTYPE;
 }

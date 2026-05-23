@@ -125,13 +125,14 @@ ParseTreeNode* Parser::parseIdentifierList() {
 ParseTreeNode* Parser::parseTypeDeclaration() {
     ParseTreeNode* node = new ParseTreeNode("<type-declaration>");
     node->children.push_back(match(TokenType::TYPESY));
+    if (hasError) return node;
     
-    do {
+   while (!hasError && currentToken().type == TokenType::IDENT) {
         node->children.push_back(match(TokenType::IDENT));
         node->children.push_back(match(TokenType::EQL));
         node->children.push_back(parseType());
         node->children.push_back(match(TokenType::SEMICOLON));
-    } while (currentToken().type == TokenType::IDENT);
+    }
     
     return node;
 }

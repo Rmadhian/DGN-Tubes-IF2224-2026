@@ -19,7 +19,7 @@ enum class ObjClass {
 
 // NOTYPE = belum ditentukan, NONE = void
 enum class DataType {
-    NOTYPE, NONE, INTEGER, REAL, CHAR, BOOLEAN, STRING, ARRAY, RECORD
+    NOTYPE, NONE, INTEGER, REAL, CHAR, BOOLEAN, STRING, ARRAY, RECORD, SUBRANGE, ENUMERATED
 };
 
 // =========================================================
@@ -69,6 +69,7 @@ public:
     vector<BTabEntry> btab;
     vector<ATabEntry> atab;
     int currentLevel;
+    vector<int> activeBlocks;
 
     SymbolTable() { currentLevel = 0; }
 
@@ -129,6 +130,9 @@ public:
     vector<string> idents;
     DataType type;
     int ref; // Indeks atab jika array/record
+    DataType elementType = DataType::NOTYPE;
+    int lowBound = 0;
+    int highBound = 0;
     void accept(SemanticVisitor* visitor) override;
 };
 
@@ -277,4 +281,37 @@ public:
     void visit(VarAccessNode* node) override;
     void visit(FuncCallNode* node) override;
 };
+
+class PrintASTVisitor : public SemanticVisitor {
+private:
+    std::ostream& out;
+    std::vector<bool> isLastChildStack;
+    
+    void printPrefix(bool isLast);
+    std::string typeToStr(DataType t);
+
+public:
+    PrintASTVisitor(std::ostream& outputStream) : out(outputStream) {}
+
+    void visit(ProgramNode* node) override;
+    void visit(VarDeclNode* node) override;
+    void visit(ConstDeclNode* node) override;
+    void visit(SubprogDeclNode* node) override;
+
+    void visit(CompoundStmtNode* node) override;
+    void visit(AssignStmtNode* node) override;
+    void visit(IfStmtNode* node) override;
+    void visit(WhileStmtNode* node) override;
+    void visit(ForStmtNode* node) override;
+
+    void visit(BinaryOpNode* node) override;
+    void visit(UnaryOpNode* node) override;
+    void visit(LiteralNode* node) override;
+    void visit(VarAccessNode* node) override;
+    void visit(FuncCallNode* node) override;
+};
+
+// Deklarasi fungsi cetak Symbol Table
+void printSymbolTables(const SymbolTable& st, std::ostream& out);
+
 #endif // SEMANTIC_H

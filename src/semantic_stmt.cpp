@@ -65,6 +65,11 @@ static bool isAssignmentCompatible(DataType target, DataType value) {
     if (target == DataType::NOTYPE || value == DataType::NOTYPE) return true;
     if (target == value) return true;
     if (target == DataType::REAL && value == DataType::INTEGER) return true;
+    if ((target == DataType::SUBRANGE && value == DataType::INTEGER) ||
+        (target == DataType::INTEGER && value == DataType::SUBRANGE) ||
+        (target == DataType::SUBRANGE && value == DataType::SUBRANGE)) {
+        return true; 
+    }
     return false;
 }
 
@@ -74,6 +79,7 @@ void SemanticAnalyzer::visit(CompoundStmtNode* node) {
     st.pushScope();
     int blockIdx    = st.insertBTab();
     int startTabIdx = (int)st.tab.size() - 1;
+    st.activeBlocks.push_back(blockIdx);
 
     node->symRef      = blockIdx;
     node->lexicalLevel = st.currentLevel;
@@ -93,6 +99,7 @@ void SemanticAnalyzer::visit(CompoundStmtNode* node) {
     st.updateBTab(blockIdx, endTabIdx, 0, 0, vsze);
 
     node->evalType = DataType::NONE;
+    st.activeBlocks.pop_back();
     st.popScope();
 }
 

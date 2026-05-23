@@ -132,14 +132,7 @@ ParseTreeNode* Parser::parseWhileStatement() {
   node->children.push_back(match(TokenType::DOSY));
   if (hasError) return node;
 
-  node->children.push_back(parseCompoundStatement());
-  if (hasError) return node;
-
-  if (currentToken().type == TokenType::SEMICOLON) {
-    node->children.push_back(match(TokenType::SEMICOLON));
-  } else {
-    reportError("semicolon", currentToken().value);
-  }
+  node->children.push_back(parseStatement());
 
   return node;
 }
@@ -236,14 +229,7 @@ ParseTreeNode* Parser::parseForStatement() {
   node->children.push_back(match(TokenType::DOSY));
   if (hasError) return node;
 
-  node->children.push_back(parseCompoundStatement());
-  if (hasError) return node;
-
-  if (currentToken().type == TokenType::SEMICOLON) {
-    node->children.push_back(match(TokenType::SEMICOLON));
-  } else {
-    reportError("semicolon", currentToken().value);
-  }
+  node->children.push_back(parseStatement());
 
   return node;
 }
