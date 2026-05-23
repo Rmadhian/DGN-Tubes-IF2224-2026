@@ -1,47 +1,84 @@
-[HASIL SEMANTIC ANALYSIS]
-
-tab (hanya sebagian yang relevan):
-idx id             obj            type      ref  nrm  lev  adr  link
------------------------------------------------------------------
-... (reserved words & predefined)
-7   HitungExposure procedure      void      0    -1988239040    0    -1
-8   iso            variable       integer   0    7    1    0    -1
-9   shutter        variable       integer   0    7    1    0    -1
-10  aperture       variable       real      0    7    1    0    -1
+tab:
+idx  id          obj       type  ref  nrm  lev  adr  link
+-------------------------------------------------------
+0    empty       const     1     0    0    0    0    0
+1    and         const     1     0    0    0    0    0
+2    array       const     1     0    0    0    0    0
+3    begin       const     1     0    0    0    0    0
+4    case        const     1     0    0    0    0    0
+5    const       const     1     0    0    0    0    0
+6    div         const     1     0    0    0    0    0
+7    downto      const     1     0    0    0    0    0
+8    do          const     1     0    0    0    0    0
+9    else        const     1     0    0    0    0    0
+10   end         const     1     0    0    0    0    0
+11   for         const     1     0    0    0    0    0
+12   function    const     1     0    0    0    0    0
+13   if          const     1     0    0    0    0    0
+14   mod         const     1     0    0    0    0    0
+15   not         const     1     0    0    0    0    0
+16   of          const     1     0    0    0    0    0
+17   or          const     1     0    0    0    0    0
+18   procedure   const     1     0    0    0    0    0
+19   program     program   1     0    0    0    0    0
+20   record      const     1     0    0    0    0    0
+21   repeat      const     1     0    0    0    0    0
+22   integer     const     1     0    0    0    0    0
+23   real        const     1     0    0    0    0    0
+24   boolean     const     1     0    0    0    0    0
+25   char        const     1     0    0    0    0    0
+26   string      const     1     0    0    0    0    0
+27   then        const     1     0    0    0    0    0
+28   to          const     1     0    0    0    0    0
+29   type        const     1     0    0    0    0    0
+30   until       const     1     0    0    0    0    0
+31   var         const     1     0    0    0    0    0
+32   while       const     1     0    0    0    0    0
+33   integer     type      2     0    0    0    0    0
+34   real        type      3     0    0    0    0    33
+35   char        type      4     0    0    0    0    34
+36   boolean     type      5     0    0    0    0    35
+37   string      type      6     0    0    0    0    36
+38   true        const     5     0    1    0    1    37
+39   false       const     5     0    1    0    0    38
+40   writeln     procedure 1     0    0    0    0    39
+41   readln      procedure 1     0    0    0    0    40
+42   HitungExposureprocedure 1     0    0    0    0    41
+43   iso         variable  2     0    1    0    0    42
+44   shutter     variable  2     0    1    0    0    43
+45   aperture    variable  3     0    1    0    0    44
 
 btab:
-idx last  lpar  psze  vsze
-------------------------------
-0   10    0     0     0
+idx  last  lpar  psze  vsze
+---------------------------
+0    45    0     0     3   <- global block (program), vsze=3
+1    45    0     0     0   <- main block (kosong variabel lokal)
 
-atab:
-(kosong karena tidak ada array)
+atab: (kosong karena tidak ada array)
 
 Decorated AST:
 ProgramNode(name: 'HitungExposure')
  ├─ Declarations
- │   ├─ VarDecl('iso', 'shutter') 	-> tab_index:9, type:notype, lev:1
- │   └─ VarDecl('aperture') 	-> tab_index:10, type:notype, lev:1
- └─ Block 	-> block_index:0, lev:2
-     ├─ Assign 	-> type:void
-     │   ├─ target 'iso' 	-> type:integer
-     │   └─ value 400 	-> type:integer
-     ├─ Assign 	-> type:void
-     │   ├─ target 'shutter' 	-> type:integer
-     │   └─ value 250 	-> type:integer
-     ├─ Assign 	-> type:void
-     │   ├─ target 'aperture' 	-> type:real
-     │   └─ value 2.8 	-> type:real
-     └─ IfStmt 	-> type:void
-         ├─ condition BinOp 'andsy' 	-> type:boolean
-         │   ├─ BinOp 'geq' 	-> type:boolean
-         │   │   ├─ 'iso' 	-> type:integer
-         │   │   └─ 800 	-> type:integer
-         │   └─ BinOp 'leq' 	-> type:boolean
-         │       ├─ 'aperture' 	-> type:real
-         │       └─ 1.4 	-> type:real
-         └─ then writeln(...)
-             └─ arg 'Foto overexposed'
-
-[Analisis Semantik Sukses]
-Program berhasil lolos verifikasi tipe, scope, dan deklarasi.
+ │    ├─ VarDecl('iso') 		→ tab_index:43, type:unknown, lev:0
+ │    └─ VarDecl('shutter') 		→ tab_index:44, type:unknown, lev:0
+ │    └─ VarDecl('aperture') 		→ tab_index:45, type:unknown, lev:0
+ └─ Block                  → block_index:42, lev:0
+     ├─ Assign('iso' := 400) 	→ type:void
+     │   ├─ target 'iso' 		→ tab_index:42, type:integer
+     │   └─ value 400 		→ type:integer
+     ├─ Assign('shutter' := 250) 	→ type:void
+     │   ├─ target 'shutter' 		→ tab_index:43, type:integer
+     │   └─ value 250 		→ type:integer
+     ├─ Assign('aperture' := 2.8) 	→ type:void
+     │   ├─ target 'aperture' 		→ tab_index:44, type:real
+     │   └─ value 2.8 		→ type:real
+     └─ IfStmt                → type:void
+         ├─ condition BinOp 'andsy' 		→ type:boolean
+         │   ├─ BinOp 'geq' 		→ type:boolean
+         │   │   ├─ 'iso' 		→ tab_index:42, type:integer
+         │   │   └─ 800 		→ type:integer
+         │   └─ BinOp 'leq' 		→ type:boolean
+         │       ├─ 'aperture' 		→ tab_index:44, type:real
+         │       └─ 1.4 		→ type:real
+         └─ then writeln(...) 		→ predefined, tab_index:-1
+             └─ arg 'Foto overexposed' 		→ type:string
