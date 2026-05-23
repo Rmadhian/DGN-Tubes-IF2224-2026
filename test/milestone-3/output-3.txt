@@ -43,37 +43,42 @@ idx  id          obj       type  ref  nrm  lev  adr  link
 39   false       const     5     0    1    0    0    38
 40   writeln     procedure 1     0    0    0    0    39
 41   readln      procedure 1     0    0    0    0    40
-42   HitungLuas  procedure 1     0    0    0    0    41
-43   panjang     variable  2     0    1    0    0    42
-44   lebar       variable  2     0    1    0    0    43
-45   luas        variable  2     0    1    0    0    44
+42   CekKelulusanprocedure 1     0    0    0    0    41
+43   nilai       variable  2     0    1    0    0    42
+44   lulus       variable  5     0    1    0    0    43
 
 btab:
 idx  last  lpar  psze  vsze
 ---------------------------
-0    45    0     0     3   <- global block (program), vsze=3
-1    45    0     0     0   <- main block (kosong variabel lokal)
+0    44    0     0     2   <- global block (program), vsze=2
+1    44    0     0     0   <- main block (kosong variabel lokal)
+2    44    0     0     0
+3    44    0     0     0
 
 atab: (kosong karena tidak ada array)
 
 Decorated AST:
-ProgramNode(name: 'HitungLuas')
+ProgramNode(name: 'CekKelulusan')
  ├─ Declarations
- │    ├─ VarDecl('panjang') 		→ tab_index:43, type:unknown, lev:0
- │    ├─ VarDecl('lebar') 		→ tab_index:44, type:unknown, lev:0
- │    └─ VarDecl('luas') 		→ tab_index:45, type:unknown, lev:0
+ │    └─ VarDecl('nilai') 		→ tab_index:43, type:unknown, lev:0
+ │    └─ VarDecl('lulus') 		→ tab_index:44, type:unknown, lev:0
  └─ Block                  → block_index:42, lev:0
-     ├─ Assign('panjang' := 15) 	→ type:void
-     │   ├─ target 'panjang' 		→ tab_index:42, type:integer
-     │   └─ value 15 		→ type:integer
-     ├─ Assign('lebar' := 8) 	→ type:void
-     │   ├─ target 'lebar' 		→ tab_index:43, type:integer
-     │   └─ value 8 		→ type:integer
-     ├─ Assign('luas' := panjang * lebar) 	→ type:void
-     │   ├─ target 'luas' 		→ tab_index:44, type:integer
-     │   └─ value BinOp 'times' 		→ type:integer
-     │       ├─ 'panjang' 		→ tab_index:42, type:integer
-     │       └─ 'lebar' 		→ tab_index:43, type:integer
-     └─ writeln(...) 		→ predefined, tab_index:-1
-         ├─ arg 'Luas Persegi Panjang = ' 		→ type:string
-         └─ arg 'luas' 		→ tab_index:44, type:integer
+     ├─ Assign('nilai' := 75) 	→ type:void
+     │   ├─ target 'nilai' 		→ tab_index:42, type:integer
+     │   └─ value 75 		→ type:integer
+     └─ IfStmt                → type:void
+         ├─ condition BinOp 'geq' 		→ type:boolean
+         │   ├─ 'nilai' 		→ tab_index:42, type:integer
+         │   └─ 70 		→ type:integer
+         ├─ then CompoundStmt
+         │   ├─ Assign('lulus' := true) 	→ type:void
+         │   │   ├─ target 'lulus' 		→ tab_index:43, type:boolean
+         │   │   └─ value 'true' 		→ tab_index:37, type:boolean
+         │   └─ writeln(...) 		→ predefined, tab_index:-1
+         │       └─ arg 'Selamat, Anda Lulus!' 		→ type:string
+         └─ else CompoundStmt
+             ├─ Assign('lulus' := false) 	→ type:void
+             │   ├─ target 'lulus' 		→ tab_index:43, type:boolean
+             │   └─ value 'false' 		→ tab_index:38, type:boolean
+             └─ writeln(...) 		→ predefined, tab_index:-1
+                 └─ arg 'Maaf, Anda belum lulus.' 		→ type:string
