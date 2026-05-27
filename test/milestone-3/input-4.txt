@@ -1,0 +1,110 @@
+<program>
+├──<program-header>
+| ├──programsy
+| ├──ident (HitungExposure) 
+| └──semicolon
+├──<declaration-part>
+| └──<var-declaration>
+|  ├──varsy
+|  ├──<identifier-list>
+|  | ├──ident (iso) 
+|  | ├──comma
+|  | └──ident (shutter) 
+|  ├──colon
+|  ├──<type>
+|  | └──ident (integer) 
+|  ├──semicolon
+|  ├──<identifier-list>
+|  | └──ident (aperture) 
+|  ├──colon
+|  ├──<type>
+|  | └──ident (real) 
+|  └──semicolon
+├──<compound-statement>
+| ├──beginsy
+| ├──<statement-list>
+| | ├──<statement>
+| | | └──<assignment-statement>
+| | |  ├──<variable>
+| | |  | └──ident (iso) 
+| | |  ├──becomes
+| | |  └──<expression>
+| | |   └──<simple-expression>
+| | |    └──<term>
+| | |     └──<factor>
+| | |      └──intcon (400) 
+| | ├──semicolon
+| | ├──<statement>
+| | | └──<assignment-statement>
+| | |  ├──<variable>
+| | |  | └──ident (shutter) 
+| | |  ├──becomes
+| | |  └──<expression>
+| | |   └──<simple-expression>
+| | |    └──<term>
+| | |     └──<factor>
+| | |      └──intcon (250) 
+| | ├──semicolon
+| | ├──<statement>
+| | | └──<assignment-statement>
+| | |  ├──<variable>
+| | |  | └──ident (aperture) 
+| | |  ├──becomes
+| | |  └──<expression>
+| | |   └──<simple-expression>
+| | |    └──<term>
+| | |     └──<factor>
+| | |      └──realcon (2.8) 
+| | ├──semicolon
+| | ├──<statement>
+| | | └──<if-statement>
+| | |  ├──ifsy
+| | |  ├──<expression>
+| | |  | └──<simple-expression>
+| | |  |  └──<term>
+| | |  |   ├──<factor>
+| | |  |   | ├──lparent
+| | |  |   | ├──<expression>
+| | |  |   | | ├──<simple-expression>
+| | |  |   | | | └──<term>
+| | |  |   | | |  └──<factor>
+| | |  |   | | |   └──ident (iso) 
+| | |  |   | | ├──<relational-operator>
+| | |  |   | | | └──geq
+| | |  |   | | └──<simple-expression>
+| | |  |   | |  └──<term>
+| | |  |   | |   └──<factor>
+| | |  |   | |    └──intcon (800) 
+| | |  |   | └──rparent
+| | |  |   ├──<multiplicative-operator>
+| | |  |   | └──andsy
+| | |  |   └──<factor>
+| | |  |    ├──lparent
+| | |  |    ├──<expression>
+| | |  |    | ├──<simple-expression>
+| | |  |    | | └──<term>
+| | |  |    | |  └──<factor>
+| | |  |    | |   └──ident (aperture) 
+| | |  |    | ├──<relational-operator>
+| | |  |    | | └──leq
+| | |  |    | └──<simple-expression>
+| | |  |    |  └──<term>
+| | |  |    |   └──<factor>
+| | |  |    |    └──realcon (1.4) 
+| | |  |    └──rparent
+| | |  ├──thensy
+| | |  └──<statement>
+| | |   └──<procedure/function-call>
+| | |    ├──ident (writeln) 
+| | |    ├──lparent
+| | |    ├──<parameter-list>
+| | |    | └──<expression>
+| | |    |  └──<simple-expression>
+| | |    |   └──<term>
+| | |    |    └──<factor>
+| | |    |     └──string ('Foto overexposed') 
+| | |    └──rparent
+| | ├──semicolon
+| | └──<statement>
+| └──endsy
+└──period

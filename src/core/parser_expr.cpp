@@ -121,6 +121,8 @@ ParseTreeNode* Parser::parseIfStatement() {
 
 // Grammar: <while-statement> -> whilesy + expression + dosy + compound-statement + semicolon
 ParseTreeNode* Parser::parseWhileStatement() {
+  ParseTreeNode* node = new ParseTreeNode("<while-statement>");
+  
   node->children.push_back(match(TokenType::WHILESY));
   if (hasError) return node;
 
@@ -130,14 +132,7 @@ ParseTreeNode* Parser::parseWhileStatement() {
   node->children.push_back(match(TokenType::DOSY));
   if (hasError) return node;
 
-  node->children.push_back(parseCompoundStatement());
-  if (hasError) return node;
-
-  if (currentToken().type == TokenType::SEMICOLON) {
-    node->children.push_back(match(TokenType::SEMICOLON));
-  } else {
-    reportError("semicolon", currentToken().value);
-  }
+  node->children.push_back(parseStatement());
 
   return node;
 }
@@ -164,24 +159,26 @@ ParseTreeNode* Parser::parseCaseStatement() {
 ParseTreeNode* Parser::parseCaseBlock() {
   ParseTreeNode* node = new ParseTreeNode("<case-block>");
 
+  // Baca konstanta pertama
   node->children.push_back(parseConstant());
 
-  // Menangani multiple konstan yang dipisahkan koma (contoh: 1, 2, 3: statement)
+  // Handle konstanta yang dipisah koma (contoh: 1, 2, 3: statement)
   while (!hasError && currentToken().type == TokenType::COMMA) {
     node->children.push_back(match(TokenType::COMMA));
     node->children.push_back(parseConstant());
   }
 
+  // Baca isi statement
   if (!hasError) {
     node->children.push_back(match(TokenType::COLON));
     node->children.push_back(parseStatement());
   }
 
-  // Rekursif ke case-block selanjutnya jika dipisahkan oleh titik koma
+  // Lanjut ke blok case berikutnya (rekursif)
   while (!hasError && currentToken().type == TokenType::SEMICOLON) {
     node->children.push_back(match(TokenType::SEMICOLON));
 
-    // Jika setelah titik koma adalah endsy, berarti blok case telah selesai
+    // Berhenti jika ketemu endsy
     if (currentToken().type == TokenType::ENDSY) {
       break;
     }
@@ -234,14 +231,7 @@ ParseTreeNode* Parser::parseForStatement() {
   node->children.push_back(match(TokenType::DOSY));
   if (hasError) return node;
 
-  node->children.push_back(parseCompoundStatement());
-  if (hasError) return node;
-
-  if (currentToken().type == TokenType::SEMICOLON) {
-    node->children.push_back(match(TokenType::SEMICOLON));
-  } else {
-    reportError("semicolon", currentToken().value);
-  }
+  node->children.push_back(parseStatement());
 
   return node;
 }
@@ -253,7 +243,8 @@ ParseTreeNode* Parser::parseFactor() {
 
   if (type == TokenType::IDENT) {
     Token next = peek(1);
-    // Lookahead untuk membedakan Identifier biasa, Variabel (Array/Record), dan Pemanggilan Fungsi
+    
+    // Lookahead untuk membedakan identifier biasa, akses array/record, atau fungsi
     if (next.type == TokenType::LBRACK || next.type == TokenType::PERIOD) {
       node->children.push_back(parseVariable());
     } else if (next.type == TokenType::LPARENT) {
@@ -262,11 +253,14 @@ ParseTreeNode* Parser::parseFactor() {
       node->children.push_back(match(TokenType::IDENT));
     }
   } else if (type == TokenType::INTCON || type == TokenType::REALCON || type == TokenType::CHARCON || type == TokenType::STRING) {
+    // Literal/konstanta dasar
     node->children.push_back(match(type));
   } else if (type == TokenType::NOTSY) {
+    // Operator unary NOT
     node->children.push_back(match(TokenType::NOTSY));
     node->children.push_back(parseFactor());
   } else if (type == TokenType::LPARENT) {
+    // Sub-ekspresi dalam kurung
     node->children.push_back(match(TokenType::LPARENT));
     node->children.push_back(parseExpression());
 

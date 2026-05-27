@@ -1,0 +1,12 @@
+program HitungLuas;
+
+var
+  panjang, lebar, luas: integer;
+
+begin
+  panjang := 15;
+  lebar := 8;
+  luas := panjang * lebar;
+  
+  writeln('Luas Persegi Panjang = ', luas);
+end.

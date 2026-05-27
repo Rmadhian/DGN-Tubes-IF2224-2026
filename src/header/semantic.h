@@ -5,29 +5,24 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <algorithm>
 
 using namespace std;
 
-// =========================================================
-// 1. ENUMERASI UNTUK SEMANTIK
-// =========================================================
+// Enumerasi Semantik
 
-// Kelas Objek (obj di tabel tab)
 enum class ObjClass { 
     CONSTANT, VARIABLE, TYPE_DEF, PROCEDURE, FUNCTION
 };
 
-// Tipe Data Dasar (type di tabel tab)
-// NOTYPE = belum diketahui/belum dianalisis, NONE = void (statement/procedure)
+// NOTYPE = belum ditentukan, NONE = void
 enum class DataType {
-    NOTYPE, NONE, INTEGER, REAL, CHAR, BOOLEAN, STRING, ARRAY, RECORD
+    NOTYPE, NONE, INTEGER, REAL, CHAR, BOOLEAN, STRING, ARRAY, RECORD, SUBRANGE, ENUMERATED
 };
 
-// =========================================================
-// 2. STRUKTUR SYMBOL TABLE
-// =========================================================
+// Struktur Symbol Table
 
-// atab: Array Table
+// Array Table: menyimpan metadata tipe array
 struct ATabEntry {
     int arrays;     // Indeks entri
     DataType xtyp;  // Tipe indeks
@@ -35,34 +30,32 @@ struct ATabEntry {
     int eref;       // Referensi ke atab/btab jika elemen komposit
     int low;        // Batas bawah
     int high;       // Batas atas
-    int elsz;       // Ukuran elemen
+    int elsz;       // Ukuran per elemen
     int size;       // Total ukuran array
 };
 
-// btab: Block Table (Untuk Prosedur, Fungsi, Record)
+// Block Table: metadata scope prosedur, fungsi, dan record
 struct BTabEntry {
     int blocks;     // Indeks entri
-    int last;       // Indeks identifier terakhir di scope ini (link ke tab)
-    int lpar;       // Indeks parameter terakhir (link ke tab)
-    int psze;       // Total ukuran parameter (byte)
-    int vsze;       // Total ukuran variabel lokal (byte)
+    int last;       // Indeks identifier terakhir di scope ini
+    int lpar;       // Indeks parameter terakhir
+    int psze;       // Ukuran total parameter (byte)
+    int vsze;       // Ukuran total variabel lokal (byte)
 };
 
-// tab: Main Symbol Table
+// Main Symbol Table: satu entri per identifier
 struct TabEntry {
-    string identifiers; // Nama ident
-    int link;           // Link ke ident sebelumnya di scope yg sama
-    ObjClass obj;       // Class: Var, Const, dll
-    DataType type;      // Tipe: Int, Real, dll
-    int ref;            // Pointer ke atab (jika array) atau btab (jika proc/rec)
-    int nrm;            // 1 = Normal, 0 = By-Reference (Var Parameter)
-    int lev;            // Lexical level (0: Global, 1: Lokal, dst)
-    int adr;            // Address/Offset/Value
+    string identifiers;
+    int link;           // Link ke identifier sebelumnya di scope yang sama
+    ObjClass obj;
+    DataType type;
+    int ref;            // Indeks ke atab (array) atau btab (proc/rec)
+    int nrm;            // 1 = pass-by-value, 0 = pass-by-reference
+    int lev;            // Lexical level (0 = global)
+    int adr;            // Alamat/offset/nilai
 };
 
-// =========================================================
-// 3. SYMBOL TABLE MANAGER
-// =========================================================
+// Symbol Table Manager
 
 class SymbolTable {
 public:
@@ -70,56 +63,49 @@ public:
     vector<BTabEntry> btab;
     vector<ATabEntry> atab;
     int currentLevel;
+    vector<int> activeBlocks;
 
     SymbolTable() { currentLevel = 0; }
 
-    // Manajemen Scope
     void pushScope() { currentLevel++; }
     void popScope() { currentLevel--; }
 
-    // Fungsi Utama Tabel tab
+    // Operasi pada tab
     TabEntry* lookupTab(string name);      
     TabEntry* lookupLocalTab(string name); 
+    TabEntry* getTab(int index); 
     int insertTab(string name, ObjClass obj, DataType type, int ref = 0, int lev = -1, int adr = 0);
 
-    // Fungsi Tabel atab (Array)
+    // Operasi pada atab
     int insertATab(DataType xtyp, DataType etyp, int eref, int low, int high, int elsz);
     ATabEntry* getATab(int index);
 
-    // Fungsi Tabel btab (Block/Record)
+    // Operasi pada btab
     int insertBTab();
     void updateBTab(int bIndex, int last, int lpar, int psze, int vsze);
     BTabEntry* getBTab(int index);
 
-    // Inisialisasi Predefined (Integer, Real, True, False, dll)
     void initPredefined();
 };
 
-// =========================================================
-// 4. BASE CLASS AST & VISITOR INTERFACE
-// =========================================================
-
+// Base Class AST & Visitor Interface
 class SemanticVisitor;
 
 class ASTNode {
 public:
-    // Decorated AST Annotations
-    DataType evalType;  // Tipe hasil evaluasi
-    int symRef;         // Link ke index tabel tab
-    int lexicalLevel;   // Level scope saat ini
+    DataType evalType; 
+    int symRef;        
+    int lexicalLevel;
 
     ASTNode() : evalType(DataType::NOTYPE), symRef(-1), lexicalLevel(0) {}
     virtual ~ASTNode() {}
     virtual void accept(SemanticVisitor* visitor) = 0;
 };
 
-// =========================================================
-// 5. DAFTAR AST NODES
-// =========================================================
+// AST Node Definitions
 
-// ---------------------------------------------------------
-// DONGUN (Modul Deklarasi & Program Root)
-// ---------------------------------------------------------
+// Deklarasi & Program Root 
+
 class ProgramNode : public ASTNode {
 public:
     string name;
@@ -132,7 +118,10 @@ class VarDeclNode : public ASTNode {
 public:
     vector<string> idents;
     DataType type;
-    int ref; // Jika array/record
+    int ref;
+    DataType elementType = DataType::NOTYPE;
+    int lowBound = 0;
+    int highBound = 0;
     void accept(SemanticVisitor* visitor) override;
 };
 
@@ -144,20 +133,18 @@ public:
     void accept(SemanticVisitor* visitor) override;
 };
 
-// Gabungan Procedure & Function
 class SubprogDeclNode : public ASTNode {
 public:
     string name;
     bool isFunction; 
-    DataType retType; // Kalau procedure, isi DataType::NOTYPE
+    DataType retType;
     vector<ASTNode*> params;
     ASTNode* block;
     void accept(SemanticVisitor* visitor) override;
 };
 
-// ---------------------------------------------------------
-// NELSON (Modul Statement & Control Flow)
-// ---------------------------------------------------------
+// Statement & Control Flow
+
 class CompoundStmtNode : public ASTNode {
 public:
     vector<ASTNode*> statements;
@@ -196,9 +183,8 @@ public:
     void accept(SemanticVisitor* visitor) override;
 };
 
-// ---------------------------------------------------------
-// RAMA (Modul Ekspresi & Pengecekan Tipe Data)
-// ---------------------------------------------------------
+// Ekspresi & Type Checking
+
 class BinaryOpNode : public ASTNode {
 public:
     ASTNode* left;
@@ -224,8 +210,8 @@ public:
 class VarAccessNode : public ASTNode {
 public:
     string name;
-    vector<ASTNode*> indices; // Untuk pemanggilan array
-    string fieldName;         // Untuk pemanggilan record
+    vector<ASTNode*> indices; // Subscript array
+    string fieldName;         // Akses field record
     void accept(SemanticVisitor* visitor) override;
 };
 
@@ -236,28 +222,25 @@ public:
     void accept(SemanticVisitor* visitor) override;
 };
 
-// =========================================================
-// 6. SEMANTIC VISITOR INTERFACE
-// =========================================================
-
+// Semantic Visitor Interface
 class SemanticVisitor {
 public:
     SymbolTable st;
 
-    // --- Dongun ---
+    // Deklarasi
     virtual void visit(ProgramNode* node) = 0;
     virtual void visit(VarDeclNode* node) = 0;
     virtual void visit(ConstDeclNode* node) = 0;
     virtual void visit(SubprogDeclNode* node) = 0;
 
-    // --- Nelson ---
+    // Statement
     virtual void visit(CompoundStmtNode* node) = 0;
     virtual void visit(AssignStmtNode* node) = 0;
     virtual void visit(IfStmtNode* node) = 0;
     virtual void visit(WhileStmtNode* node) = 0;
     virtual void visit(ForStmtNode* node) = 0;
 
-    // --- Rama ---
+    // Ekspresi
     virtual void visit(BinaryOpNode* node) = 0;
     virtual void visit(UnaryOpNode* node) = 0;
     virtual void visit(LiteralNode* node) = 0;
@@ -265,32 +248,56 @@ public:
     virtual void visit(FuncCallNode* node) = 0;
 };
 
-// =========================================================
-// 7. SEMANTIC ANALYZER (Implementasi Visitor)
-// =========================================================
-//
-
 class SemanticAnalyzer : public SemanticVisitor {
 public:
-    // --- Dongun (semantic_decl.cpp) ---
     void visit(ProgramNode* node) override;
     void visit(VarDeclNode* node) override;
     void visit(ConstDeclNode* node) override;
     void visit(SubprogDeclNode* node) override;
 
-    // --- Nelson (semantic_stmt.cpp) ---
     void visit(CompoundStmtNode* node) override;
     void visit(AssignStmtNode* node) override;
     void visit(IfStmtNode* node) override;
     void visit(WhileStmtNode* node) override;
     void visit(ForStmtNode* node) override;
 
-    // --- Rama (semantic_expr.cpp) ---
     void visit(BinaryOpNode* node) override;
     void visit(UnaryOpNode* node) override;
     void visit(LiteralNode* node) override;
     void visit(VarAccessNode* node) override;
     void visit(FuncCallNode* node) override;
 };
+
+class PrintASTVisitor : public SemanticVisitor {
+private:
+    std::ostream& out;
+    std::vector<bool> isLastChildStack;
+    
+    void printPrefix(bool isLast);
+    std::string typeToStr(DataType t);
+
+public:
+    PrintASTVisitor(std::ostream& outputStream) : out(outputStream) {}
+
+    void visit(ProgramNode* node) override;
+    void visit(VarDeclNode* node) override;
+    void visit(ConstDeclNode* node) override;
+    void visit(SubprogDeclNode* node) override;
+
+    void visit(CompoundStmtNode* node) override;
+    void visit(AssignStmtNode* node) override;
+    void visit(IfStmtNode* node) override;
+    void visit(WhileStmtNode* node) override;
+    void visit(ForStmtNode* node) override;
+
+    void visit(BinaryOpNode* node) override;
+    void visit(UnaryOpNode* node) override;
+    void visit(LiteralNode* node) override;
+    void visit(VarAccessNode* node) override;
+    void visit(FuncCallNode* node) override;
+};
+
+// Deklarasi fungsi cetak Symbol Table
+void printSymbolTables(const SymbolTable& st, std::ostream& out);
 
 #endif // SEMANTIC_H

@@ -1,0 +1,21 @@
+program UjiArray;
+
+var
+  nilai: array [1..5] of integer;
+  huruf: array [0..9] of char;
+  i, sum: integer;
+
+begin
+  sum := 0;
+
+  for i := 1 to 5 do
+  begin
+    nilai[i] := i * 10;
+    sum := sum + nilai[i];
+  end;
+
+  huruf[0] := 'A';
+  huruf[1] := 'B';
+  
+  writeln('Total sum array = ', sum);
+end.

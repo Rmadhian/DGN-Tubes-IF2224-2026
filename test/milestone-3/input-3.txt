@@ -1,0 +1,20 @@
+program CekKelulusan;
+
+var
+  nilai: integer;
+  lulus: boolean;
+
+begin
+  nilai := 75;
+
+  if nilai >= 70 then
+  begin
+    lulus := true;
+    writeln('Selamat, Anda Lulus!');
+  end
+  else
+  begin
+    lulus := false;
+    writeln('Maaf, Anda belum lulus.');
+  end;
+end.
