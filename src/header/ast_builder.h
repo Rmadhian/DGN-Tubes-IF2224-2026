@@ -8,6 +8,9 @@
 
 using namespace std;
 
+// Alias supaya ICGVisitor bisa extend "ASTVisitor" (yang sebenernya SemanticVisitor)
+using ASTVisitor = SemanticVisitor;
+
 class ASTBuilder {
 public:
     // Entry point: konversi parse tree <program> menjadi AST

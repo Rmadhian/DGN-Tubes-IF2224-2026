@@ -88,9 +88,11 @@ public:
     void initPredefined();
 };
 
-// Base Class AST & Visitor Interface
+// Forward declaration
 class SemanticVisitor;
+class WriteStatementNode;
 
+// Base Class AST & Visitor Interface
 class ASTNode {
 public:
     DataType evalType; 
@@ -222,6 +224,14 @@ public:
     void accept(SemanticVisitor* visitor) override;
 };
 
+// Node khusus untuk statement write/writeln (dipakai ICG supaya bisa bedain dari FuncCall biasa)
+class WriteStatementNode : public ASTNode {
+public:
+    bool hasNewline; // true = writeln, false = write
+    vector<ASTNode*> args;
+    void accept(SemanticVisitor* visitor) override;
+};
+
 // Semantic Visitor Interface
 class SemanticVisitor {
 public:
@@ -246,6 +256,9 @@ public:
     virtual void visit(LiteralNode* node) = 0;
     virtual void visit(VarAccessNode* node) = 0;
     virtual void visit(FuncCallNode* node) = 0;
+
+    // Output statement (default kosong biar SemanticAnalyzer/PrintAST gak perlu implement)
+    virtual void visit(WriteStatementNode* node) {}
 };
 
 class SemanticAnalyzer : public SemanticVisitor {

@@ -19,6 +19,11 @@ public:
         return instructions;
     }
 
+    // Set symbol table dari hasil semantic analysis
+    void setSymbolTable(const SymbolTable& symTab) {
+        this->st = symTab;
+    }
+
     // ============================================================================
     // DONGUN (Top-Level & Deklarasi)
     // Fokus di: icg_decl.cpp

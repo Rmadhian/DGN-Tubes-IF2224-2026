@@ -5,6 +5,7 @@ void UnaryOpNode::accept(SemanticVisitor* visitor)   { visitor->visit(this); }
 void LiteralNode::accept(SemanticVisitor* visitor)   { visitor->visit(this); }
 void VarAccessNode::accept(SemanticVisitor* visitor)  { visitor->visit(this); }
 void FuncCallNode::accept(SemanticVisitor* visitor)   { visitor->visit(this); }
+void WriteStatementNode::accept(SemanticVisitor* visitor) { visitor->visit(this); }
 
 // Visitor: LiteralNode — tipe langsung diambil dari literalType
 void SemanticAnalyzer::visit(LiteralNode* node) {
@@ -21,9 +22,9 @@ void SemanticAnalyzer::visit(VarAccessNode* node) {
         return;
     }
 
-    node->symRef = entry->link;
+    node->symRef = (int)(entry - &st.tab[0]);
     node->evalType = entry->type;
-    node->lexicalLevel = st.currentLevel;
+    node->lexicalLevel = entry->lev;
 
     // Memeriksa dan mengevaluasi akses indeks array (jika identifier memiliki subscript)
     if (!node->indices.empty()) {

@@ -166,7 +166,15 @@ void SemanticAnalyzer::visit(VarDeclNode* node) {
                 // Parameter: tipe index (INTEGER), tipe elemen, array ref(0), low, high, elsz(1)
                 node->ref = st.insertATab(DataType::INTEGER, node->elementType, 0, node->lowBound, node->highBound, 1);
             }
-            node->symRef = st.insertTab(ident, ObjClass::VARIABLE, node->type, node->ref);
+            // Hitung address variabel berdasarkan jumlah variabel di scope saat ini (mulai dari offset 3)
+            int varCount = 0;
+            for (int i = 33; i < (int)st.tab.size(); i++) {
+                if (st.tab[i].lev == st.currentLevel && st.tab[i].obj == ObjClass::VARIABLE) {
+                    varCount++;
+                }
+            }
+            int address = 3 + varCount;
+            node->symRef = st.insertTab(ident, ObjClass::VARIABLE, node->type, node->ref, -1, address);
             node->lexicalLevel = st.currentLevel;
         }
     }
