@@ -179,12 +179,22 @@ IfStmtNode* ASTBuilder::buildIf(ParseTreeNode* ifStmt) {
         if (ifStmt->children[i]->label == "<expression>")
             node->condition = buildExpression(ifStmt->children[i]);
         else if (ifStmt->children[i]->label == "thensy") {
-            if (i + 1 < ifStmt->children.size()) 
-                node->thenStmt = buildStatement(ifStmt->children[i+1]);
+            if (i + 1 < ifStmt->children.size()) {
+                auto* next = ifStmt->children[i+1];
+                if (next->label == "<statement>")
+                    node->thenStmt = buildStatement(next);
+                else if (next->label == "<compound-statement>")
+                    node->thenStmt = buildCompoundStatement(next);
+            }
         }
         else if (ifStmt->children[i]->label == "elsesy") {
-            if (i + 1 < ifStmt->children.size()) 
-                node->elseStmt = buildStatement(ifStmt->children[i+1]);
+            if (i + 1 < ifStmt->children.size()) {
+                auto* next = ifStmt->children[i+1];
+                if (next->label == "<statement>")
+                    node->elseStmt = buildStatement(next);
+                else if (next->label == "<compound-statement>")
+                    node->elseStmt = buildCompoundStatement(next);
+            }
         }
     }
     return node;
@@ -197,6 +207,10 @@ WhileStmtNode* ASTBuilder::buildWhile(ParseTreeNode* whileStmt) {
             node->condition = buildExpression(whileStmt->children[i]);
         else if (whileStmt->children[i]->label == "<compound-statement>")
             node->body = buildCompoundStatement(whileStmt->children[i]);
+        else if (whileStmt->children[i]->label == "<statement>") {
+            // Parser while menghasilkan <statement> bukan <compound-statement> langsung
+            node->body = buildStatement(whileStmt->children[i]);
+        }
     }
     return node;
 }
@@ -215,6 +229,8 @@ ForStmtNode* ASTBuilder::buildFor(ParseTreeNode* forStmt) {
         }
         else if (child->label == "<compound-statement>")
             node->body = buildCompoundStatement(child);
+        else if (child->label == "<statement>")
+            node->body = buildStatement(child);
     }
     return node;
 }

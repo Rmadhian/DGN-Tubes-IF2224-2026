@@ -8,6 +8,8 @@
 #include "parser.h"
 #include "ast_builder.h"
 #include "semantic.h"
+#include "icg_visitor.h"
+#include "interpreter_core.h"
 
 using namespace std;
 
@@ -216,6 +218,74 @@ int main(int argc, char* argv[]) {
         // Panggil Visitor PrintASTVisitor dengan meneruskan stream fileOutput
         PrintASTVisitor astPrinter(fileOutput);
         astRoot->accept(&astPrinter);
+
+        // ====================================================================
+        // MILESTONE 4: Intermediate Code Generation
+        // ====================================================================
+        cout << "\n[INFO] Memulai Intermediate Code Generation..." << endl;
+
+        ICGVisitor icgVisitor;
+        icgVisitor.setSymbolTable(semanticAnalyzer.st);
+        astRoot->accept(&icgVisitor);
+
+        const auto& instructions = icgVisitor.getInstructions();
+        cout << "[SUCCESS] ICG Selesai. Total instruksi: " << instructions.size() << endl;
+
+        // Helper konversi OpCode ke string
+        auto opCodeToStr = [](OpCode op) -> string {
+            switch (op) {
+                case OpCode::LIT: return "LIT";
+                case OpCode::LOD: return "LOD";
+                case OpCode::STO: return "STO";
+                case OpCode::CAL: return "CAL";
+                case OpCode::INT: return "INT";
+                case OpCode::JMP: return "JMP";
+                case OpCode::JPC: return "JPC";
+                case OpCode::OPR: return "OPR";
+                case OpCode::RET: return "RET";
+                default: return "???";
+            }
+        };
+
+        // Cetak Intermediate Code ke terminal dan file output
+        cout << "\n========== Intermediate Code ==========" << endl;
+        fileOutput << "\nIntermediate Code:\n";
+        for (int i = 0; i < (int)instructions.size(); i++) {
+            string line = to_string(i) + " " + opCodeToStr(instructions[i].op) 
+                        + " " + to_string(instructions[i].l) 
+                        + " " + to_string(instructions[i].a);
+            cout << line << endl;
+            fileOutput << line << "\n";
+        }
+        cout << "========================================\n" << endl;
+
+        // ====================================================================
+        // MILESTONE 4: Interpreter (Eksekusi Program)
+        // ====================================================================
+        cout << "[INFO] Menjalankan Interpreter..." << endl;
+        cout << "\n========== Output Program ==============" << endl;
+        fileOutput << "\nOutput Program:\n";
+
+        try {
+            VirtualMachine vm(instructions);
+            // Redirect cout ke buffer agar bisa capture output untuk file
+            stringstream outputCapture;
+            streambuf* oldCout = cout.rdbuf(outputCapture.rdbuf());
+
+            vm.run();
+
+            // Kembalikan cout dan cetak hasilnya
+            cout.rdbuf(oldCout);
+            string programOutput = outputCapture.str();
+            cout << programOutput;
+            fileOutput << programOutput;
+
+            cout << "========================================" << endl;
+            cout << "\n[SUCCESS] Program selesai dieksekusi." << endl;
+        } catch (const runtime_error& e) {
+            cout << "\n[RUNTIME ERROR] " << e.what() << endl;
+            fileOutput << "[RUNTIME ERROR] " << string(e.what()) << "\n";
+        }
         
     } else {
         cout << "Error Semantik: Gagal membangun Abstract Syntax Tree dari struktur Parse Tree." << endl;

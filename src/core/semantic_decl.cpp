@@ -176,6 +176,13 @@ void SemanticAnalyzer::visit(VarDeclNode* node) {
             int address = 3 + varCount;
             node->symRef = st.insertTab(ident, ObjClass::VARIABLE, node->type, node->ref, -1, address);
             node->lexicalLevel = st.currentLevel;
+
+            // Update vsze di btab agar icg_decl tahu jumlah variabel di blok ini
+            if (!st.activeBlocks.empty()) {
+                int blockIdx = st.activeBlocks.back();
+                st.btab[blockIdx].vsze++;
+                st.btab[blockIdx].last = node->symRef;
+            }
         }
     }
 }

@@ -2,8 +2,9 @@
 #define ICG_VISITOR_H
 
 #include <vector>
+#include <string>
 #include "tac_instruction.h"
-#include "ast_builder.h" // Asumsi file yang menyimpan deklarasi interface ASTVisitor dan Node-Node AST kalian
+#include "ast_builder.h" 
 
 class ICGVisitor : public ASTVisitor {
 private:
@@ -13,15 +14,66 @@ private:
     // ============================================================================
     std::vector<Instruction> instructions;
 
+    // Symbol table hasil semantic analysis (Milestone 3). Dipakai untuk
+    // mencari alamat memori variabel.
+    SymbolTable st;
+
 public:
+    ICGVisitor() {}
+
     // Mengambil hasil akhir instruksi untuk di-pass ke Interpreter
     const std::vector<Instruction>& getInstructions() const {
         return instructions;
     }
 
-    // Set symbol table dari hasil semantic analysis
+    // Set symbol table dari hasil semantic analysis (Bagian Rama)
     void setSymbolTable(const SymbolTable& symTab) {
         this->st = symTab;
+    }
+
+    // ------------------------------------------------------------------------
+    // Helper bersama (Bagian Nelson)
+    // ------------------------------------------------------------------------
+
+    // Dispatch sebuah node AST ke method visit() yang sesuai. Dipakai untuk
+    // menelusuri anak-anak node (pengganti accept() versi ICG).
+    void dispatch(ASTNode* node) {
+        if (node == nullptr) return;
+
+        if (auto p = dynamic_cast<ProgramNode*>(node))        { visit(p); return; }
+        if (auto p = dynamic_cast<VarDeclNode*>(node))        { visit(p); return; }
+        if (auto p = dynamic_cast<ConstDeclNode*>(node))      { visit(p); return; }
+        if (auto p = dynamic_cast<SubprogDeclNode*>(node))    { visit(p); return; }
+        if (auto p = dynamic_cast<CompoundStmtNode*>(node))   { visit(p); return; }
+        if (auto p = dynamic_cast<AssignStmtNode*>(node))     { visit(p); return; }
+        if (auto p = dynamic_cast<IfStmtNode*>(node))         { visit(p); return; }
+        if (auto p = dynamic_cast<WhileStmtNode*>(node))      { visit(p); return; }
+        if (auto p = dynamic_cast<ForStmtNode*>(node))        { visit(p); return; }
+        if (auto p = dynamic_cast<BinaryOpNode*>(node))       { visit(p); return; }
+        if (auto p = dynamic_cast<UnaryOpNode*>(node))        { visit(p); return; }
+        if (auto p = dynamic_cast<LiteralNode*>(node))        { visit(p); return; }
+        if (auto p = dynamic_cast<VarAccessNode*>(node))      { visit(p); return; }
+        if (auto p = dynamic_cast<WriteStatementNode*>(node)) { visit(p); return; }
+        if (auto p = dynamic_cast<FuncCallNode*>(node))       { visit(p); return; }
+    }
+
+    // Mencari alamat memori sebuah variabel berdasarkan namanya.
+    int addressOf(const std::string& name) {
+        TabEntry* e = st.lookupTab(name);
+        if (e == nullptr) return -1;
+
+        // Kalau icg_decl (Dongun) sudah mengisi alamatnya, langsung pakai
+        if (e->adr >= 3) return e->adr;
+
+        // Fallback: hitung offset dari urutan deklarasi variabel (mulai dari 3)
+        int offset = 3;
+        for (size_t i = 33; i < st.tab.size(); i++) {
+            if (st.tab[i].obj == ObjClass::VARIABLE && st.tab[i].lev == e->lev) {
+                if (st.tab[i].identifiers == name) return offset;
+                offset++;
+            }
+        }
+        return e->adr;
     }
 
     // ============================================================================

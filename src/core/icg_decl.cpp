@@ -10,6 +10,15 @@ void ICGVisitor::visit(ProgramNode* node) {
     if (!st.btab.empty()) {
         numVars = st.btab[0].vsze;
     }
+
+    // Fallback: jika btab belum di-update, hitung manual dari tab
+    if (numVars == 0) {
+        for (size_t i = 33; i < st.tab.size(); i++) {
+            if (st.tab[i].obj == ObjClass::VARIABLE && st.tab[i].lev == 0) {
+                numVars++;
+            }
+        }
+    }
     
     // Bikin instruksi INT m untuk alokasi memori utama. 
     // m = 3 blok dasar (Static Link, Dynamic Link, Return Address) + jumlah variabel

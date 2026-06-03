@@ -73,9 +73,14 @@ void VirtualMachine::run() {
                 break;
                 
             case OpCode::RET:
-                SP = BP - 1;         // Musnahkan Stack Frame (hapus memori lokal)
-                IP = stack[BP + 2];  // Kembalikan alur program ke Return Address
-                BP = stack[BP + 1];  // Kembalikan Base Pointer ke fungsi pemanggil (DL)
+                if (BP == 0) {
+                    // RET di level global = program selesai, hentikan eksekusi
+                    IP = code.size();
+                } else {
+                    SP = BP - 1;         // Musnahkan Stack Frame (hapus memori lokal)
+                    IP = stack[BP + 2];  // Kembalikan alur program ke Return Address
+                    BP = stack[BP + 1];  // Kembalikan Base Pointer ke fungsi pemanggil (DL)
+                }
                 break;
                 
             default:

@@ -1,0 +1,18 @@
+program TestKeywords;
+
+var
+  x, y: integer;
+
+begin
+  x := 10;
+  if x > 5 then
+    y := x * 2
+  else
+    y := x div 2;
+  writeln(y);
+  while y > 0 do
+  begin
+    y := y - 1;
+    writeln(y);
+  end;
+end.

@@ -1,12 +1,44 @@
 #include "interpreter_core.h"
 #include "interpreter_security.h"
 
-// Mengimplementasikan perpindahan Instruction Pointer (IP) milik VirtualMachine
-
+// JMP: lompat tanpa syarat ke alamat tujuan
 void VirtualMachine::jump(int address) {
-    // TODO: Ubah nilai IP ke address target. Panggil Security::validateJumpTarget()
+    checkInvalidJump(address);
+    IP = address;
 }
 
+// JPC: lompat ke alamat tujuan HANYA kalau nilai teratas stack = 0 (false).
+// IP sudah di-increment oleh run() sebelum masuk sini, jadi else-nya kosong.
 void VirtualMachine::conditionalJump(int address, bool condition) {
-    // TODO: Ubah nilai IP ke address target HANYA JIKA condition bernilai FALSE
+    if (condition) {
+        checkInvalidJump(address);
+        IP = address;
+    }
+    // else: lanjut ke instruksi berikutnya (IP sudah maju di run())
+}
+
+// ----------------------------------------------------------------------------
+// Bridge ke namespace Security memakai state VM saat ini.
+// Dongun/Rama bisa memanggil method ini, atau langsung Security::... .
+// ----------------------------------------------------------------------------
+
+void VirtualMachine::checkStackOverflow(int additionalSize) {
+    Security::checkStackOverflow(SP + 1, additionalSize);
+}
+
+void VirtualMachine::checkStackUnderflow(int requiredItems) {
+    Security::checkStackUnderflow(SP + 1, requiredItems);
+}
+
+void VirtualMachine::checkOutOfBounds(int address) {
+    // Batas memori = ukuran stack yang sudah dialokasikan
+    Security::checkOutOfBounds(address, (int)stack.size());
+}
+
+void VirtualMachine::checkInvalidJump(int targetAddress) {
+    Security::validateJumpTarget(targetAddress, (int)code.size());
+}
+
+void VirtualMachine::checkDivisionByZero(int divisor) {
+    Security::checkDivisionByZero(divisor);
 }
