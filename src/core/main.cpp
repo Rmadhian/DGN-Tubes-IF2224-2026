@@ -10,12 +10,13 @@
 #include "semantic.h"
 #include "icg_visitor.h"
 #include "interpreter_core.h"
+#include "ast_parser.h"
 
 using namespace std;
 
 // Utility file reader & parser helper
 
-enum class InputType { SOURCE_CODE, TOKEN_LIST, PARSE_TREE };
+enum class InputType { SOURCE_CODE, TOKEN_LIST, PARSE_TREE, DECORATED_AST };
 
 TokenType stringToType(string s) {
     if (s == "programsy") return TokenType::PROGRAMSY;
@@ -55,6 +56,10 @@ InputType detectInputType(const string& content) {
     // Cek jika ini format Parse Tree Milestone 2
     if (firstLine.find("<program>") != string::npos || firstLine.find("\xE2\x94") != string::npos) {
         return InputType::PARSE_TREE;
+    }
+    // Cek jika ini format Decorated AST Milestone 3
+    if (firstLine.find("tab:") != string::npos || firstLine.find("Decorated AST:") != string::npos) {
+        return InputType::DECORATED_AST;
     }
     // Cek jika ini format Token List Milestone 1
     size_t openParen = firstLine.find('(');
@@ -147,6 +152,22 @@ ParseTreeNode* buildParseTreeFromText(const string& content) {
     return root;
 }
 
+// Helper konversi OpCode ke string
+string opCodeToStr(OpCode op) {
+    switch (op) {
+        case OpCode::LIT: return "LIT";
+        case OpCode::LOD: return "LOD";
+        case OpCode::STO: return "STO";
+        case OpCode::CAL: return "CAL";
+        case OpCode::INT: return "INT";
+        case OpCode::JMP: return "JMP";
+        case OpCode::JPC: return "JPC";
+        case OpCode::OPR: return "OPR";
+        case OpCode::RET: return "RET";
+        default: return "???";
+    }
+}
+
 // Main program
 
 int main(int argc, char* argv[]) {
@@ -167,7 +188,67 @@ int main(int argc, char* argv[]) {
     ParseTreeNode* tree = nullptr;
     Parser* parserPtr = nullptr; // Digunakan jika input perlu melewati parser
 
-    // Proses Parsing: Membangun Parse Tree dari input
+    ofstream fileOutput(argv[2]);
+    if (!fileOutput.is_open()) return 1;
+
+    if (type == InputType::DECORATED_AST) {
+        cout << "[INFO] Format file Decorated AST terdeteksi. Melakukan rekonstruksi AST & Symbol Table..." << endl;
+        ASTParser astParser(fileContent);
+        astParser.parse();
+        
+        if (astParser.isError()) {
+            cout << "Parsing gagal: terdapat error saat membaca struktur Decorated AST." << endl;
+            return 1;
+        }
+
+        cout << "[SUCCESS] Rekonstruksi Decorated AST Selesai." << endl;
+        
+        // Pindah ke ICG
+        cout << "\n[INFO] Memulai Intermediate Code Generation..." << endl;
+        ICGVisitor icgVisitor;
+        icgVisitor.setSymbolTable(astParser.getSymbolTable());
+        
+        ProgramNode* root = astParser.getASTRoot();
+        if (root) root->accept(&icgVisitor);
+
+        const auto& instructions = icgVisitor.getInstructions();
+        cout << "[SUCCESS] ICG Selesai. Total instruksi: " << instructions.size() << endl;
+
+        // ... Cetak instruksi ICG ke file dan layar ...
+        fileOutput << "\nIntermediate Code:\n";
+        for (int i = 0; i < (int)instructions.size(); i++) {
+            string line = to_string(i) + " " + opCodeToStr(instructions[i].op);
+            if (instructions[i].op != OpCode::RET) {
+                line += " " + to_string(instructions[i].l) + " " + to_string(instructions[i].a);
+            }
+            fileOutput << line << "\n";
+        }
+        
+        cout << "[INFO] Menjalankan Interpreter..." << endl;
+        fileOutput << "\nOutput Program:\n";
+
+        try {
+            VirtualMachine vm(instructions);
+            stringstream outputCapture;
+            streambuf* oldCout = cout.rdbuf(outputCapture.rdbuf());
+
+            vm.run();
+
+            cout.rdbuf(oldCout);
+            string programOutput = outputCapture.str();
+            cout << programOutput;
+            fileOutput << programOutput;
+
+            cout << "\n[SUCCESS] Program selesai dieksekusi." << endl;
+        } catch (const runtime_error& e) {
+            cout << "\n[RUNTIME ERROR] " << e.what() << endl;
+            fileOutput << "[RUNTIME ERROR] " << string(e.what()) << "\n";
+        }
+        
+        return 0; // Selesai
+    }
+
+    // Proses Parsing Reguler: Membangun Parse Tree dari input (Source, Token, ParseTree)
     if (type == InputType::PARSE_TREE) {
         cout << "[INFO] Format file Parse Tree terdeteksi. Melakukan rekonstruksi Tree..." << endl;
         tree = buildParseTreeFromText(fileContent);
@@ -195,8 +276,6 @@ int main(int argc, char* argv[]) {
     }
 
     // Proses Semantik: Membangun AST dan Symbol Table
-    ofstream fileOutput(argv[2]);
-    if (!fileOutput.is_open()) return 1;
 
     cout << "[INFO] Memulai pembangunan AST (Syntax-Directed Translation)..." << endl;
     ASTBuilder astBuilder;
@@ -231,29 +310,14 @@ int main(int argc, char* argv[]) {
         const auto& instructions = icgVisitor.getInstructions();
         cout << "[SUCCESS] ICG Selesai. Total instruksi: " << instructions.size() << endl;
 
-        // Helper konversi OpCode ke string
-        auto opCodeToStr = [](OpCode op) -> string {
-            switch (op) {
-                case OpCode::LIT: return "LIT";
-                case OpCode::LOD: return "LOD";
-                case OpCode::STO: return "STO";
-                case OpCode::CAL: return "CAL";
-                case OpCode::INT: return "INT";
-                case OpCode::JMP: return "JMP";
-                case OpCode::JPC: return "JPC";
-                case OpCode::OPR: return "OPR";
-                case OpCode::RET: return "RET";
-                default: return "???";
-            }
-        };
-
         // Cetak Intermediate Code ke terminal dan file output
         cout << "\n========== Intermediate Code ==========" << endl;
         fileOutput << "\nIntermediate Code:\n";
         for (int i = 0; i < (int)instructions.size(); i++) {
-            string line = to_string(i) + " " + opCodeToStr(instructions[i].op) 
-                        + " " + to_string(instructions[i].l) 
-                        + " " + to_string(instructions[i].a);
+            string line = to_string(i) + " " + opCodeToStr(instructions[i].op);
+            if (instructions[i].op != OpCode::RET) {
+                line += " " + to_string(instructions[i].l) + " " + to_string(instructions[i].a);
+            }
             cout << line << endl;
             fileOutput << line << "\n";
         }
