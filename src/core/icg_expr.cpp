@@ -13,6 +13,14 @@ void ICGVisitor::visit(LiteralNode* node) {
     } else if (node->literalType == DataType::CHAR) {
         // ambil ASCII code dari karakter pertama
         val = (node->value.length() > 0) ? (int)node->value[0] : 0;
+    } else if (node->literalType == DataType::STRING) {
+        // simpan string di pool, push index-nya ke stack
+        std::string s = node->value;
+        if (s.length() >= 2 && s.front() == '\'' && s.back() == '\'') {
+            s = s.substr(1, s.length() - 2);
+        }
+        stringPool.push_back(s);
+        val = stringPool.size() - 1;
     } else {
         // fallback: coba convert ke int
         try { val = std::stoi(node->value); } catch (...) { val = 0; }
@@ -96,7 +104,12 @@ void ICGVisitor::visit(FuncCallNode* node) {
         // Evaluasi semua argumen lalu cetak
         for (auto* arg : node->args) {
             arg->accept(this);
-            instructions.push_back(Instruction(OpCode::OPR, 0, (int)OprCode::WRT));
+            // Deteksi tipe: l=1 untuk string, l=0 untuk lainnya
+            int lFlag = 0;
+            if (auto lit = dynamic_cast<LiteralNode*>(arg)) {
+                if (lit->literalType == DataType::STRING) lFlag = 1;
+            }
+            instructions.push_back(Instruction(OpCode::OPR, lFlag, (int)OprCode::WRT));
         }
         if (node->name == "writeln") {
             instructions.push_back(Instruction(OpCode::OPR, 0, (int)OprCode::WRTLN));
@@ -159,8 +172,13 @@ void ICGVisitor::visit(AssignStmtNode* node) {
 // WriteStatementNode: Cetak nilai argumen
 void ICGVisitor::visit(WriteStatementNode* node) {
     for (size_t i = 0; i < node->args.size(); i++) {
-        node->args[i]->accept(this);
-        instructions.push_back(Instruction(OpCode::OPR, 0, (int)OprCode::WRT));
+        auto* arg = node->args[i];
+        arg->accept(this);
+        int lFlag = 0;
+        if (auto lit = dynamic_cast<LiteralNode*>(arg)) {
+            if (lit->literalType == DataType::STRING) lFlag = 1;
+        }
+        instructions.push_back(Instruction(OpCode::OPR, lFlag, (int)OprCode::WRT));
     }
     if (node->hasNewline) {
         instructions.push_back(Instruction(OpCode::OPR, 0, (int)OprCode::WRTLN));

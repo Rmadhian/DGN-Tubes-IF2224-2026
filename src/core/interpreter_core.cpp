@@ -3,8 +3,9 @@
 
 // Implementasi arsitektur VirtualMachine
 
-VirtualMachine::VirtualMachine(const std::vector<Instruction>& instructions) {
+VirtualMachine::VirtualMachine(const std::vector<Instruction>& instructions, const std::vector<std::string>& sp) {
     this->code = instructions;
+    this->stringPool = sp;
     this->IP = 0;
     this->BP = 0;
     this->SP = -1;
@@ -74,7 +75,7 @@ void VirtualMachine::run() {
             }
                 
             case OpCode::OPR: {
-                executeOPR(instr.a); 
+                executeOPR(instr.a, instr.l); 
                 break;
             }
                 

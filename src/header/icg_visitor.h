@@ -14,16 +14,21 @@ private:
     // ============================================================================
     std::vector<Instruction> instructions;
 
-    // Symbol table hasil semantic analysis (Milestone 3). Dipakai untuk
-    // mencari alamat memori variabel.
+    // Symbol table dari semantic analysis, untuk mencari alamat variabel.
     SymbolTable st;
+
+    // String pool untuk menyimpan literal string (index dipakai oleh LIT)
+    std::vector<std::string> stringPool;
 
 public:
     ICGVisitor() {}
 
-    // Mengambil hasil akhir instruksi untuk di-pass ke Interpreter
     const std::vector<Instruction>& getInstructions() const {
         return instructions;
+    }
+
+    const std::vector<std::string>& getStringPool() const {
+        return stringPool;
     }
 
     // Inisialisasi Symbol Table dari Semantic Analyzer

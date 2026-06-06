@@ -43,9 +43,9 @@ idx  id          obj       type  ref  nrm  lev  adr  link
 39   false       const     5     0    1    0    0    38
 40   writeln     procedure 1     0    0    0    0    39
 41   readln      procedure 1     0    0    0    0    40
-42   SimpleTest  procedure 1     0    0    0    0    41
-43   a           variable  2     0    1    0    0    42
-44   b           variable  2     0    1    0    0    43
+42   Hello       program   1     0    0    0    0    41
+43   a           variable  2     0    1    0    3    42
+44   b           variable  2     0    1    0    4    43
 
 btab:
 idx  last  lpar  psze  vsze
@@ -56,18 +56,37 @@ idx  last  lpar  psze  vsze
 atab: (kosong karena tidak ada array)
 
 Decorated AST:
-ProgramNode(name: 'SimpleTest')
+ProgramNode(name: 'Hello')
  ├─ Declarations
  │    ├─ VarDecl('a') 		→ tab_index:43, type:unknown, lev:0
  │    └─ VarDecl('b') 		→ tab_index:44, type:unknown, lev:0
  └─ Block                  → block_index:42, lev:0
      ├─ Assign('a' := 5) 	→ type:void
-     │   ├─ target 'a' 		→ tab_index:42, type:integer
+     │   ├─ target 'a' 		→ tab_index:43, type:integer
      │   └─ value 5 		→ type:integer
      ├─ Assign('b' := a + 10) 	→ type:void
-     │   ├─ target 'b' 		→ tab_index:43, type:integer
+     │   ├─ target 'b' 		→ tab_index:44, type:integer
      │   └─ value BinOp 'plus' 		→ type:integer
-     │       ├─ 'a' 		→ tab_index:42, type:integer
+     │       ├─ 'a' 		→ tab_index:43, type:integer
      │       └─ 10 		→ type:integer
      └─ writeln(...) 		→ predefined, tab_index:-1
-         └─ arg 'b' 		→ tab_index:43, type:integer
+         ├─ arg 'Result = ' 		→ type:string
+         └─ arg 'b' 		→ tab_index:44, type:integer
+
+Intermediate Code:
+0 INT 0 5
+1 LIT 0 5
+2 STO 0 3
+3 LOD 0 3
+4 LIT 0 10
+5 OPR 0 2
+6 STO 0 4
+7 LIT 0 0
+8 OPR 0 13
+9 LOD 0 4
+10 OPR 0 13
+11 OPR 0 14
+12 RET
+
+Output Program:
+015

@@ -228,7 +228,7 @@ int main(int argc, char* argv[]) {
         fileOutput << "\nOutput Program:\n";
 
         try {
-            VirtualMachine vm(instructions);
+            VirtualMachine vm(instructions, icgVisitor.getStringPool());
             stringstream outputCapture;
             streambuf* oldCout = cout.rdbuf(outputCapture.rdbuf());
 
@@ -327,7 +327,7 @@ int main(int argc, char* argv[]) {
         fileOutput << "\nOutput Program:\n";
 
         try {
-            VirtualMachine vm(instructions);
+            VirtualMachine vm(instructions, icgVisitor.getStringPool());
             // Redirect cout ke buffer agar bisa capture output untuk file
             stringstream outputCapture;
             streambuf* oldCout = cout.rdbuf(outputCapture.rdbuf());

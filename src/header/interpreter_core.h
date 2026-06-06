@@ -23,8 +23,11 @@ private:
     const int MAX_STACK_SIZE = 1000;
 
 public:
+    // String pool untuk mencetak literal string via WRT
+    std::vector<std::string> stringPool;
+
     // Constructor
-    VirtualMachine(const std::vector<Instruction>& instrs);
+    VirtualMachine(const std::vector<Instruction>& instrs, const std::vector<std::string>& sp);
 
     // Daur Utama Eksekusi (Fetch-Decode-Execute)
     void run();
@@ -39,8 +42,8 @@ public:
     // RAMA (Eksekusi Operasi Matematika & Logika)
     // ============================================================================
     
-    // Menjalankan operasi OPR spesifik
-    void executeOPR(int oprCode);
+    // Menjalankan operasi OPR (l=0: integer, l=1: string)
+    void executeOPR(int oprCode, int lField);
 
 
     // ============================================================================

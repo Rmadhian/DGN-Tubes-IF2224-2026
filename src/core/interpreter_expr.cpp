@@ -4,7 +4,7 @@
 
 // Eksekusi operasi matematika dan logika di atas Stack (Bagian Rama)
 
-void VirtualMachine::executeOPR(int oprCode) {
+void VirtualMachine::executeOPR(int oprCode, int lField) {
     switch (oprCode) {
         case 1: { // NEG: negasi nilai teratas stack
             Security::checkStackUnderflow(SP + 1, 1);
@@ -97,10 +97,14 @@ void VirtualMachine::executeOPR(int oprCode) {
             push(a <= b ? 1 : 0);
             break;
         }
-        case 13: { // WRT: cetak tanpa newline
+        case 13: { // WRT: cetak tanpa newline (l=0: integer, l=1: string dari pool)
             Security::checkStackUnderflow(SP + 1, 1);
             int val = pop();
-            std::cout << val;
+            if (lField == 1 && val >= 0 && val < (int)stringPool.size()) {
+                std::cout << stringPool[val];
+            } else {
+                std::cout << val;
+            }
             break;
         }
         case 14: { // WRTLN: cetak newline saja (tanpa pop)

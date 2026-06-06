@@ -82,11 +82,11 @@ Intermediate Code:
 5 OPR 0 2
 6 STO 0 4
 7 LIT 0 0
-8 OPR 0 17
+8 OPR 1 13
 9 LOD 0 4
 10 OPR 0 13
 11 OPR 0 14
 12 RET
 
 Output Program:
-'Result = '15
+Result = 15
