@@ -65,8 +65,8 @@ void ICGVisitor::visit(BinaryOpNode* node) {
     else if (op == "geq" || op == ">=")     oprCode = (int)OprCode::GEQ;  // 10
     else if (op == "gtr" || op == ">")      oprCode = (int)OprCode::GTR;  // 11
     else if (op == "leq" || op == "<=")     oprCode = (int)OprCode::LEQ;  // 12
-    else if (op == "and")                   oprCode = (int)OprCode::MUL;  // AND = perkalian (1*1=1, sisanya 0)
-    else if (op == "or") {
+    else if (op == "and" || op == "andsy")  oprCode = (int)OprCode::MUL;  // AND = perkalian (1*1=1, sisanya 0)
+    else if (op == "or" || op == "orsy") {
         // OR = a+b, lalu jadikan 1 kalau > 0.
         // Tapi kita bisa ubah implementasinya jadi instruksi manual, 
         // karena Arion OPR gak punya native OR, kita pakai ADD lalu cek GTR 0
@@ -101,18 +101,27 @@ void ICGVisitor::visit(UnaryOpNode* node) {
 // FuncCallNode: Menangani I/O atau pemanggilan fungsi user
 void ICGVisitor::visit(FuncCallNode* node) {
     if (node->name == "writeln" || node->name == "write") {
+        if (node->args.empty() && node->name == "writeln") {
+            stringPool.push_back("");
+            instructions.push_back(Instruction(OpCode::LIT, 0, stringPool.size() - 1));
+            instructions.push_back(Instruction(OpCode::OPR, 1, (int)OprCode::WRTLN));
+            return;
+        }
+
         // Evaluasi semua argumen lalu cetak
-        for (auto* arg : node->args) {
+        for (size_t i = 0; i < node->args.size(); i++) {
+            auto* arg = node->args[i];
             arg->accept(this);
             // Deteksi tipe: l=1 untuk string, l=0 untuk lainnya
             int lFlag = 0;
             if (auto lit = dynamic_cast<LiteralNode*>(arg)) {
                 if (lit->literalType == DataType::STRING) lFlag = 1;
             }
-            instructions.push_back(Instruction(OpCode::OPR, lFlag, (int)OprCode::WRT));
-        }
-        if (node->name == "writeln") {
-            instructions.push_back(Instruction(OpCode::OPR, 0, (int)OprCode::WRTLN));
+            if (i == node->args.size() - 1 && node->name == "writeln") {
+                instructions.push_back(Instruction(OpCode::OPR, lFlag, (int)OprCode::WRTLN));
+            } else {
+                instructions.push_back(Instruction(OpCode::OPR, lFlag, (int)OprCode::WRT));
+            }
         }
     } else if (node->name == "readln" || node->name == "read") {
         // ICG baca input, lalu STO ke variabel
@@ -171,6 +180,14 @@ void ICGVisitor::visit(AssignStmtNode* node) {
 
 // WriteStatementNode: Cetak nilai argumen
 void ICGVisitor::visit(WriteStatementNode* node) {
+    if (node->args.empty() && node->hasNewline) {
+        // empty writeln
+        stringPool.push_back("");
+        instructions.push_back(Instruction(OpCode::LIT, 0, stringPool.size() - 1));
+        instructions.push_back(Instruction(OpCode::OPR, 1, (int)OprCode::WRTLN));
+        return;
+    }
+
     for (size_t i = 0; i < node->args.size(); i++) {
         auto* arg = node->args[i];
         arg->accept(this);
@@ -178,9 +195,11 @@ void ICGVisitor::visit(WriteStatementNode* node) {
         if (auto lit = dynamic_cast<LiteralNode*>(arg)) {
             if (lit->literalType == DataType::STRING) lFlag = 1;
         }
-        instructions.push_back(Instruction(OpCode::OPR, lFlag, (int)OprCode::WRT));
-    }
-    if (node->hasNewline) {
-        instructions.push_back(Instruction(OpCode::OPR, 0, (int)OprCode::WRTLN));
+        
+        if (i == node->args.size() - 1 && node->hasNewline) {
+            instructions.push_back(Instruction(OpCode::OPR, lFlag, (int)OprCode::WRTLN));
+        } else {
+            instructions.push_back(Instruction(OpCode::OPR, lFlag, (int)OprCode::WRT));
+        }
     }
 }
