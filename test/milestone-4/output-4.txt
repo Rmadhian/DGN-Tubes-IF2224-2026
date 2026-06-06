@@ -1,0 +1,18 @@
+
+Intermediate Code:
+0 INT 0 6
+1 LIT 0 15
+2 STO 0 3
+3 LIT 0 8
+4 STO 0 4
+5 LOD 0 3
+6 LOD 0 4
+7 OPR 0 4
+8 STO 0 5
+9 LIT 0 0
+10 OPR 1 13
+11 OPR 0 14
+12 RET
+
+Output Program:
+Luas Persegi Panjang = 120

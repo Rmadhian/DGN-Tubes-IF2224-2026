@@ -1,0 +1,20 @@
+
+Intermediate Code:
+0 INT 0 5
+1 LIT 0 0
+2 STO 0 3
+3 LOD 0 3
+4 LIT 0 9
+5 OPR 0 4
+6 LIT 0 5
+7 OPR 0 5
+8 LIT 0 32
+9 OPR 0 2
+10 STO 0 4
+11 LIT 0 0
+12 OPR 1 13
+13 OPR 0 14
+14 RET
+
+Output Program:
+{Hasil} Suhu F = 32

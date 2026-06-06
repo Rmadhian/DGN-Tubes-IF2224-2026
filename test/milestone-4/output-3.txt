@@ -1,0 +1,22 @@
+
+Intermediate Code:
+0 INT 0 6
+1 LIT 0 400
+2 STO 0 3
+3 LIT 0 250
+4 STO 0 4
+5 LIT 0 2
+6 STO 0 5
+7 LOD 0 3
+8 LIT 0 800
+9 OPR 0 10
+10 LOD 0 5
+11 LIT 0 1
+12 OPR 0 12
+13 OPR 0 4
+14 JPC 0 17
+15 LIT 0 0
+16 OPR 1 14
+17 RET
+
+Output Program:
