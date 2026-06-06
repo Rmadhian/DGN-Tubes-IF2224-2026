@@ -1,0 +1,21 @@
+ProgramNode(name: 'KonversiSuhu')
+ ├─ Declarations
+ │    ├─ VarDecl('celsius') 		→ tab_index:43, type:unknown, lev:0
+ │    └─ VarDecl('fahrenheit') 		→ tab_index:44, type:unknown, lev:0
+ └─ Block                  → block_index:42, lev:0
+     ├─ Assign('celsius' := -10.5) 	→ type:void
+     │   ├─ target 'celsius' 		→ tab_index:43, type:real
+     │   └─ value UnaryOp 'minus'          → type:real
+     │       └─ 10.5 		→ type:real
+     ├─ Assign('fahrenheit' := celsius * 9 div 5 + 32) 	→ type:void
+     │   ├─ target 'fahrenheit' 		→ tab_index:44, type:real
+     │   └─ value BinOp 'plus' 		→ type:unknown
+     │       ├─ BinOp 'idiv' 		→ type:unknown
+     │       │   ├─ BinOp 'times' 		→ type:real
+     │       │   │   ├─ 'celsius' 		→ tab_index:43, type:real
+     │       │   │   └─ 9 		→ type:integer
+     │       │   └─ 5 		→ type:integer
+     │       └─ 32 		→ type:integer
+     └─ writeln(...) 		→ predefined, tab_index:-1
+         ├─ arg '{Hasil} Suhu F = ' 		→ type:string
+         └─ arg 'fahrenheit' 		→ tab_index:44, type:real

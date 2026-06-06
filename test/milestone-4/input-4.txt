@@ -1,0 +1,20 @@
+ProgramNode(name: 'HitungLuas')
+ ├─ Declarations
+ │    ├─ VarDecl('panjang') 		→ tab_index:43, type:unknown, lev:0
+ │    ├─ VarDecl('lebar') 		→ tab_index:44, type:unknown, lev:0
+ │    └─ VarDecl('luas') 		→ tab_index:45, type:unknown, lev:0
+ └─ Block                  → block_index:42, lev:0
+     ├─ Assign('panjang' := 15) 	→ type:void
+     │   ├─ target 'panjang' 		→ tab_index:43, type:integer
+     │   └─ value 15 		→ type:integer
+     ├─ Assign('lebar' := 8) 	→ type:void
+     │   ├─ target 'lebar' 		→ tab_index:44, type:integer
+     │   └─ value 8 		→ type:integer
+     ├─ Assign('luas' := panjang * lebar) 	→ type:void
+     │   ├─ target 'luas' 		→ tab_index:45, type:integer
+     │   └─ value BinOp 'times' 		→ type:integer
+     │       ├─ 'panjang' 		→ tab_index:43, type:integer
+     │       └─ 'lebar' 		→ tab_index:44, type:integer
+     └─ writeln(...) 		→ predefined, tab_index:-1
+         ├─ arg 'Luas Persegi Panjang = ' 		→ type:string
+         └─ arg 'luas' 		→ tab_index:45, type:integer

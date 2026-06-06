@@ -1,0 +1,24 @@
+ProgramNode(name: 'CekKelulusan')
+ ├─ Declarations
+ │    └─ VarDecl('nilai') 		→ tab_index:43, type:unknown, lev:0
+ │    └─ VarDecl('lulus') 		→ tab_index:44, type:unknown, lev:0
+ └─ Block                  → block_index:42, lev:0
+     ├─ Assign('nilai' := 75) 	→ type:void
+     │   ├─ target 'nilai' 		→ tab_index:43, type:integer
+     │   └─ value 75 		→ type:integer
+     └─ IfStmt                → type:void
+         ├─ condition BinOp 'geq' 		→ type:boolean
+         │   ├─ 'nilai' 		→ tab_index:43, type:integer
+         │   └─ 70 		→ type:integer
+         ├─ then CompoundStmt
+         │   ├─ Assign('lulus' := true) 	→ type:void
+         │   │   ├─ target 'lulus' 		→ tab_index:44, type:boolean
+         │   │   └─ value 'true' 		→ tab_index:38, type:boolean
+         │   └─ writeln(...) 		→ predefined, tab_index:-1
+         │       └─ arg 'Selamat, Anda Lulus!' 		→ type:string
+         └─ else CompoundStmt
+             ├─ Assign('lulus' := false) 	→ type:void
+             │   ├─ target 'lulus' 		→ tab_index:44, type:boolean
+             │   └─ value 'false' 		→ tab_index:39, type:boolean
+             └─ writeln(...) 		→ predefined, tab_index:-1
+                 └─ arg 'Maaf, Anda belum lulus.' 		→ type:string

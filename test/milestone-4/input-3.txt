@@ -1,0 +1,25 @@
+ProgramNode(name: 'HitungExposure')
+ ├─ Declarations
+ │    ├─ VarDecl('iso') 		→ tab_index:43, type:unknown, lev:0
+ │    └─ VarDecl('shutter') 		→ tab_index:44, type:unknown, lev:0
+ │    └─ VarDecl('aperture') 		→ tab_index:45, type:unknown, lev:0
+ └─ Block                  → block_index:42, lev:0
+     ├─ Assign('iso' := 400) 	→ type:void
+     │   ├─ target 'iso' 		→ tab_index:43, type:integer
+     │   └─ value 400 		→ type:integer
+     ├─ Assign('shutter' := 250) 	→ type:void
+     │   ├─ target 'shutter' 		→ tab_index:44, type:integer
+     │   └─ value 250 		→ type:integer
+     ├─ Assign('aperture' := 2.8) 	→ type:void
+     │   ├─ target 'aperture' 		→ tab_index:45, type:real
+     │   └─ value 2.8 		→ type:real
+     └─ IfStmt                → type:void
+         ├─ condition BinOp 'andsy' 		→ type:boolean
+         │   ├─ BinOp 'geq' 		→ type:boolean
+         │   │   ├─ 'iso' 		→ tab_index:43, type:integer
+         │   │   └─ 800 		→ type:integer
+         │   └─ BinOp 'leq' 		→ type:boolean
+         │       ├─ 'aperture' 		→ tab_index:45, type:real
+         │       └─ 1.4 		→ type:real
+         └─ then writeln(...) 		→ predefined, tab_index:-1
+             └─ arg 'Foto overexposed' 		→ type:string

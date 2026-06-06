@@ -1,0 +1,17 @@
+ProgramNode(name: 'GanjilGenap')
+ ├─ Declarations
+ │    └─ VarDecl('angka') 		→ tab_index:43, type:unknown, lev:0
+ └─ Block                  → block_index:42, lev:0
+     ├─ Assign('angka' := 15) 	→ type:void
+     │   ├─ target 'angka' 		→ tab_index:43, type:integer
+     │   └─ value 15 		→ type:integer
+     └─ IfStmt                → type:void
+         ├─ condition BinOp 'eql' 		→ type:boolean
+         │   ├─ BinOp 'imod' 		→ type:integer
+         │   │   ├─ 'angka' 		→ tab_index:43, type:integer
+         │   │   └─ 2 		→ type:integer
+         │   └─ 0 		→ type:integer
+         ├─ then writeln(...) 		→ predefined, tab_index:-1
+         │   └─ arg 'Genap' 		→ type:string
+         └─ else writeln(...) 		→ predefined, tab_index:-1
+             └─ arg 'Ganjil' 		→ type:string
