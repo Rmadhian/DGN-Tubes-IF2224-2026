@@ -7,7 +7,7 @@ using namespace std;
 void SymbolTable::initPredefined() {
     currentLevel = 0;
 
-    // 1. Mengisi indeks 0 s.d 32 dengan dummy/reserved words sesuai spesifikasi
+    // Mengalokasikan indeks 0 hingga 32 pada tabel simbol untuk menampung reserved words standar.
     string reservedWords[33] = {
         "empty", "and", "array", "begin", "case", "const", "div", "downto", 
         "do", "else", "end", "for", "function", "if", "mod", "not", "of", 
@@ -24,7 +24,7 @@ void SymbolTable::initPredefined() {
         tab.push_back(entry);
     }
 
-    // 2. Predefined identifiers (Mulai dari indeks 33)
+    // 2. Predefined identifiers
     insertTab("integer", ObjClass::TYPE_DEF, DataType::INTEGER, 0, 0, 0);
     insertTab("real", ObjClass::TYPE_DEF, DataType::REAL, 0, 0, 0);
     insertTab("char", ObjClass::TYPE_DEF, DataType::CHAR, 0, 0, 0);

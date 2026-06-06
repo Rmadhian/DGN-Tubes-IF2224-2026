@@ -2,13 +2,13 @@
 #include <cctype>
 #include <algorithm>
 
-// Melewati whitespace (spasi, tab, newline) dan komentar Pascal
+// Mengabaikan karakter whitespace dan blok komentar.
 void Lexer::skipWhitespaceAndComments() {
     while (current_char != '\0') {
         if (isspace(current_char)) {
             advance();
         } 
-        // Komentar gaya { ... }
+        // Menangani komentar dengan format kurung kurawal.
         else if (current_char == '{') {
             advance();
             while (current_char != '\0' && current_char != '}') {
@@ -16,14 +16,14 @@ void Lexer::skipWhitespaceAndComments() {
             }
             if (current_char == '}') advance();
         } 
-        // Komentar gaya (* ... *)
+        // Menangani komentar dengan format kurung buka dan bintang.
         else if (current_char == '(' && peek() == '*') {
-            advance(); // skip '('
-            advance(); // skip '*'
+            advance();
+            advance();
             while (current_char != '\0') {
                 if (current_char == '*' && peek() == ')') {
-                    advance(); // skip '*'
-                    advance(); // skip ')'
+                    advance();
+                    advance();
                     break;
                 }
                 advance();
@@ -34,17 +34,17 @@ void Lexer::skipWhitespaceAndComments() {
     }
 }
 
-// Memindai bilangan: integer atau real (jika ada titik desimal)
+// Memindai tipe data numerik integer atau real.
 Token Lexer::scanNumber() {
     string res = "";
 
-    // Baca digit integer dulu
+    // Mengurai bagian bilangan bulat.
     while (isdigit(current_char)) {
         res += current_char;
         advance();
     }
 
-    // Kalau ketemu titik dan diikuti digit, berarti bilangan real
+    // Mengurai bagian pecahan jika ditemukan titik desimal.
     if (current_char == '.' && isdigit(peek())) {
         res += current_char;
         advance();
@@ -59,19 +59,19 @@ Token Lexer::scanNumber() {
     return Token(TokenType::INTCON, res);
 }
 
-// Memindai identifier lalu cek apakah termasuk keyword Pascal
+// Memindai identifier dan memeriksa kecocokannya dengan keyword bahasa ini.
 Token Lexer::scanIdentOrKeyword() {
     string res = "";
     res += current_char;
     advance();
 
-    // Terus baca selama masih alfanumerik
+    // Mengekstraksi karakter alfanumerik secara berurutan.
     while (current_char != '\0' && isalnum(current_char)) {
         res += current_char;
         advance();
     }
 
-    // Lowercase untuk pencocokan keyword (Pascal case-insensitive)
+    // Mengubah string ke huruf kecil karena bahasa ini bersifat case-insensitive.
     string lookup = res;
     transform(lookup.begin(), lookup.end(), lookup.begin(), ::tolower);
 
@@ -79,22 +79,22 @@ Token Lexer::scanIdentOrKeyword() {
     return Token(type, res);
 }
 
-// Memindai string literal atau char constant yang diapit petik tunggal
+// Memindai literal string atau karakter konstan yang diapit tanda kutip tunggal.
 Token Lexer::scanStringOrChar() {
     string teks;
-    teks += current_char; // Simpan petik pembuka
+    teks += current_char;
     advance();
 
     while (current_char != '\0') {
       if (current_char == '\'') {
-        // Petik ganda ('') artinya escape, bukan penutup
+        // Menangani karakter escape berupa kutip tunggal ganda.
         if (peek() == '\'') {
           teks += current_char;
           advance();
           teks += current_char;
           advance();
         } else {
-          // Petik penutup
+          // Mengakhiri pemindaian saat kutip penutup ditemukan.
           teks += current_char;
           advance();
           break;
@@ -105,7 +105,7 @@ Token Lexer::scanStringOrChar() {
       }
     } 
 
-    // Panjang 3 (misal 'A') berarti char, selain itu string
+    // Menentukan tipe token berdasarkan panjang string yang dipindai.
     if (teks.length() == 3) {
       return Token(TokenType::CHARCON, teks);
     } else {

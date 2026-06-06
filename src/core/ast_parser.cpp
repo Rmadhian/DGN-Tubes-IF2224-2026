@@ -47,7 +47,7 @@ ObjClass ASTParser::strToObjClass(const string& str) {
     if (str == "type") return ObjClass::TYPE_DEF;
     if (str == "procedure") return ObjClass::PROCEDURE;
     if (str == "function") return ObjClass::FUNCTION;
-    return ObjClass::CONSTANT; // default dummy
+    return ObjClass::CONSTANT;
 }
 
 void ASTParser::parse() {
@@ -69,13 +69,13 @@ void ASTParser::parse() {
         }
     }
 
-    // Bangun symbol table dari tree
+    // Membangun tabel simbol dari Abstract Syntax Tree.
     buildSymbolTableFromTree();
 }
 
-// Pattern matching untuk node AST (support format internal dan format spek)
+// Mengevaluasi dan memetakan string input ke instansiasi node AST yang sesuai.
 ASTNode* ASTParser::parseASTNode(const string& text) {
-    // Format internal: ProgramNode, VarDecl, AssignStmt, etc.
+    // Melakukan pencocokan pola untuk format node internal utama.
     if (text.find("ProgramNode") != string::npos) return new ProgramNode();
     if (text.find("VarDecl") != string::npos) return new VarDeclNode();
     if (text.find("ConstDecl") != string::npos) return new ConstDeclNode();
@@ -105,16 +105,16 @@ ASTNode* ASTParser::parseASTNode(const string& text) {
         return un;
     }
     
-    // Format internal: cek tab_index untuk VarAccess
+    // Mendeteksi node akses variabel berdasarkan keberadaan atribut tab_index.
     if (text.find("tab_index:") != string::npos && text.find("type:") != string::npos) {
         return new VarAccessNode();
     }
     if (text.find("\'") != string::npos && text.find("type:") != string::npos) {
-        // Bisa jadi literal string atau var access
+        // Membedakan literal string dari akses variabel.
         if (text.find("tab_index:") != string::npos) return new VarAccessNode();
     }
     
-    // Literal jika punya type tapi bukan var
+    // Memetakan sebagai literal jika memiliki tipe namun tanpa penanda variabel.
     if (text.find("type:") != string::npos) return new LiteralNode();
     
     return nullptr;
@@ -122,7 +122,7 @@ ASTNode* ASTParser::parseASTNode(const string& text) {
 
 void ASTParser::parseDecoratedAST(const vector<string>& lines, size_t& i) {
     if (lines[i].find("Decorated AST:") != string::npos) {
-        i++; // lewati "Decorated AST:"
+        i++; // Mengabaikan baris penanda header AST.
     }
     
     vector<pair<int, ASTNode*>> stack;
@@ -135,7 +135,7 @@ void ASTParser::parseDecoratedAST(const vector<string>& lines, size_t& i) {
             continue;
         }
         
-        // Hitung depth secara logis (UTF-8 safe)
+        // Menghitung kedalaman node berdasarkan posisi karakter dan representasi UTF-8.
         int depth = 0;
         int bytePos = 0;
         while (bytePos < (int)line.length()) {
@@ -148,18 +148,18 @@ void ASTParser::parseDecoratedAST(const vector<string>& lines, size_t& i) {
             depth++;
         }
         
-        string text = trim(line.substr(bytePos)); // Cukup untuk pengecekan pola
+        string text = trim(line.substr(bytePos));
         ASTNode* node = parseASTNode(text);
         
         if (!node) {
             i++;
-            continue; // Skip decorative nodes like 'Declarations'
+            continue; // Mengabaikan node dekoratif yang tidak memiliki representasi fungsional.
         }
 
         if (stack.empty()) {
             root = dynamic_cast<ProgramNode*>(node);
             if (!root) { 
-                root = new ProgramNode(); // Fallback
+                root = new ProgramNode(); // Menangani fallback untuk node program akar.
                 delete node;
                 node = root;
             }
@@ -213,7 +213,6 @@ void ASTParser::parseDecoratedAST(const vector<string>& lines, size_t& i) {
                     else if (text.find("end ") != string::npos) fs->endExpr = node;
                     else if (text.find("body ") != string::npos) fs->body = node;
                     else {
-                        // asumsi iterVar
                         if (auto v = dynamic_cast<VarAccessNode*>(node)) fs->iterVar = v->name;
                     }
                 }
@@ -225,7 +224,7 @@ void ASTParser::parseDecoratedAST(const vector<string>& lines, size_t& i) {
             stack.push_back({depth, node});
         }
 
-        // Proses ekstraksi metadata penting
+        // Mengekstraksi metadata indeks simbol dari string node.
         if (text.find("tab_index:") != string::npos) {
             size_t pos = text.find("tab_index:");
             string idxStr = "";
@@ -245,7 +244,7 @@ void ASTParser::parseDecoratedAST(const vector<string>& lines, size_t& i) {
             }
         }
         
-        // Ekstrak lev (Lexical Level) jika ada tertulis eksplisit
+        // Mengekstraksi dan menetapkan tingkat leksikal jika didefinisikan secara eksplisit.
         if (text.find("lev:") != string::npos) {
             size_t pos = text.find("lev:");
             string levStr = "";
@@ -345,7 +344,7 @@ void ASTParser::parseDecoratedAST(const vector<string>& lines, size_t& i) {
                             break;
                         }
                     }
-                    // buang spasi dan karakter grafis
+                    // Membersihkan karakter grafis dan spasi dari nama fungsi.
                     while(!name.empty() && !isalpha(name[0])) name.erase(0,1);
                     fnNode->name = name;
                 }
@@ -357,27 +356,27 @@ void ASTParser::parseDecoratedAST(const vector<string>& lines, size_t& i) {
 }
 
 void ASTParser::buildSymbolTableFromTree() {
-    // Kosongkan tab, btab, atab
+    // Mereset isi tabel simbol sebelum rekonstruksi.
     st.tab.clear();
     st.btab.clear();
     st.atab.clear();
 
-    // Inisialisasi predefined identifiers
+    // Mengisi tabel simbol dengan fungsi bawaan.
     st.initPredefined();
 
-    // reset tab supaya yang sisa cuma built-in (0..39)
+    // Membatasi tabel simbol hanya pada identifier bawaan standar.
     while (st.tab.size() > 40) {
         st.tab.pop_back();
     }
 
-    // Alamat variabel dimulai dari offset 3 (karena 0=SL, 1=DL, 2=RA)
+    // Mengatur offset memori variabel dimulai dari indeks 3 untuk mengakomodasi struktur kontrol.
     int currentAdr = 3;
     
     for (size_t i = 0; i < varDeclNames.size(); i++) {
         TabEntry t;
         t.identifiers = varDeclNames[i];
         t.obj = ObjClass::VARIABLE;
-        t.type = DataType::INTEGER; // Default, karena kita tidak parsing tipe secara ketat di sini jika tidak ada
+        t.type = DataType::INTEGER;
         t.ref = 0;
         t.nrm = 1;
         t.lev = 0;
@@ -386,8 +385,8 @@ void ASTParser::buildSymbolTableFromTree() {
         st.tab.push_back(t);
     }
 
-    // Resolusi symRef untuk VarAccessNode dan VarDeclNode yang tidak punya index
-    // DFS traversal sederhana untuk assign symRef
+    // Melakukan resolusi referensi simbol untuk node deklarasi dan akses yang belum terpetakan.
+    // Menggunakan algoritma penelusuran Depth First Search.
     vector<ASTNode*> stack;
     if (root) stack.push_back(root);
     
@@ -443,17 +442,17 @@ void ASTParser::buildSymbolTableFromTree() {
         }
     }
 
-    // Init 1 block di btab (Program block)
+    // Menginisiasi blok eksekusi utama pada block table.
     BTabEntry b;
     b.blocks = 0;
     b.last = st.tab.size() - 1;
     b.lpar = 0;
     b.psze = 0;
-    b.vsze = varDeclNames.size(); // Hanya jumlah variabel, +3 (SL/DL/RA) akan ditambahkan saat instruksi INT
+    b.vsze = varDeclNames.size();
     st.btab.push_back(b);
     
-    // Main block
+    // Mendefinisikan cakupan tingkat root untuk program utama.
     BTabEntry b2 = b;
-    b2.vsze = 0; // blok utama biasanya vsze-nya menumpang program block di arsitektur kita
+    b2.vsze = 0; 
     st.btab.push_back(b2);
 }

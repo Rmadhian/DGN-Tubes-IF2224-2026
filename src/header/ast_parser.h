@@ -32,7 +32,7 @@ private:
     ASTNode* parseASTNode(const std::string& line);
     ObjClass strToObjClass(const std::string& str);
 
-    // Tracking variabel yang ditemukan di tree (untuk tree-only mode)
+    // Tracking variabel yang ditemukan di tree
     std::vector<std::string> varDeclNames;
 };
 

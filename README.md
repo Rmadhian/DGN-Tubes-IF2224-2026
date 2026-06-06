@@ -1,4 +1,4 @@
-# Arion Compiler - Tugas Besar IF2224 TBFO (Milestone 3)
+# Arion Compiler - Tugas Besar IF2224 TBFO (Milestone 4)
 
 ## Identitas Kelompok
 
@@ -13,19 +13,17 @@
 
 ## Deskripsi Program
 
-Program ini merupakan tahapan ketiga dari pembuatan compiler Arion, yaitu **Semantic Analysis**. Program ini melanjutkan fungsionalitas dari parser pada Milestone 2 dengan menambahkan pengecekan makna (*semantic check*) terhadap *parse tree* yang telah dihasilkan.
+Program ini merupakan tahapan keempat dan terakhir dari pembuatan compiler Arion, yaitu **Intermediate Code Generation (ICG) & Interpreter**. Program ini melanjutkan fungsionalitas dari Milestone 3 dengan melakukan penerjemahan *Decorated AST* menjadi kode instruksi tingkat rendah, lalu mengeksekusinya layaknya *Virtual Machine*.
 
-Fitur utama pada Milestone 3 ini meliputi:
+Fitur utama pada Milestone 4 ini meliputi:
 
-**Konversi Parse Tree ke Decorated AST**: Mengubah *parse tree* menjadi *Abstract Syntax Tree* (AST) yang ringkas dan melakukan anotasi informasi tambahan (seperti tipe data dan referensi simbol).
+**Intermediate Code Generation**: Mengubah *Decorated AST* menjadi kumpulan instruksi mesin perantara (LIT, LOD, STO, CAL, INT, JMP, JPC, OPR, RET) menggunakan desain *Visitor Pattern*.
 
-**Symbol Table Management**: Implementasi struktur data *stack* untuk mengelola cakupan (*scope*) variabel/fungsi menggunakan tiga tabel utama: `tab`, `btab`, dan `atab`.
+**Stack Machine Interpreter**: Mengeksekusi kumpulan instruksi TAC layaknya sebuah *Virtual Machine* berbasis *stack*, secara otomatis mengelola memori fungsi seperti *Static Link*, *Dynamic Link*, dan *Return Address*.
 
+**Control Flow Flattening**: Meratakan struktur kontrol tingkat tinggi yang bersarang (seperti IF-THEN-ELSE, WHILE-DO, FOR-DO) menjadi instruksi lompatan linear bersyarat dan tak bersyarat (JMP/JPC).
 
-**Type & Scope Checking**: Melakukan verifikasi kompatibilitas tipe data berdasarkan aturan *Type Compatibility* dan memastikan validitas akses identifier berdasarkan hierarki blok kode.
-
-
-**Recursive Descent Visitor**: Penelusuran *parse tree* secara *top-down* menggunakan fungsi *visit* untuk membangun *Decorated AST*.
+**Vulnerability Handling (Bonus)**: Mencegah dan menangani secara aman kesalahan-kesalahan fatal *runtime* seperti *Stack Overflow*, *Stack Underflow*, akses memori *Out of Bounds*, *Invalid Jump Target*, *Numerical Overflow/Underflow*, dan *Division by Zero*.
 
 ## Requirements
 Untuk melakukan kompilasi dan menjalankan program ini, pastikan sistem Anda sudah terpasang:
@@ -39,7 +37,7 @@ Buka terminal pada *root directory* proyek ini, lalu jalankan perintah `make`:
 ```bash
 make
 ```
-*(Untuk OS Windows: Jika `make` tidak dikenali, gunakan `mingw32-make` atau kompilasi manual dengan perintah: `g++ src/main.cpp src/dfa_dinamis.cpp src/dfa_statis.cpp src/lexer.cpp src/parser_expr.cpp src/parser_stmt.cpp src/parser_decl.cpp src/ast_builder.cpp src/semantic_decl.cpp src/semantic_expr.cpp src/semantic_stmt.cpp src/semantic_printer.cpp -o arion_lexer`)*
+*(Untuk OS Windows: Jika `make` tidak dikenali, gunakan `mingw32-make` atau kompilasi manual dengan perintah: `g++ -std=c++17 -I src/header src/core/*.cpp -o arion_lexer`)*
 
 ### 2. Menjalankan Program
 Setelah berhasil dikompilasi, jalankan executable dengan format berikut:
@@ -49,14 +47,14 @@ Setelah berhasil dikompilasi, jalankan executable dengan format berikut:
 
 **Contoh Penggunaan:**
 ```bash
-./arion_lexer test/milestone-3/input-1.txt test/milestone-3/output-1.txt
+./arion_lexer test/milestone-4/input-1.txt test/milestone-4/output-1.txt
 ```
-Program akan membaca parse tree hasil dari Milestone 2, melakukan analisis semantik, dan menghasilkan Decorated AST serta Symbol Table ke dalam file output yang ditentukan.
+Program akan membaca file input berformat Decorated AST (atau source code/parse tree dari milestone sebelumnya), membangkitkan kumpulan Intermediate Code, mencetaknya, dan mengeksekusi instruksi tersebut menggunakan Interpreter, menghasilkan output program ke layar dan file yang ditentukan.
 
 ## Pembagian Tugas
 | NIM | Nama | Tugas |
 | :--- | :--- | :---|
-| 13523150 | Benedictus Nelson | Mengimplementasi semantic_stmt.cpp & laporan. |
+| 13523150 | Benedictus Nelson | Mengimplementasi Control Flow & Penanganan Keamanan/Vulnerability (`icg_stmt.cpp`, `interpreter_security.cpp`, `interpreter_flow.cpp`) & laporan. |
 | 13524117 | Rainaldi Pratama F. Sembiring | - |
-| 13524120 | Jonathan Alveraldo Bangun | Mengimplementasi semantic_decl.cpp, ast_builder & laporan. |
-| 13524126 | Ramadhian Nabil Firdaus Gumay | Mengimplementasi semantic_expr.cpp, semantic_printer.cpp & laporan. |
+| 13524120 | Jonathan Alveraldo Bangun | Mengimplementasi Top-Level, Manajemen Scope & Core VM Engine (`icg_decl.cpp`, `interpreter_core.cpp`) & laporan. |
+| 13524126 | Ramadhian Nabil Firdaus Gumay | Mengimplementasi Ekspresi, Assignment & Operasi Memori (`icg_expr.cpp`, `interpreter_expr.cpp`) & laporan. |

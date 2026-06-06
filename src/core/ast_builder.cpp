@@ -39,7 +39,7 @@ void ASTBuilder::buildVarDeclaration(ParseTreeNode* varDecl, vector<ASTNode*>& d
             VarDeclNode* vNode = new VarDeclNode();
             vNode->idents = extractIdentifierList(varDecl->children[i]);
             
-            // Tipe ada 2 posisi setelah identifier-list (lewat colon)
+            // Melakukan pencarian spesifikasi tipe dengan melompati token colon separator.
             if (i + 2 < varDecl->children.size() && varDecl->children[i+2]->label == "<type>") {
                 ParseTreeNode* typeNode = varDecl->children[i+2];
                 vNode->type = resolveType(typeNode);
@@ -47,33 +47,33 @@ void ASTBuilder::buildVarDeclaration(ParseTreeNode* varDecl, vector<ASTNode*>& d
                 if (vNode->type == DataType::ARRAY) {
                     ParseTreeNode* curr = typeNode;
                     
-                    // Cari node <array-type>
+                    // Menelusuri rantai child node tunggal hingga mencapai spesifikasi array.
                     while(curr->children.size() == 1 && curr->label != "<array-type>") {
                         curr = curr->children[0];
                     }
                     
                     if (curr->label == "<array-type>") {
-                        // Cari info dimensi dan tipe elemen
+                        // Mengurai batas indeks spesifik dan deklarasi tipe elemen dari tipe komposit array.
                         for(size_t j=0; j<curr->children.size(); j++){
                             if(curr->children[j]->label == "<range>") {
                                 ParseTreeNode* rangeNode = curr->children[j];
                                 
-                                // Ekstrak batas bawah dan atas
+                                // Mengekstrak informasi rentang limit bawah dan atas.
                                 if (rangeNode->children.size() >= 4) {
                                     ParseTreeNode* leftConst = rangeNode->children[0];
                                     ParseTreeNode* rightConst = rangeNode->children[3];
                                     
-                                    // Ambil nilai batas bawah
+                                    // Menyimpan nilai statis batas bawah deklarasi array.
                                     if(!leftConst->children.empty()) {
                                         vNode->lowBound = stoi(leftConst->children[0]->value);
                                     }
-                                    // Ambil nilai batas atas
+                                    // Menyimpan nilai statis batas atas deklarasi array.
                                     if(!rightConst->children.empty()) {
                                         vNode->highBound = stoi(rightConst->children[0]->value);
                                     }
                                 }
                             } else if(curr->children[j]->label == "<type>") {
-                                // Ambil tipe data elemen
+                                // Menyimpan tipe dasar pembentuk array.
                                 vNode->elementType = resolveType(curr->children[j]);
                             }
                         }
@@ -117,11 +117,11 @@ void ASTBuilder::buildSubprogramDeclaration(ParseTreeNode* subprogDecl, vector<A
     }
 
     for (auto child : subNode->children) {
-        // Ambil nama subprogram
+        // Mengambil identifier string yang akan direferensikan pada subprogram.
         if (child->label == "ident" && funcNode->name.empty()) {
             funcNode->name = child->value;
         }
-        // Proses blok parameter dan isi kode
+        // Mengeksekusi penelusuran parameter dan delegasi blok eksekusi body.
         else if (child->label == "<block>") {
             for (auto blockChild : child->children) {
                 if (blockChild->label == "<declaration-part>")
@@ -138,7 +138,7 @@ CompoundStmtNode* ASTBuilder::buildCompoundStatement(ParseTreeNode* compStmt) {
     CompoundStmtNode* cStmtNode = new CompoundStmtNode();
     for (auto child : compStmt->children) {
         if (child->label == "<statement-list>") {
-            // Evaluasi setiap statement di dalam blok berurutan
+            // Mengevaluasi setiap statement secara berurutan dalam scope yang sama.
             for (auto stmtChild : child->children) {
                 if (stmtChild->label == "<statement>") {
                     ASTNode* s = buildStatement(stmtChild);
@@ -208,7 +208,7 @@ WhileStmtNode* ASTBuilder::buildWhile(ParseTreeNode* whileStmt) {
         else if (whileStmt->children[i]->label == "<compound-statement>")
             node->body = buildCompoundStatement(whileStmt->children[i]);
         else if (whileStmt->children[i]->label == "<statement>") {
-            // Parser while menghasilkan <statement> bukan <compound-statement> langsung
+            // Menangani body dari loop while yang direpresentasikan sebagai single statement node.
             node->body = buildStatement(whileStmt->children[i]);
         }
     }
@@ -255,7 +255,7 @@ ASTNode* ASTBuilder::buildExpression(ParseTreeNode* expr) {
         return buildSimpleExpression(expr->children[0]);
 
     if (expr->children.size() == 3) {
-        // simple-expr <relop> simple-expr
+        // Membangun node evaluasi biner dari dua simple expression dan sebuah relational operator.
         BinaryOpNode* bNode = new BinaryOpNode();
         bNode->left = buildSimpleExpression(expr->children[0]);
         ParseTreeNode* op = expr->children[1];
@@ -273,7 +273,7 @@ ASTNode* ASTBuilder::buildSimpleExpression(ParseTreeNode* simpleExpr) {
     string pendingOp = "";
     bool isFirstUnary = false;
     
-    // Tangani sign unary di awal (misal: -5, +x)
+    // Mendeteksi dan memproses operator unary yang berada di awal expression.
     size_t startIndex = 0;
     if (simpleExpr->children[0]->label == "plus" ||
         simpleExpr->children[0]->label == "minus") {
@@ -288,17 +288,17 @@ ASTNode* ASTBuilder::buildSimpleExpression(ParseTreeNode* simpleExpr) {
             ASTNode* termNode = buildTerm(child);
             
             if (isFirstUnary) {
-                // Jadikan unary node sebagai node pertama
+                // Menjadikan unary node sebagai akar komputasi paling kiri.
                 UnaryOpNode* uNode = new UnaryOpNode();
                 uNode->op = pendingOp;
                 uNode->operand = termNode;
                 currentLeft = uNode;
                 isFirstUnary = false;
             } else if (currentLeft == nullptr) {
-                // Inisialisasi node paling kiri
+                // Menempatkan node pertama sebagai operand awal komputasi.
                 currentLeft = termNode;
             } else {
-                // Gabungkan node sebelumnya dengan node term saat ini menggunakan operator
+                // Menggabungkan current term dengan term sebelumnya menggunakan operator yang ditunda.
                 BinaryOpNode* bNode = new BinaryOpNode();
                 bNode->left = currentLeft;
                 bNode->op = pendingOp;
@@ -306,7 +306,7 @@ ASTNode* ASTBuilder::buildSimpleExpression(ParseTreeNode* simpleExpr) {
                 currentLeft = bNode;
             }
         } else if (child->label == "<additive-operator>") {
-            // Simpan operator penambahan/pengurangan untuk node term berikutnya
+            // Menyimpan operator aditif ke dalam antrean untuk node term berikutnya.
             if (!child->children.empty())
                 pendingOp = child->children[0]->label;
         }
@@ -324,10 +324,10 @@ ASTNode* ASTBuilder::buildTerm(ParseTreeNode* term) {
             ASTNode* factorNode = buildFactor(child);
             
             if (currentLeft == nullptr) {
-                // Inisialisasi node factor paling kiri
+                // Menempatkan factor pertama sebagai operand dasar.
                 currentLeft = factorNode;
             } else {
-                // Gabungkan factor sebelumnya dan sekarang menggunakan operator perkalian
+                // Membangun pohon operasi untuk perkalian atau pembagian berdasarkan urutan evaluasi.
                 BinaryOpNode* bNode = new BinaryOpNode();
                 bNode->left = currentLeft;
                 bNode->op = pendingOp;
@@ -335,7 +335,7 @@ ASTNode* ASTBuilder::buildTerm(ParseTreeNode* term) {
                 currentLeft = bNode;
             }
         } else if (child->label == "<multiplicative-operator>") {
-            // Simpan operator perkalian/pembagian untuk factor selanjutnya
+            // Menyimpan operator multiplikatif ke dalam antrean untuk evaluasi factor berikutnya.
             if (!child->children.empty())
                 pendingOp = child->children[0]->label;
         }
@@ -384,7 +384,7 @@ VarAccessNode* ASTBuilder::buildVariable(ParseTreeNode* varNode) {
         else if (child->label == "<component-variable>") {
             for (auto compChild : child->children) {
                 if (compChild->label == "<index-list>") {
-                    // Ekstrak semua indeks di dalam kurung siku
+                    // Memproses dan menyimpan seluruh list indeks array pada dimensi yang relevan.
                     for (auto idxChild : compChild->children) {
                         if (idxChild->label == "intcon" || idxChild->label == "charcon") {
                             LiteralNode* lit = new LiteralNode();
@@ -398,7 +398,7 @@ VarAccessNode* ASTBuilder::buildVariable(ParseTreeNode* varNode) {
                         }
                     }
                 } else if (compChild->label == "ident") { 
-                    // Akses field record (contoh: record.field)
+                    // Menetapkan nama field pada akses property komposit record.
                     vNode->fieldName = compChild->value;
                 }
             }
@@ -428,19 +428,18 @@ DataType ASTBuilder::stringToDataType(string typeStr) {
 DataType ASTBuilder::resolveType(ParseTreeNode* typeNode) {
     if (!typeNode || typeNode->children.empty()) return DataType::NOTYPE;
 
-    // Telusuri ke bawah untuk berjaga-jaga jika grammar berjenjang 
-    // (misal: <type> -> <simple-type> -> <subrange-type>)
+    // Menelusuri hirarki grammar tunggal hingga mencapai identitas base type.
     ParseTreeNode* curr = typeNode;
     while (curr->children.size() == 1 && curr->label != "ident") {
         curr = curr->children[0];
     }
 
-    // Resolusi untuk tipe data dasar (Integer, Real, Boolean, dsb.)
+    // Melakukan resolusi terhadap nama base type.
     if (curr->children.empty()) {
         return stringToDataType(curr->value.empty() ? curr->label : curr->value);
     }
 
-    // Deteksi tipe subrange dari keberadaan token '..' (dotdot)
+    // Memindai keberadaan token rentang untuk mengenali deklarasi tipe subrange.
     bool isSubrange = false;
     ParseTreeNode* leftConst = nullptr;
     ParseTreeNode* rightConst = nullptr;
@@ -455,26 +454,26 @@ DataType ASTBuilder::resolveType(ParseTreeNode* typeNode) {
     }
 
     if (isSubrange && leftConst && rightConst) {
-        // Ekstrak tipe dan nilai dari node <constant>
+        // Mengekstraksi informasi node konstanta pembatas kiri dan kanan.
         ParseTreeNode* leftValNode = leftConst->children.empty() ? leftConst : leftConst->children[0];
         ParseTreeNode* rightValNode = rightConst->children.empty() ? rightConst : rightConst->children[0];
 
         DataType leftType = stringToDataType(leftValNode->label);
         DataType rightType = stringToDataType(rightValNode->label);
 
-        // Pastikan tipe subrange bukan bilangan real (hanya boleh ordinal/diskrit)
+        // Memvalidasi bahwa tipe data pembatas merupakan tipe ordinal diskrit yang diizinkan.
         if (leftType == DataType::REAL || rightType == DataType::REAL) {
             std::cerr << "Error Semantik: Tipe Subrange tidak boleh menggunakan Real!" << std::endl;
             return DataType::NOTYPE;
         }
 
-        // Pastikan batas bawah dan batas atas memiliki tipe data yang sama
+        // Memastikan komparabilitas dan konsistensi tipe antara kedua batas rentang.
         if (leftType != rightType) {
             std::cerr << "Error Semantik: Batas kiri dan kanan Subrange harus memiliki tipe yang sama!" << std::endl;
             return DataType::NOTYPE;
         }
 
-        // Pastikan nilai batas bawah tidak lebih besar dari batas atas
+        // Memvalidasi logika interval agar rentang nilai terurut membesar (ascending).
         if (leftType == DataType::INTEGER) {
             int leftVal = std::stoi(leftValNode->value);
             int rightVal = std::stoi(rightValNode->value);
@@ -495,7 +494,7 @@ DataType ASTBuilder::resolveType(ParseTreeNode* typeNode) {
         return DataType::SUBRANGE;
     }
 
-    // Tangani tipe bentukan lain (Array atau Record)
+    // Memetakan struktur tipe komposit seperti Array dan Record.
     string label = curr->label;
     if (label == "array" || label == "<array-type>") return DataType::ARRAY;
     if (label == "record" || label == "<record-type>") return DataType::RECORD;
