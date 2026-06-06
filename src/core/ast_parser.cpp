@@ -95,7 +95,15 @@ ASTNode* ASTParser::parseASTNode(const string& text) {
         }
         return bin;
     }
-    if (text.find("UnOp") != string::npos) return new UnaryOpNode();
+    if (text.find("UnOp") != string::npos || text.find("UnaryOp") != string::npos) {
+        auto un = new UnaryOpNode();
+        size_t firstQuote = text.find('\'');
+        size_t lastQuote = text.rfind('\'');
+        if (firstQuote != string::npos && lastQuote != string::npos && firstQuote != lastQuote) {
+            un->op = text.substr(firstQuote + 1, lastQuote - firstQuote - 1);
+        }
+        return un;
+    }
     
     // Format internal: cek tab_index untuk VarAccess
     if (text.find("tab_index:") != string::npos && text.find("type:") != string::npos) {
@@ -140,7 +148,7 @@ void ASTParser::parseDecoratedAST(const vector<string>& lines, size_t& i) {
             depth++;
         }
         
-        string text = trim(line); // Cukup untuk pengecekan pola
+        string text = trim(line.substr(bytePos)); // Cukup untuk pengecekan pola
         ASTNode* node = parseASTNode(text);
         
         if (!node) {
@@ -420,6 +428,9 @@ void ASTParser::buildSymbolTableFromTree() {
         }
         else if (auto wrt = dynamic_cast<WriteStatementNode*>(curr)) {
             for (auto* arg : wrt->args) stack.push_back(arg);
+        }
+        else if (auto fn = dynamic_cast<FuncCallNode*>(curr)) {
+            for (auto* arg : fn->args) stack.push_back(arg);
         }
         else if (auto prog = dynamic_cast<ProgramNode*>(curr)) {
             if (prog->mainBlock) stack.push_back(prog->mainBlock);
