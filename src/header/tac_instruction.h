@@ -3,9 +3,7 @@
 
 #include <string>
 
-// ============================================================================
-// Semua akan menggunakan enum dan struct ini untuk ICG dan Interpreter.
-// ============================================================================
+// Definisi instruksi dan tipe data untuk ICG dan Interpreter.
 
 // Daftar Instruksi Utama berdasarkan Spesifikasi Milestone 4 
 enum class OpCode {

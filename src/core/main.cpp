@@ -14,7 +14,7 @@
 
 using namespace std;
 
-// Utility file reader & parser helper
+// Fungsi pembantu untuk membaca dan mendeteksi format input file.
 
 enum class InputType { SOURCE_CODE, TOKEN_LIST, PARSE_TREE, DECORATED_AST };
 
@@ -57,7 +57,7 @@ InputType detectInputType(const string& content) {
     if (firstLine.find("<program>") != string::npos || firstLine.find("\xE2\x94") != string::npos) {
         return InputType::PARSE_TREE;
     }
-    // Cek jika ini format Decorated AST Milestone 3 (dengan tabel atau tree-only)
+    // Cek format Decorated AST Milestone 3.
     if (firstLine.find("tab:") != string::npos || firstLine.find("Decorated AST:") != string::npos
         || firstLine.find("ProgramNode") != string::npos || firstLine.find("Program:") != string::npos) {
         return InputType::DECORATED_AST;
@@ -89,13 +89,11 @@ vector<Token> parseTokenFile(const string& content) {
     return tokens;
 }
 
-// Reconstructor parse tree (Milestone 2 -> Memori AST)
-
-// Membaca satu baris Parse Tree dan membuatnya menjadi node
+// Merekonstruksi Parse Tree dari string input.
 ParseTreeNode* parseTreeLine(const string& line, int& outStartIdx) {
     int startIdx = -1;
     for (int i = 0; i < line.length(); i++) {
-        // Cari karakter awal dari label (Bisa '<' untuk Non-terminal, atau huruf kapital untuk Terminal)
+        // Cari karakter awal dari label (huruf kapital atau '<').
         if (line[i] == '<' || isalnum((unsigned char)line[i])) {
             startIdx = i; break;
         }
@@ -122,7 +120,7 @@ ParseTreeNode* parseTreeLine(const string& line, int& outStartIdx) {
     return new ParseTreeNode(label, value);
 }
 
-// Membangun kembali pohon menggunakan Stack berbasis kedalaman indentasi
+// Membangun pohon dari list node menggunakan stack berbasis kedalaman.
 ParseTreeNode* buildParseTreeFromText(const string& content) {
     istringstream iss(content);
     string line;
@@ -140,7 +138,7 @@ ParseTreeNode* buildParseTreeFromText(const string& content) {
             root = node;
             stack.push_back({startIdx, node});
         } else {
-            // Jika depth node saat ini lebih kecil/sama dengan elemen di stack, pop!
+            // Pop stack jika kedalaman node saat ini lebih kecil atau sama.
             while (!stack.empty() && stack.back().first >= startIdx) {
                 stack.pop_back();
             }
@@ -215,7 +213,7 @@ int main(int argc, char* argv[]) {
         const auto& instructions = icgVisitor.getInstructions();
         cout << "[SUCCESS] ICG Selesai. Total instruksi: " << instructions.size() << endl;
 
-        // ... Cetak instruksi ICG ke file dan layar ...
+        // Menyimpan instruksi ICG ke dalam file output.
         fileOutput << "\nIntermediate Code:\n";
         for (int i = 0; i < (int)instructions.size(); i++) {
             string line = to_string(i) + " " + opCodeToStr(instructions[i].op);
@@ -249,7 +247,7 @@ int main(int argc, char* argv[]) {
         return 0; // Selesai
     }
 
-    // Proses Parsing Reguler: Membangun Parse Tree dari input (Source, Token, ParseTree)
+    // Membangun Parse Tree dari input Source Code atau Token List.
     if (type == InputType::PARSE_TREE) {
         cout << "[INFO] Format file Parse Tree terdeteksi. Melakukan rekonstruksi Tree..." << endl;
         tree = buildParseTreeFromText(fileContent);
@@ -276,7 +274,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    // Proses Semantik: Membangun AST dan Symbol Table
+    // Melakukan analisis semantik untuk membangun AST dan Symbol Table.
 
     cout << "[INFO] Memulai pembangunan AST (Syntax-Directed Translation)..." << endl;
     ASTBuilder astBuilder;
@@ -299,9 +297,7 @@ int main(int argc, char* argv[]) {
         PrintASTVisitor astPrinter(fileOutput);
         astRoot->accept(&astPrinter);
 
-        // ====================================================================
-        // MILESTONE 4: Intermediate Code Generation
-        // ====================================================================
+        // Menghasilkan Intermediate Code (Milestone 4).
         cout << "\n[INFO] Memulai Intermediate Code Generation..." << endl;
 
         ICGVisitor icgVisitor;
@@ -321,9 +317,7 @@ int main(int argc, char* argv[]) {
             fileOutput << line << "\n";
         }
 
-        // ====================================================================
-        // MILESTONE 4: Interpreter (Eksekusi Program)
-        // ====================================================================
+        // Menjalankan interpreter untuk mengeksekusi ICG.
         cout << "[INFO] Menjalankan Interpreter..." << endl;
         fileOutput << "\nOutput Program:\n";
 

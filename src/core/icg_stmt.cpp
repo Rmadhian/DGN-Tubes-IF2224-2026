@@ -1,78 +1,69 @@
 #include "icg_visitor.h"
 
-// Blok begin..end : telusuri semua statement secara berurutan
+// Mengeksekusi secara berurutan semua pernyataan di dalam blok utama.
 void ICGVisitor::visit(CompoundStmtNode* node) {
     for (size_t i = 0; i < node->statements.size(); i++) {
         dispatch(node->statements[i]);
     }
 }
 
-// IF-THEN dan IF-THEN-ELSE
+// Menghasilkan instruksi ICG untuk struktur kontrol percabangan IF-THEN dan IF-THEN-ELSE.
 void ICGVisitor::visit(IfStmtNode* node) {
-    // 1. Hitung kondisi -> hasil boolean ada di stack teratas
+    // Mengevaluasi kondisi dan menyimpan hasilnya sebagai boolean di stack teratas.
     dispatch(node->condition);
 
-    // 2. Kalau kondisi false, lompat melewati blok THEN.
-    //    Alamat tujuan belum tahu, jadi diisi 0 dulu lalu di-backpatch.
+    // Menambahkan instruksi lompatan bersyarat (JPC) untuk mengeksekusi lompatan jika kondisi salah.
     int jpcIndex = instructions.size();
     instructions.push_back(Instruction(OpCode::JPC, 0, 0));
 
-    // 3. Blok THEN
+    // Menghasilkan blok eksekusi THEN.
     dispatch(node->thenStmt);
 
     if (node->elseStmt != nullptr) {
-        // Ada ELSE: setelah THEN selesai, harus lompat melewati blok ELSE
+        // Menambahkan instruksi lompatan tidak bersyarat (JMP) untuk melewati blok ELSE setelah eksekusi blok THEN.
         int jmpIndex = instructions.size();
         instructions.push_back(Instruction(OpCode::JMP, 0, 0));
 
-        // Blok ELSE mulai di sini, jadi JPC tadi diarahkan ke sini
+        // Melakukan backpatching agar JPC sebelumnya melompat ke awal blok ELSE.
         int elseStart = instructions.size();
         instructions[jpcIndex].a = elseStart;
 
         dispatch(node->elseStmt);
 
-        // Akhir dari seluruh if, JMP setelah THEN diarahkan ke sini
+        // Melakukan backpatching agar JMP setelah THEN mengarah ke akhir struktur IF.
         int endPos = instructions.size();
         instructions[jmpIndex].a = endPos;
     } else {
-        // Tanpa ELSE: kalau kondisi false langsung lompat ke akhir if
+        // Melakukan backpatching agar JPC mengarah langsung ke akhir blok jika tidak ada ELSE.
         int endPos = instructions.size();
         instructions[jpcIndex].a = endPos;
     }
 }
 
-// WHILE: cek kondisi di awal, lompat keluar kalau false, lompat mundur di akhir
+// Menghasilkan instruksi ICG untuk perulangan bersyarat WHILE-DO.
 void ICGVisitor::visit(WhileStmtNode* node) {
-    // Alamat awal pengecekan kondisi (tempat kita lompat mundur tiap iterasi)
+    // Menyimpan alamat awal blok kondisi untuk lompatan iterasi.
     int condStart = instructions.size();
 
-    // 1. Hitung kondisi
+    // Mengevaluasi kondisi loop.
     dispatch(node->condition);
 
-    // 2. Kalau false, keluar dari loop (alamat di-backpatch nanti)
+    // Menambahkan instruksi JPC yang akan di-backpatch ke titik keluar loop.
     int jpcIndex = instructions.size();
     instructions.push_back(Instruction(OpCode::JPC, 0, 0));
 
-    // 3. Badan loop
+    // Mengeksekusi blok pernyataan di dalam loop.
     dispatch(node->body);
 
-    // 4. Lompat mundur ke pengecekan kondisi
+    // Mengembalikan eksekusi ke awal blok kondisi.
     instructions.push_back(Instruction(OpCode::JMP, 0, condStart));
 
-    // 5. Titik keluar loop
+    // Menyelesaikan backpatching pada instruksi JPC menuju titik akhir perulangan.
     int endPos = instructions.size();
     instructions[jpcIndex].a = endPos;
 }
 
-// FOR: for i := start to/downto end do body
-// Strukturnya kita ubah jadi mirip while:
-//   i := start
-//   L: kalau (i <= end) [untuk 'to'] tidak terpenuhi -> keluar
-//      body
-//      i := i + 1   (atau i - 1 untuk 'downto')
-//      lompat ke L
-// Batas akhir (end) dihitung ulang tiap iterasi supaya tidak perlu variabel
-// sementara tambahan; cukup untuk kebutuhan Arion.
+// Menghasilkan instruksi ICG untuk struktur perulangan terbatas FOR-DO.
 void ICGVisitor::visit(ForStmtNode* node) {
     TabEntry* iterEntry = getTabEntry(node->iterVar);
     if (!iterEntry) {
@@ -82,16 +73,14 @@ void ICGVisitor::visit(ForStmtNode* node) {
     int iterAddr = iterEntry->adr;
     int levelDiff = node->lexicalLevel - iterEntry->lev;
 
-    // 1. Inisialisasi: i := start
+    // Menginisialisasi nilai awal iterator.
     dispatch(node->startExpr);                              // hasil start di stack
     instructions.push_back(Instruction(OpCode::STO, levelDiff, iterAddr));
 
-    // 2. Awal pengecekan kondisi
+    // Mencatat alamat awal pengecekan batas perulangan.
     int condStart = instructions.size();
 
-    // Muat i lalu hitung batas akhir, lalu bandingkan.
-    // 'to'     -> lanjut selama i <= end  (OPR LEQ)
-    // 'downto' -> lanjut selama i >= end  (OPR GEQ)
+    // Mengevaluasi dan membandingkan variabel iterator terhadap batas akhir.
     instructions.push_back(Instruction(OpCode::LOD, levelDiff, iterAddr));
     dispatch(node->endExpr);
 
@@ -101,14 +90,14 @@ void ICGVisitor::visit(ForStmtNode* node) {
         instructions.push_back(Instruction(OpCode::OPR, 0, (int)OprCode::LEQ));
     }
 
-    // 3. Kalau kondisi false, keluar dari loop
+    // Menambahkan instruksi JPC yang akan di-backpatch saat keluar dari perulangan.
     int jpcIndex = instructions.size();
     instructions.push_back(Instruction(OpCode::JPC, 0, 0));
 
-    // 4. Badan loop
+    // Mengeksekusi blok pernyataan di dalam for.
     dispatch(node->body);
 
-    // 5. Update iterator: i := i +/- 1
+    // Menginkrementasi atau mendekrementasi variabel iterator.
     instructions.push_back(Instruction(OpCode::LOD, levelDiff, iterAddr));
     instructions.push_back(Instruction(OpCode::LIT, 0, 1));
     if (node->isDownto) {
@@ -118,10 +107,10 @@ void ICGVisitor::visit(ForStmtNode* node) {
     }
     instructions.push_back(Instruction(OpCode::STO, levelDiff, iterAddr));
 
-    // 6. Lompat mundur untuk cek kondisi lagi
+    // Kembali mengeksekusi pemeriksaan kondisi.
     instructions.push_back(Instruction(OpCode::JMP, 0, condStart));
 
-    // 7. Titik keluar loop
+    // Menyelesaikan proses backpatching titik keluar.
     int endPos = instructions.size();
     instructions[jpcIndex].a = endPos;
 }

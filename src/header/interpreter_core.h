@@ -8,9 +8,7 @@
 
 class VirtualMachine {
 private:
-    // ============================================================================
-    // DONGUN (Core Engine & Struktur Stack)
-    // ============================================================================
+    // Core engine dan struktur stack memori utama.
     
     std::vector<int> stack;             // Memori utama / The Stack
     std::vector<Instruction> code;      // Kumpulan instruksi TAC yang akan dieksekusi
@@ -38,17 +36,13 @@ public:
     int getMemory(int address);
     void setMemory(int address, int value);
 
-    // ============================================================================
-    // RAMA (Eksekusi Operasi Matematika & Logika)
-    // ============================================================================
+    // Mengeksekusi instruksi matematika dan operasi logika.
     
     // Menjalankan operasi OPR (l=0: integer, l=1: string)
     void executeOPR(int oprCode, int lField);
 
 
-    // ============================================================================
-    // NELSON (Control Flow & Penanganan Keamanan)
-    // ============================================================================
+    // Mengatur aliran kontrol eksekusi dan memvalidasi keamanan operasi.
     
     // Fungsi Manipulasi Alur Kontrol
     void jump(int address);

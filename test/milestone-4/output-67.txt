@@ -1,0 +1,13 @@
+
+Intermediate Code:
+0 INT 0 4
+1 LIT 0 10
+2 LIT 0 0
+3 OPR 0 5
+4 STO 0 3
+5 LOD 0 3
+6 OPR 0 14
+7 RET
+
+Output Program:
+[RUNTIME ERROR] [DivisionByZero] Pembagian atau modulus dengan nol tidak diperbolehkan.

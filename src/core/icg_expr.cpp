@@ -1,8 +1,7 @@
 #include "icg_visitor.h"
 #include <iostream>
 
-// ICG ekspresi, assignment, dan I/O
-// LiteralNode: Load literal ke stack
+// Memuat nilai literal ke dalam stack ICG.
 void ICGVisitor::visit(LiteralNode* node) {
     int val = 0;
     if (node->literalType == DataType::INTEGER) {
@@ -11,10 +10,10 @@ void ICGVisitor::visit(LiteralNode* node) {
         // true = 1, false = 0
         val = (node->value == "true" || node->value == "1") ? 1 : 0;
     } else if (node->literalType == DataType::CHAR) {
-        // ambil ASCII code dari karakter pertama
+        // Mengonversi karakter menjadi kode ASCII.
         val = (node->value.length() > 0) ? (int)node->value[0] : 0;
     } else if (node->literalType == DataType::STRING) {
-        // simpan string di pool, push index-nya ke stack
+        // Menyimpan string literal ke pool dan merujuk indeksnya.
         std::string s = node->value;
         if (s.length() >= 2 && s.front() == '\'' && s.back() == '\'') {
             s = s.substr(1, s.length() - 2);
@@ -22,13 +21,13 @@ void ICGVisitor::visit(LiteralNode* node) {
         stringPool.push_back(s);
         val = stringPool.size() - 1;
     } else {
-        // fallback: coba convert ke int
+        // Melakukan konversi fallback ke integer.
         try { val = std::stoi(node->value); } catch (...) { val = 0; }
     }
     instructions.push_back(Instruction(OpCode::LIT, 0, val));
 }
 
-// VarAccessNode: Load variabel dari memori
+// Memuat nilai variabel dari alamat memori yang sesuai.
 void ICGVisitor::visit(VarAccessNode* node) {
     int tabIdx = node->symRef;
     if (tabIdx >= 0 && tabIdx < (int)st.tab.size()) {
@@ -44,13 +43,13 @@ void ICGVisitor::visit(VarAccessNode* node) {
     }
 }
 
-// BinaryOpNode: Evaluasi operand kiri, kanan, lalu operasi
+// Mengevaluasi kedua operand untuk eksekusi operasi biner.
 void ICGVisitor::visit(BinaryOpNode* node) {
     // Telusuri subtree kiri dulu, baru kanan (postorder)
     node->left->accept(this);
     node->right->accept(this);
 
-    // Mapping operator string ke OPR code
+    // Memetakan string operator biner ke kode OPR instruksi.
     std::string op = node->op;
     int oprCode = 0;
 
@@ -67,9 +66,7 @@ void ICGVisitor::visit(BinaryOpNode* node) {
     else if (op == "leq" || op == "<=")     oprCode = (int)OprCode::LEQ;  // 12
     else if (op == "and" || op == "andsy")  oprCode = (int)OprCode::MUL;  // AND = perkalian (1*1=1, sisanya 0)
     else if (op == "or" || op == "orsy") {
-        // OR = a+b, lalu jadikan 1 kalau > 0.
-        // Tapi kita bisa ubah implementasinya jadi instruksi manual, 
-        // karena Arion OPR gak punya native OR, kita pakai ADD lalu cek GTR 0
+        // Mensimulasikan operasi OR menggunakan instruksi ADD dan pembandingan GTR.
         instructions.push_back(Instruction(OpCode::OPR, 0, (int)OprCode::ADD));
         instructions.push_back(Instruction(OpCode::LIT, 0, 0));
         instructions.push_back(Instruction(OpCode::OPR, 0, (int)OprCode::GTR));
@@ -83,7 +80,7 @@ void ICGVisitor::visit(BinaryOpNode* node) {
     instructions.push_back(Instruction(OpCode::OPR, 0, oprCode));
 }
 
-// UnaryOpNode: Operasi tunggal (NEG, NOT)
+// Mengeksekusi operasi unary seperti negasi atau pembalikan logika.
 void ICGVisitor::visit(UnaryOpNode* node) {
     node->operand->accept(this);
 
@@ -95,10 +92,10 @@ void ICGVisitor::visit(UnaryOpNode* node) {
         instructions.push_back(Instruction(OpCode::LIT, 0, 0));
         instructions.push_back(Instruction(OpCode::OPR, 0, (int)OprCode::EQL));
     }
-    // kalau plus, gak perlu instruksi tambahan (unary + itu no-op)
+    // Operator unary positif diabaikan karena tidak mengubah nilai.
 }
 
-// FuncCallNode: Menangani I/O atau pemanggilan fungsi user
+// Membangun ICG untuk pemanggilan fungsi, termasuk instruksi I/O standar.
 void ICGVisitor::visit(FuncCallNode* node) {
     if (node->name == "writeln" || node->name == "write") {
         if (node->args.empty() && node->name == "writeln") {
@@ -142,7 +139,7 @@ void ICGVisitor::visit(FuncCallNode* node) {
             }
         }
     } else {
-        // Fungsi/prosedur user-defined: push argumen, lalu CAL
+        // Menambahkan instruksi pemanggilan ke subprogram yang didefinisikan pengguna.
         for (auto* arg : node->args) {
             arg->accept(this);
         }
@@ -155,13 +152,13 @@ void ICGVisitor::visit(FuncCallNode* node) {
                 return;
             }
         }
-        std::cerr << "ICG Error: fungsi/prosedur '" << node->name << "' gak ketemu" << std::endl;
+        std::cerr << "ICG Error: fungsi/prosedur '" << node->name << "' tidak ditemukan" << std::endl;
     }
 }
 
-// AssignStmtNode: Evaluasi ruas kanan lalu simpan ke variabel target
+// Menyimpan hasil evaluasi ekspresi kanan ke variabel target.
 void ICGVisitor::visit(AssignStmtNode* node) {
-    // Evaluasi ekspresi di ruas kanan, hasilnya bakal di-push ke stack
+    // Mengevaluasi sisi kanan untuk dimasukkan ke dalam stack.
     node->right->accept(this);
 
     // Ambil address variabel target (ruas kiri)
@@ -178,7 +175,7 @@ void ICGVisitor::visit(AssignStmtNode* node) {
     }
 }
 
-// WriteStatementNode: Cetak nilai argumen
+// Menghasilkan instruksi ICG untuk mencetak output.
 void ICGVisitor::visit(WriteStatementNode* node) {
     if (node->args.empty() && node->hasNewline) {
         // empty writeln

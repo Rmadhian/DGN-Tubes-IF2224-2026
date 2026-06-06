@@ -4,12 +4,7 @@
 #include <stdexcept>
 #include <string>
 
-// ============================================================================
-// NELSON (Sekuritas & Penanganan Vulnerability)
-// Fokus di: interpreter_security.cpp
-// Tugas: Mengimplementasikan logika semua fungsi pelemparan error ini. Nanti 
-// Dongun dan Rama tinggal memanggil fungsi ini di awal eksekusi operasi mereka.
-// ============================================================================
+// Sekuritas dan penanganan kerentanan sistem saat interpreter berjalan.
 
 namespace Security {
     

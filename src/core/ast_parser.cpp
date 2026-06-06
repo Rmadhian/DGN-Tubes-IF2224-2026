@@ -329,20 +329,26 @@ void ASTParser::parseDecoratedAST(const vector<string>& lines, size_t& i) {
             }
         }
         if (auto fnNode = dynamic_cast<FuncCallNode*>(node)) {
-            size_t parenPos = text.find("(");
-            if (parenPos != string::npos) {
-                string name = text.substr(0, parenPos);
-                string prefixes[] = {"condition ", "then ", "else ", "body "};
-                for (const string& p : prefixes) {
-                    size_t pPos = name.find(p);
-                    if (pPos != string::npos) {
-                        name = name.substr(pPos + p.length());
-                        break;
+            size_t firstQuote = text.find('\'');
+            size_t lastQuote = text.find('\'', firstQuote + 1);
+            if (firstQuote != string::npos && lastQuote != string::npos) {
+                fnNode->name = text.substr(firstQuote + 1, lastQuote - firstQuote - 1);
+            } else {
+                size_t parenPos = text.find("(");
+                if (parenPos != string::npos) {
+                    string name = text.substr(0, parenPos);
+                    string prefixes[] = {"condition ", "then ", "else ", "body "};
+                    for (const string& p : prefixes) {
+                        size_t pPos = name.find(p);
+                        if (pPos != string::npos) {
+                            name = name.substr(pPos + p.length());
+                            break;
+                        }
                     }
+                    // buang spasi dan karakter grafis
+                    while(!name.empty() && !isalpha(name[0])) name.erase(0,1);
+                    fnNode->name = name;
                 }
-                // buang spasi dan karakter grafis
-                while(!name.empty() && !isalpha(name[0])) name.erase(0,1);
-                fnNode->name = name;
             }
         }
 

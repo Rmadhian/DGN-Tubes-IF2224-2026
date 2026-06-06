@@ -1,0 +1,11 @@
+ProgramNode(name: 'DivZero')
+ ├─ Declarations
+ │    └─ VarDecl('hasil') 		→ tab_index:43, type:unknown, lev:0
+ └─ Block                  → block_index:42, lev:0
+     ├─ Assign('hasil' := 10 div 0) 	→ type:void
+     │   ├─ target 'hasil' 		→ tab_index:43, type:integer
+     │   └─ value BinOp 'idiv' 		→ type:integer
+     │       ├─ 10 		→ type:integer
+     │       └─ 0 		→ type:integer
+     └─ writeln(...) 		→ predefined, tab_index:-1
+         └─ arg 'hasil' 		→ tab_index:43, type:integer

@@ -8,10 +8,7 @@
 
 class ICGVisitor : public ASTVisitor {
 private:
-    // ============================================================================
-    // (Penyimpanan Utama)
-    // Semua method visit() akan menambahkan (push_back) instruksi ke array ini.
-    // ============================================================================
+    // Array utama untuk menyimpan daftar instruksi ICG.
     std::vector<Instruction> instructions;
 
     // Symbol table dari semantic analysis, untuk mencari alamat variabel.
@@ -47,12 +44,9 @@ public:
         }
     }
 
-    // ------------------------------------------------------------------------
-    // Helper bersama (Bagian Nelson)
-    // ------------------------------------------------------------------------
+    // Helper pendispatch node AST.
 
-    // Dispatch sebuah node AST ke method visit() yang sesuai. Dipakai untuk
-    // menelusuri anak-anak node (pengganti accept() versi ICG).
+    // Mendispatch sebuah node AST ke method visit yang sesuai.
     void dispatch(ASTNode* node) {
         if (node == nullptr) return;
 
@@ -78,22 +72,13 @@ public:
         return st.lookupTab(name);
     }
 
-    // ============================================================================
-    // DONGUN (Top-Level & Deklarasi)
-    // Fokus di: icg_decl.cpp
-    // Tugas: Bikin inisialisasi memori awal (INT m), menyiapkan alokasi fungsi (CAL, RET).
-    // ============================================================================
+    // Menangani pembuatan kode ICG untuk deklarasi tingkat program dan subprogram.
     void visit(ProgramNode* node) override;
     void visit(VarDeclNode* node) override;
     void visit(ConstDeclNode* node) override;
     void visit(SubprogDeclNode* node) override;
 
-    // ============================================================================
-    // RAMA (Ekspresi, Assignment & Output)
-    // Fokus di: icg_expr.cpp
-    // Tugas: Load literal (LIT), load variabel (LOD), store nilai (STO), operasi 
-    // matematika/logika (OPR 1-12), dan cetak layar (OPR 13 & 14).
-    // ============================================================================
+    // Menangani pembuatan kode ICG untuk ekspresi dan perintah dasar (load, store, operator aritmatika, cetak).
     void visit(LiteralNode* node) override;
     void visit(VarAccessNode* node) override;
     void visit(BinaryOpNode* node) override;
@@ -102,12 +87,7 @@ public:
     void visit(AssignStmtNode* node) override;
     void visit(WriteStatementNode* node) override; // Menangani WRT dan WRTLN
 
-    // ============================================================================
-    // NELSON (Statement & Control Flow)
-    // Fokus di: icg_stmt.cpp
-    // Tugas: Menangani lompatan (JMP, JPC), mengatur blok eksekusi, meratakan (flattening) 
-    // percabangan dan perulangan.
-    // ============================================================================
+    // Menangani pembuatan kode ICG untuk control flow (percabangan dan perulangan).
     void visit(CompoundStmtNode* node) override;
     void visit(IfStmtNode* node) override;
     void visit(WhileStmtNode* node) override;

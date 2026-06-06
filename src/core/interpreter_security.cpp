@@ -66,4 +66,4 @@ namespace Security {
         throw std::runtime_error("[" + errorType + "] " + message);
     }
 
-} // akhir namespace Security
+} 
