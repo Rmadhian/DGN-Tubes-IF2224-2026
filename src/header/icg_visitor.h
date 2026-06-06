@@ -26,9 +26,20 @@ public:
         return instructions;
     }
 
-    // Set symbol table dari hasil semantic analysis (Bagian Rama)
+    // Inisialisasi Symbol Table dari Semantic Analyzer
     void setSymbolTable(const SymbolTable& symTab) {
         this->st = symTab;
+        
+        // Sesuaikan alamat variabel (fallback jika kosong)
+        int offset = 3;
+        for (size_t i = 33; i < st.tab.size(); i++) {
+            if (st.tab[i].obj == ObjClass::VARIABLE) {
+                if (st.tab[i].adr < 3) {
+                    st.tab[i].adr = offset; // Fallback jika adr belum diatur
+                }
+                offset = st.tab[i].adr + 1;
+            }
+        }
     }
 
     // ------------------------------------------------------------------------
@@ -57,23 +68,9 @@ public:
         if (auto p = dynamic_cast<FuncCallNode*>(node))       { visit(p); return; }
     }
 
-    // Mencari alamat memori sebuah variabel berdasarkan namanya.
-    int addressOf(const std::string& name) {
-        TabEntry* e = st.lookupTab(name);
-        if (e == nullptr) return -1;
-
-        // Kalau icg_decl (Dongun) sudah mengisi alamatnya, langsung pakai
-        if (e->adr >= 3) return e->adr;
-
-        // Fallback: hitung offset dari urutan deklarasi variabel (mulai dari 3)
-        int offset = 3;
-        for (size_t i = 33; i < st.tab.size(); i++) {
-            if (st.tab[i].obj == ObjClass::VARIABLE && st.tab[i].lev == e->lev) {
-                if (st.tab[i].identifiers == name) return offset;
-                offset++;
-            }
-        }
-        return e->adr;
+    // Mencari TabEntry sebuah variabel berdasarkan namanya.
+    TabEntry* getTabEntry(const std::string& name) {
+        return st.lookupTab(name);
     }
 
     // ============================================================================

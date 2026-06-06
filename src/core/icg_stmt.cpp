@@ -74,11 +74,17 @@ void ICGVisitor::visit(WhileStmtNode* node) {
 // Batas akhir (end) dihitung ulang tiap iterasi supaya tidak perlu variabel
 // sementara tambahan; cukup untuk kebutuhan Arion.
 void ICGVisitor::visit(ForStmtNode* node) {
-    int iterAddr = addressOf(node->iterVar);
+    TabEntry* iterEntry = getTabEntry(node->iterVar);
+    if (!iterEntry) {
+        std::cerr << "ICG Error: For loop iterator '" << node->iterVar << "' tidak ditemukan." << std::endl;
+        return;
+    }
+    int iterAddr = iterEntry->adr;
+    int levelDiff = node->lexicalLevel - iterEntry->lev;
 
     // 1. Inisialisasi: i := start
     dispatch(node->startExpr);                              // hasil start di stack
-    instructions.push_back(Instruction(OpCode::STO, 0, iterAddr));
+    instructions.push_back(Instruction(OpCode::STO, levelDiff, iterAddr));
 
     // 2. Awal pengecekan kondisi
     int condStart = instructions.size();
@@ -86,7 +92,7 @@ void ICGVisitor::visit(ForStmtNode* node) {
     // Muat i lalu hitung batas akhir, lalu bandingkan.
     // 'to'     -> lanjut selama i <= end  (OPR LEQ)
     // 'downto' -> lanjut selama i >= end  (OPR GEQ)
-    instructions.push_back(Instruction(OpCode::LOD, 0, iterAddr));
+    instructions.push_back(Instruction(OpCode::LOD, levelDiff, iterAddr));
     dispatch(node->endExpr);
 
     if (node->isDownto) {
@@ -103,14 +109,14 @@ void ICGVisitor::visit(ForStmtNode* node) {
     dispatch(node->body);
 
     // 5. Update iterator: i := i +/- 1
-    instructions.push_back(Instruction(OpCode::LOD, 0, iterAddr));
+    instructions.push_back(Instruction(OpCode::LOD, levelDiff, iterAddr));
     instructions.push_back(Instruction(OpCode::LIT, 0, 1));
     if (node->isDownto) {
         instructions.push_back(Instruction(OpCode::OPR, 0, (int)OprCode::SUB));
     } else {
         instructions.push_back(Instruction(OpCode::OPR, 0, (int)OprCode::ADD));
     }
-    instructions.push_back(Instruction(OpCode::STO, 0, iterAddr));
+    instructions.push_back(Instruction(OpCode::STO, levelDiff, iterAddr));
 
     // 6. Lompat mundur untuk cek kondisi lagi
     instructions.push_back(Instruction(OpCode::JMP, 0, condStart));

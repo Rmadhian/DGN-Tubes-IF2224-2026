@@ -35,7 +35,9 @@ enum class OprCode {
     GTR = 11,  // Lebih dari (>) 
     LEQ = 12,  // Kurang dari sama dengan (<=) 
     WRT = 13,  // Menulis output tanpa newline 
-    WRTLN = 14 // Menulis output dengan newline 
+    WRTLN = 14, // Menulis output dengan newline 
+    READ = 15,  // Membaca input tanpa newline
+    READLN = 16 // Membaca input dengan newline
 };
 
 // Struktur representasi satu baris instruksi TAC
@@ -43,9 +45,10 @@ struct Instruction {
     OpCode op;   // Kode Instruksi (LIT, LOD, dll)
     int l;       // Lexical Level / Static Link (biasanya 0 untuk Arion tanpa nested function)
     int a;       // Alamat memori, identifier literal, atau kode operasi (OprCode)
+    int numArgs; // Jumlah argumen (khusus untuk instruksi CAL)
     
     // Constructor untuk kemudahan inisialisasi
-    Instruction(OpCode op, int l, int a) : op(op), l(l), a(a) {}
+    Instruction(OpCode op, int l, int a, int numArgs = 0) : op(op), l(l), a(a), numArgs(numArgs) {}
 };
 
 #endif // TAC_INSTRUCTION_H

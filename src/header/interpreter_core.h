@@ -24,7 +24,7 @@ private:
 
 public:
     // Constructor
-    VirtualMachine(const std::vector<Instruction>& instructions);
+    VirtualMachine(const std::vector<Instruction>& instrs);
 
     // Daur Utama Eksekusi (Fetch-Decode-Execute)
     void run();

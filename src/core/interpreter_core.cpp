@@ -1,34 +1,32 @@
 #include "interpreter_core.h"
-#include "interpreter_security.h" // Butuh ini untuk manggil fitur keamanan nelson
-#include <iostream>
+#include "interpreter_security.h" // Security checks
 
-// Mengimplementasikan arsitektur dasar VirtualMachine
+// Implementasi arsitektur VirtualMachine
 
 VirtualMachine::VirtualMachine(const std::vector<Instruction>& instructions) {
     this->code = instructions;
     this->IP = 0;
     this->BP = 0;
     this->SP = -1;
-    this->stack.resize(MAX_STACK_SIZE, 0); // Pre-alokasikan memori kosong
+    this->stack.assign(MAX_STACK_SIZE, 0); // Alokasi stack awal
 }
 
 void VirtualMachine::run() {
-    // TODO: Bikin loop eksekusi utama (Fetch - Decode - Execute)
-    // Loop eksekusi utama (Fetch - Decode - Execute)
+    // Loop eksekusi utama (Fetch-Decode-Execute)
     while (IP < (int)code.size()) {
-        // [FETCH] Ambil instruksi yang ditunjuk Instruction Pointer
+        // [FETCH] Ambil instruksi
         Instruction instr = code[IP];
         
-        // Segera majukan IP agar Return Address (RA) mengarah ke baris yang tepat
+        // Majukan IP (Return Address menunjuk baris berikutnya)
         IP++; 
 
-        // Fungsi lambda internal untuk mencari Base Pointer dari Lexical Level Absolut
-        auto getBase = [&](int level) {
-            if (level == 0) {
-                return 0; // Level 0 selalu merujuk ke blok variabel global yang Base Pointer-nya dimulai dari 0
-            } else {
-                return BP; // Level > 0 (Lokal) merujuk ke Base Pointer fungsi yang sedang aktif saat ini
+        // Fungsi lambda internal untuk mencari Base Pointer dari Lexical Level Difference
+        auto getBase = [&](int levelDiff) {
+            int base = BP;
+            for (int i = 0; i < levelDiff; i++) {
+                base = stack[base]; // Traverse Static Link
             }
+            return base;
         };
 
         // [DECODE & EXECUTE]
@@ -45,43 +43,52 @@ void VirtualMachine::run() {
                 setMemory(getBase(instr.l) + instr.a, pop());
                 break;
                 
-            case OpCode::CAL:
-                // Menyiapkan Stack Frame baru saat prosedur/fungsi dipanggil
-                stack[SP + 1] = getBase(instr.l); // Static Link (SL)
-                stack[SP + 2] = BP;               // Dynamic Link (DL)
-                stack[SP + 3] = IP;               // Return Address (RA)
+            case OpCode::CAL: {
+                int sl = getBase(instr.l); // Static Link
+                int dl = BP;               // Dynamic Link
+                int ra = IP;               // Return Address
+                int args = instr.numArgs;  // Jumlah argumen
                 
-                BP = SP + 1;                      // Majukan Base Pointer ke awal frame baru
-                IP = instr.a;                     // Jump ke alamat awal fungsi
+                // Sisipkan Call Frame (SL, DL, RA)
+                BP = SP - args + 1; 
+                SP = SP + 3;        
+                IP = instr.a;       
                 break;
+            }
                 
-            case OpCode::INT:
-                SP = SP + instr.a;                // Ubah top-of-stack sesuai memori yang diminta
-                Security::checkStackOverflow(SP + 1, 0);
+            case OpCode::INT: {
+                // Alokasi stack memory
+                Security::checkStackOverflow(SP + instr.a, MAX_STACK_SIZE);
+                SP = SP + instr.a;                
                 break;
+            }
                 
-            case OpCode::JMP:
-                jump(instr.a); // Akan merubah IP (diimplementasi Nelson)
+            case OpCode::JMP: {
+                jump(instr.a); 
                 break;
+            }
                 
-            case OpCode::JPC:
-                conditionalJump(instr.a, pop() == 0); // (IF_FALSE) Jump jika top stack = 0
+            case OpCode::JPC: {
+                conditionalJump(instr.a, pop() == 0); 
                 break;
+            }
                 
-            case OpCode::OPR:
-                executeOPR(instr.a); // Eksekusi MTK & Output (diimplementasi Rama)
+            case OpCode::OPR: {
+                executeOPR(instr.a); 
                 break;
+            }
                 
-            case OpCode::RET:
+            case OpCode::RET: {
                 if (BP == 0) {
-                    // RET di level global = program selesai, hentikan eksekusi
-                    IP = code.size();
+                    IP = code.size(); // Hentikan eksekusi global
                 } else {
-                    SP = BP - 1;         // Musnahkan Stack Frame (hapus memori lokal)
-                    IP = stack[BP + 2];  // Kembalikan alur program ke Return Address
-                    BP = stack[BP + 1];  // Kembalikan Base Pointer ke fungsi pemanggil (DL)
+                    // Musnahkan Stack Frame dan kembali
+                    SP = BP - 1;         
+                    IP = stack[BP + 2];  
+                    BP = stack[BP + 1];  
                 }
                 break;
+            }
                 
             default:
                 Security::throwRuntimeError("VM_ENGINE_ERROR", "OpCode Instruksi tidak dikenali");
@@ -90,33 +97,31 @@ void VirtualMachine::run() {
     }
 }
 
-void VirtualMachine::push(int value) {
-    // TODO: Tambah nilai ke stack. Jangan lupa panggil Security::checkStackOverflow()
-    Security::checkStackOverflow(SP + 1, 1);
+void VirtualMachine::push(int val) {
     SP++;
+    Security::checkStackOverflow(SP, MAX_STACK_SIZE);
     
-    // Safety net: expand capacity jika diperlukan (meskipun sudah dipre-alokasi)
-    if (SP >= stack.size()) stack.resize(SP + 100, 0);
-    
-    stack[SP] = value;
+    // Resize array memori jika dibutuhkan
+    if (SP >= (int)stack.size()) {
+        stack.resize(SP + 100, 0);
+    }
+    stack[SP] = val;
 }
 
+// Mengambil nilai dari stack
 int VirtualMachine::pop() {
-    // TODO: Ambil nilai dari stack. Jangan lupa panggil Security::checkStackUnderflow()
-    Security::checkStackUnderflow(SP + 1, 1);
-    int val = stack[SP];
-    SP--;
-    return val;
+    Security::checkStackUnderflow(SP, 0);
+    return stack[SP--];
 }
 
+// Membaca nilai dari stack index
 int VirtualMachine::getMemory(int address) {
-    // TODO: Ambil nilai dari memory address tertentu
     Security::checkOutOfBounds(address, stack.size());
     return stack[address];
 }
 
-void VirtualMachine::setMemory(int address, int value) {
-    // TODO: Simpan nilai ke memory address tertentu
+// Menyimpan nilai ke stack index
+void VirtualMachine::setMemory(int address, int val) {
     Security::checkOutOfBounds(address, stack.size());
-    stack[address] = value;
+    stack[address] = val;
 }

@@ -193,7 +193,16 @@ void SemanticAnalyzer::visit(ConstDeclNode* node) {
         cerr << "Semantic Error: Multiple declaration of constant '"
              << node->name << "' in the same scope." << endl;
     } else {
-        node->symRef = st.insertTab(node->name, ObjClass::CONSTANT, node->type);
+        int val = 0;
+        if (node->type == DataType::INTEGER) {
+            try { val = std::stoi(node->value); } catch (...) { val = 0; }
+        } else if (node->type == DataType::BOOLEAN) {
+            val = (node->value == "true" || node->value == "1") ? 1 : 0;
+        } else if (node->type == DataType::CHAR) {
+            val = (node->value.length() > 0) ? (int)node->value[0] : 0;
+        }
+        
+        node->symRef = st.insertTab(node->name, ObjClass::CONSTANT, node->type, 0, 0, val);
         node->lexicalLevel = st.currentLevel;
     }
 }

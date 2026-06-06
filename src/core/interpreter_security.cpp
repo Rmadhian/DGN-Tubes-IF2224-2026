@@ -5,18 +5,14 @@
 
 namespace Security {
 
-    // Stack Overflow: terlalu banyak push/frame sampai melebihi kapasitas memori.
-    // Penyebab umum: infinite recursion. Dipanggil sebelum push()/CAL.
-    void checkStackOverflow(int current_size, int additional_size) {
-        if (current_size + additional_size > MAX_STACK_SIZE) {
-            throwRuntimeError("StackOverflow",
-                "Batas stack (" + std::to_string(MAX_STACK_SIZE) +
-                ") terlampaui. Kemungkinan rekursi tak berujung.");
+    // Validasi batas memori Stack (Overflow).
+    void checkStackOverflow(int targetSP, int maxCapacity) {
+        if (targetSP >= maxCapacity) {
+            throwRuntimeError("STACK_OVERFLOW", "Kapasitas stack terlampaui (" + std::to_string(targetSP) + " >= " + std::to_string(maxCapacity) + ")");
         }
     }
 
-    // Stack Underflow: mencoba pop dari stack yang isinya kurang dari yang dibutuhkan.
-    // Biasanya menandakan cacat logika di Intermediate Code Generator.
+    // Validasi isi Stack sebelum Pop (Underflow).
     void checkStackUnderflow(int current_size, int required_items) {
         if (current_size < required_items) {
             throwRuntimeError("StackUnderflow",
@@ -25,10 +21,7 @@ namespace Security {
         }
     }
 
-    // Out-of-Bounds: akses indeks memori/array di luar batas yang sah.
-    // Juga membentengi Stack Smashing, karena penulisan (STO) tidak boleh
-    // meluber melewati batas memori yang dialokasikan hingga menimpa
-    // return address. Untuk array, [0, max) merepresentasikan indeks 0..panjang-1.
+    // Validasi akses indeks memori/array (Out-of-Bounds & Stack Smashing).
     void checkOutOfBounds(int index, int max_memory_limit) {
         if (index < 0 || index >= max_memory_limit) {
             throwRuntimeError("IndexOutOfBounds",
@@ -37,18 +30,16 @@ namespace Security {
         }
     }
 
-    // Invalid Jump Target: target JMP/JPC harus berada di dalam daftar instruksi.
-    // Mencegah Instruction Pointer tersesat ke area memori acak.
+    // Validasi target JMP/JPC ke dalam daftar instruksi.
     void validateJumpTarget(int target_ip, int max_instructions) {
-        if (target_ip < 0 || target_ip >= max_instructions) {
+        if (target_ip < 0 || target_ip > max_instructions) {
             throwRuntimeError("InvalidJumpTarget",
                 "Lompatan ke baris " + std::to_string(target_ip) +
                 " tidak valid (jumlah instruksi = " + std::to_string(max_instructions) + ").");
         }
     }
 
-    // Numerical Overflow/Underflow: hasil hitung sudah dijadikan long long agar
-    // bisa dibandingkan dengan batas signed integer 32-bit sebelum di-wrap.
+    // Deteksi Numerical Overflow/Underflow pada Signed Integer 32-bit.
     void checkNumericalOverflow(long long calculation_result) {
         if (calculation_result > INT32_MAX) {
             throwRuntimeError("OverflowError",
@@ -62,7 +53,7 @@ namespace Security {
         }
     }
 
-    // Division by Zero: dipanggil sebelum OPR DIV / MOD.
+    // Validasi pencegahan Division by Zero.
     void checkDivisionByZero(int divisor) {
         if (divisor == 0) {
             throwRuntimeError("DivisionByZero",
@@ -70,8 +61,7 @@ namespace Security {
         }
     }
 
-    // Helper untuk melempar format pesan error yang rapi. Memakai exception
-    // supaya eksekusi berhenti tapi mesin tidak crash (ditangkap di run()).
+    // Helper pelempar pesan error runtime seragam.
     void throwRuntimeError(const std::string& errorType, const std::string& message) {
         throw std::runtime_error("[" + errorType + "] " + message);
     }

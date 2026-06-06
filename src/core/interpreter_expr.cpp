@@ -103,10 +103,22 @@ void VirtualMachine::executeOPR(int oprCode) {
             std::cout << val;
             break;
         }
-        case 14: { // WRTLN: cetak dengan newline
-            Security::checkStackUnderflow(SP + 1, 1);
-            int val = pop();
-            std::cout << val << std::endl;
+        case 14: { // WRTLN: cetak newline saja (tanpa pop)
+            std::cout << std::endl;
+            break;
+        }
+        case 15: { // READ: baca input dari stdin
+            int val;
+            std::cin >> val;
+            push(val);
+            break;
+        }
+        case 16: { // READLN: baca input dari stdin dan abaikan sisa baris
+            int val;
+            std::cin >> val;
+            push(val);
+            // clear the rest of the line
+            std::cin.ignore(10000, '\n');
             break;
         }
         default:

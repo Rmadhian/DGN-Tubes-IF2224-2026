@@ -59,16 +59,16 @@ void ICGVisitor::visit(SubprogDeclNode* node) {
     }
 
     // Hitung jumlah alokasi lokal yang dibutuhkan untuk Parameter dan Variabel Fungsi
-    int numParams = 0;
+    // vsze di btab sudah mencakup semua variabel (termasuk parameter), 
+    // jadi kita cukup gunakan vsze untuk alokasi memori lokal.
     int numVars = 0;
     if (node->symRef != -1 && st.tab[node->symRef].ref < (int)st.btab.size()) {
         int blockIdx = st.tab[node->symRef].ref;
-        numParams = st.btab[blockIdx].psze;
         numVars = st.btab[blockIdx].vsze;
     }
 
-    // Inisiasi Stack Frame untuk fungsi: 3 (SL, DL, RA) + jumlah parameter + variabel lokal
-    instructions.push_back(Instruction(OpCode::INT, 0, 3 + numParams + numVars));
+    // Inisiasi Stack Frame untuk fungsi: 3 (SL, DL, RA) + variabel lokal (termasuk param)
+    instructions.push_back(Instruction(OpCode::INT, 0, 3 + numVars));
 
     // Eksekusi semua kode/statement yang ada di dalam badan fungsi
     if (node->block) {

@@ -236,7 +236,7 @@ int main(int argc, char* argv[]) {
 
             cout.rdbuf(oldCout);
             string programOutput = outputCapture.str();
-            cout << programOutput;
+            // Hanya tulis ke file, jangan ke terminal
             fileOutput << programOutput;
 
             cout << "\n[SUCCESS] Program selesai dieksekusi." << endl;
@@ -310,24 +310,20 @@ int main(int argc, char* argv[]) {
         const auto& instructions = icgVisitor.getInstructions();
         cout << "[SUCCESS] ICG Selesai. Total instruksi: " << instructions.size() << endl;
 
-        // Cetak Intermediate Code ke terminal dan file output
-        cout << "\n========== Intermediate Code ==========" << endl;
+        // Cetak Intermediate Code ke file output (tidak ke terminal biar ga penuhin layar)
         fileOutput << "\nIntermediate Code:\n";
         for (int i = 0; i < (int)instructions.size(); i++) {
             string line = to_string(i) + " " + opCodeToStr(instructions[i].op);
             if (instructions[i].op != OpCode::RET) {
                 line += " " + to_string(instructions[i].l) + " " + to_string(instructions[i].a);
             }
-            cout << line << endl;
             fileOutput << line << "\n";
         }
-        cout << "========================================\n" << endl;
 
         // ====================================================================
         // MILESTONE 4: Interpreter (Eksekusi Program)
         // ====================================================================
         cout << "[INFO] Menjalankan Interpreter..." << endl;
-        cout << "\n========== Output Program ==============" << endl;
         fileOutput << "\nOutput Program:\n";
 
         try {
@@ -341,10 +337,9 @@ int main(int argc, char* argv[]) {
             // Kembalikan cout dan cetak hasilnya
             cout.rdbuf(oldCout);
             string programOutput = outputCapture.str();
-            cout << programOutput;
+            // Hanya tulis ke file, jangan ke terminal
             fileOutput << programOutput;
 
-            cout << "========================================" << endl;
             cout << "\n[SUCCESS] Program selesai dieksekusi." << endl;
         } catch (const runtime_error& e) {
             cout << "\n[RUNTIME ERROR] " << e.what() << endl;

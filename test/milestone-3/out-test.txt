@@ -1,0 +1,92 @@
+tab:
+idx  id          obj       type  ref  nrm  lev  adr  link
+-------------------------------------------------------
+0    empty       const     1     0    0    0    0    0
+1    and         const     1     0    0    0    0    0
+2    array       const     1     0    0    0    0    0
+3    begin       const     1     0    0    0    0    0
+4    case        const     1     0    0    0    0    0
+5    const       const     1     0    0    0    0    0
+6    div         const     1     0    0    0    0    0
+7    downto      const     1     0    0    0    0    0
+8    do          const     1     0    0    0    0    0
+9    else        const     1     0    0    0    0    0
+10   end         const     1     0    0    0    0    0
+11   for         const     1     0    0    0    0    0
+12   function    const     1     0    0    0    0    0
+13   if          const     1     0    0    0    0    0
+14   mod         const     1     0    0    0    0    0
+15   not         const     1     0    0    0    0    0
+16   of          const     1     0    0    0    0    0
+17   or          const     1     0    0    0    0    0
+18   procedure   const     1     0    0    0    0    0
+19   program     program   1     0    0    0    0    0
+20   record      const     1     0    0    0    0    0
+21   repeat      const     1     0    0    0    0    0
+22   integer     const     1     0    0    0    0    0
+23   real        const     1     0    0    0    0    0
+24   boolean     const     1     0    0    0    0    0
+25   char        const     1     0    0    0    0    0
+26   string      const     1     0    0    0    0    0
+27   then        const     1     0    0    0    0    0
+28   to          const     1     0    0    0    0    0
+29   type        const     1     0    0    0    0    0
+30   until       const     1     0    0    0    0    0
+31   var         const     1     0    0    0    0    0
+32   while       const     1     0    0    0    0    0
+33   integer     type      2     0    0    0    0    0
+34   real        type      3     0    0    0    0    33
+35   char        type      4     0    0    0    0    34
+36   boolean     type      5     0    0    0    0    35
+37   string      type      6     0    0    0    0    36
+38   true        const     5     0    1    0    1    37
+39   false       const     5     0    1    0    0    38
+40   writeln     procedure 1     0    0    0    0    39
+41   readln      procedure 1     0    0    0    0    40
+42   Hello       program   1     0    0    0    0    41
+43   a           variable  2     0    1    0    3    42
+44   b           variable  2     0    1    0    4    43
+
+btab:
+idx  last  lpar  psze  vsze
+---------------------------
+0    44    0     0     2   <- global block (program), vsze=2
+1    44    0     0     0   <- main block (kosong variabel lokal)
+
+atab: (kosong karena tidak ada array)
+
+Decorated AST:
+ProgramNode(name: 'Hello')
+ ├─ Declarations
+ │    ├─ VarDecl('a') 		→ tab_index:43, type:unknown, lev:0
+ │    └─ VarDecl('b') 		→ tab_index:44, type:unknown, lev:0
+ └─ Block                  → block_index:42, lev:0
+     ├─ Assign('a' := 5) 	→ type:void
+     │   ├─ target 'a' 		→ tab_index:43, type:integer
+     │   └─ value 5 		→ type:integer
+     ├─ Assign('b' := a + 10) 	→ type:void
+     │   ├─ target 'b' 		→ tab_index:44, type:integer
+     │   └─ value BinOp 'plus' 		→ type:integer
+     │       ├─ 'a' 		→ tab_index:43, type:integer
+     │       └─ 10 		→ type:integer
+     └─ writeln(...) 		→ predefined, tab_index:-1
+         ├─ arg 'Result = ' 		→ type:string
+         └─ arg 'b' 		→ tab_index:44, type:integer
+
+Intermediate Code:
+0 INT 0 5
+1 LIT 0 5
+2 STO 0 3
+3 LOD 0 3
+4 LIT 0 10
+5 OPR 0 2
+6 STO 0 4
+7 LIT 0 0
+8 OPR 0 17
+9 LOD 0 4
+10 OPR 0 13
+11 OPR 0 14
+12 RET
+
+Output Program:
+'Result = '15

@@ -1,9 +1,8 @@
 #include "icg_visitor.h"
 #include <iostream>
 
-// ICG untuk Ekspresi, Assignment, dan Output (Bagian Rama)
-
-// LiteralNode -> LIT 0 value (push literal ke stack)
+// ICG ekspresi, assignment, dan I/O
+// LiteralNode: Load literal ke stack
 void ICGVisitor::visit(LiteralNode* node) {
     int val = 0;
     if (node->literalType == DataType::INTEGER) {
@@ -21,7 +20,7 @@ void ICGVisitor::visit(LiteralNode* node) {
     instructions.push_back(Instruction(OpCode::LIT, 0, val));
 }
 
-// VarAccessNode -> LOD level address (load value dari memory)
+// VarAccessNode: Load variabel dari memori
 void ICGVisitor::visit(VarAccessNode* node) {
     int tabIdx = node->symRef;
     if (tabIdx >= 0 && tabIdx < (int)st.tab.size()) {
@@ -29,14 +28,15 @@ void ICGVisitor::visit(VarAccessNode* node) {
         if (entry.obj == ObjClass::CONSTANT) {
             instructions.push_back(Instruction(OpCode::LIT, 0, entry.adr));
         } else {
-            instructions.push_back(Instruction(OpCode::LOD, node->lexicalLevel, entry.adr));
+            int levelDiff = node->lexicalLevel - entry.lev;
+            instructions.push_back(Instruction(OpCode::LOD, levelDiff, entry.adr));
         }
     } else {
         std::cerr << "ICG Error: symbol reference invalid untuk '" << node->name << "'" << std::endl;
     }
 }
 
-// BinaryOpNode -> visit kiri, visit kanan, lalu OPR sesuai operator
+// BinaryOpNode: Evaluasi operand kiri, kanan, lalu operasi
 void ICGVisitor::visit(BinaryOpNode* node) {
     // Telusuri subtree kiri dulu, baru kanan (postorder)
     node->left->accept(this);
@@ -57,6 +57,16 @@ void ICGVisitor::visit(BinaryOpNode* node) {
     else if (op == "geq" || op == ">=")     oprCode = (int)OprCode::GEQ;  // 10
     else if (op == "gtr" || op == ">")      oprCode = (int)OprCode::GTR;  // 11
     else if (op == "leq" || op == "<=")     oprCode = (int)OprCode::LEQ;  // 12
+    else if (op == "and")                   oprCode = (int)OprCode::MUL;  // AND = perkalian (1*1=1, sisanya 0)
+    else if (op == "or") {
+        // OR = a+b, lalu jadikan 1 kalau > 0.
+        // Tapi kita bisa ubah implementasinya jadi instruksi manual, 
+        // karena Arion OPR gak punya native OR, kita pakai ADD lalu cek GTR 0
+        instructions.push_back(Instruction(OpCode::OPR, 0, (int)OprCode::ADD));
+        instructions.push_back(Instruction(OpCode::LIT, 0, 0));
+        instructions.push_back(Instruction(OpCode::OPR, 0, (int)OprCode::GTR));
+        return;
+    }
     else {
         std::cerr << "ICG Error: operator '" << op << "' belum di-handle" << std::endl;
         return;
@@ -65,37 +75,49 @@ void ICGVisitor::visit(BinaryOpNode* node) {
     instructions.push_back(Instruction(OpCode::OPR, 0, oprCode));
 }
 
-// UnaryOpNode -> visit operand, lalu OPR 1 (NEG) kalau minus
+// UnaryOpNode: Operasi tunggal (NEG, NOT)
 void ICGVisitor::visit(UnaryOpNode* node) {
     node->operand->accept(this);
 
     if (node->op == "minus" || node->op == "-") {
         instructions.push_back(Instruction(OpCode::OPR, 0, (int)OprCode::NEG));
     }
+    else if (node->op == "not") {
+        // NOT: a == 0 (pakai EQL terhadap 0)
+        instructions.push_back(Instruction(OpCode::LIT, 0, 0));
+        instructions.push_back(Instruction(OpCode::OPR, 0, (int)OprCode::EQL));
+    }
     // kalau plus, gak perlu instruksi tambahan (unary + itu no-op)
 }
 
-// FuncCallNode -> kalau write/writeln, handle output; sisanya CAL
+// FuncCallNode: Menangani I/O atau pemanggilan fungsi user
 void ICGVisitor::visit(FuncCallNode* node) {
-    if (node->name == "writeln") {
-        // Tiap argumen: evaluate ekspresi, lalu cetak
-        for (size_t i = 0; i < node->args.size(); i++) {
-            node->args[i]->accept(this);
-            if (i < node->args.size() - 1) {
-                instructions.push_back(Instruction(OpCode::OPR, 0, (int)OprCode::WRT));
-            } else {
-                instructions.push_back(Instruction(OpCode::OPR, 0, (int)OprCode::WRTLN));
-            }
-        }
-        // writeln tanpa argumen = newline doang
-        if (node->args.empty()) {
-            instructions.push_back(Instruction(OpCode::LIT, 0, 0));
-            instructions.push_back(Instruction(OpCode::OPR, 0, (int)OprCode::WRTLN));
-        }
-    } else if (node->name == "write") {
+    if (node->name == "writeln" || node->name == "write") {
+        // Evaluasi semua argumen lalu cetak
         for (auto* arg : node->args) {
             arg->accept(this);
             instructions.push_back(Instruction(OpCode::OPR, 0, (int)OprCode::WRT));
+        }
+        if (node->name == "writeln") {
+            instructions.push_back(Instruction(OpCode::OPR, 0, (int)OprCode::WRTLN));
+        }
+    } else if (node->name == "readln" || node->name == "read") {
+        // ICG baca input, lalu STO ke variabel
+        for (auto* arg : node->args) {
+            if (node->name == "readln") {
+                instructions.push_back(Instruction(OpCode::OPR, 0, (int)OprCode::READLN));
+            } else {
+                instructions.push_back(Instruction(OpCode::OPR, 0, (int)OprCode::READ));
+            }
+            // STO nilai yang baru di-push oleh READ ke address argumen
+            VarAccessNode* varArg = dynamic_cast<VarAccessNode*>(arg);
+            if (varArg) {
+                int tabIdx = varArg->symRef;
+                if (tabIdx >= 0 && tabIdx < (int)st.tab.size()) {
+                    int levelDiff = varArg->lexicalLevel - st.tab[tabIdx].lev;
+                    instructions.push_back(Instruction(OpCode::STO, levelDiff, st.tab[tabIdx].adr));
+                }
+            }
         }
     } else {
         // Fungsi/prosedur user-defined: push argumen, lalu CAL
@@ -106,7 +128,8 @@ void ICGVisitor::visit(FuncCallNode* node) {
         for (int i = 33; i < (int)st.tab.size(); i++) {
             if (st.tab[i].identifiers == node->name &&
                 (st.tab[i].obj == ObjClass::FUNCTION || st.tab[i].obj == ObjClass::PROCEDURE)) {
-                instructions.push_back(Instruction(OpCode::CAL, node->lexicalLevel, st.tab[i].adr));
+                int levelDiff = node->lexicalLevel - st.tab[i].lev;
+                instructions.push_back(Instruction(OpCode::CAL, levelDiff, st.tab[i].adr, node->args.size()));
                 return;
             }
         }
@@ -114,7 +137,7 @@ void ICGVisitor::visit(FuncCallNode* node) {
     }
 }
 
-// AssignStmtNode -> evaluate ruas kanan, lalu STO ke address ruas kiri
+// AssignStmtNode: Evaluasi ruas kanan lalu simpan ke variabel target
 void ICGVisitor::visit(AssignStmtNode* node) {
     // Evaluasi ekspresi di ruas kanan, hasilnya bakal di-push ke stack
     node->right->accept(this);
@@ -125,27 +148,21 @@ void ICGVisitor::visit(AssignStmtNode* node) {
         int tabIdx = target->symRef;
         if (tabIdx >= 0 && tabIdx < (int)st.tab.size()) {
             int addr = st.tab[tabIdx].adr;
-            instructions.push_back(Instruction(OpCode::STO, target->lexicalLevel, addr));
+            int levelDiff = target->lexicalLevel - st.tab[tabIdx].lev;
+            instructions.push_back(Instruction(OpCode::STO, levelDiff, addr));
         }
     } else {
         std::cerr << "ICG Error: target assignment bukan VarAccessNode" << std::endl;
     }
 }
 
-// WriteStatementNode -> evaluate tiap argumen lalu OPR WRT/WRTLN
+// WriteStatementNode: Cetak nilai argumen
 void ICGVisitor::visit(WriteStatementNode* node) {
     for (size_t i = 0; i < node->args.size(); i++) {
         node->args[i]->accept(this);
-        // Argumen terakhir di writeln pake WRTLN, sisanya WRT
-        if (node->hasNewline && i == node->args.size() - 1) {
-            instructions.push_back(Instruction(OpCode::OPR, 0, (int)OprCode::WRTLN));
-        } else {
-            instructions.push_back(Instruction(OpCode::OPR, 0, (int)OprCode::WRT));
-        }
+        instructions.push_back(Instruction(OpCode::OPR, 0, (int)OprCode::WRT));
     }
-    // writeln() tanpa argumen = cetak newline aja
-    if (node->args.empty() && node->hasNewline) {
-        instructions.push_back(Instruction(OpCode::LIT, 0, 0));
+    if (node->hasNewline) {
         instructions.push_back(Instruction(OpCode::OPR, 0, (int)OprCode::WRTLN));
     }
 }

@@ -90,6 +90,10 @@ void ASTParser::parseSymbolTable(const vector<string>& lines, size_t& i) {
             t.nrm = stoi(cols[cols.size()-4]);
             t.ref = stoi(cols[cols.size()-5]);
             t.type = (DataType)stoi(cols[cols.size()-6]);
+            if (cols.size() >= 8) {
+                t.identifiers = cols[1];
+                t.obj = strToObjClass(cols[2]);
+            }
             st.tab[idx] = t;
         }
         i++;
@@ -185,17 +189,17 @@ void ASTParser::parseDecoratedAST(const vector<string>& lines, size_t& i) {
         string line = lines[i];
         if (line.find("Intermediate Code:") != string::npos || line.empty()) break;
         
-        // Hitung depth berdasarkan posisi karakter huruf/angka pertama setelah grafis
+        // Hitung depth secara logis (UTF-8 safe)
         int depth = 0;
-        for (int j = 0; j < line.length(); j++) {
-            // Abaikan spasi dan box drawing (E2 94 XX di UTF8)
-            unsigned char c = line[j];
-            if (c != ' ' && c != '\t' && c != 0xE2 && c != 0x94 && c != 0x9C && c != 0x82 && c != 0x94 && c != 0x80 && c != 0x98) {
-                if (isalnum(c) || c == '\'' || c == '_' || c == '<' || c == '>') {
-                    depth = j;
-                    break;
-                }
-            }
+        int bytePos = 0;
+        while (bytePos < (int)line.length()) {
+            unsigned char c = line[bytePos];
+            if (isalnum(c) || c == '\'' || c == '_' || c == '<' || c == '>') break;
+            
+            if ((c & 0xE0) == 0xE0) bytePos += 3;
+            else if ((c & 0xC0) == 0xC0) bytePos += 2;
+            else bytePos += 1;
+            depth++;
         }
         
         string text = trim(line); // Cukup untuk pengecekan pola
@@ -260,8 +264,24 @@ void ASTParser::parseDecoratedAST(const vector<string>& lines, size_t& i) {
                     if (!bin->left) bin->left = node;
                     else bin->right = node;
                 }
+                else if (auto un = dynamic_cast<UnaryOpNode*>(parent)) {
+                    un->operand = node;
+                }
                 else if (auto fn = dynamic_cast<FuncCallNode*>(parent)) {
-                    if (text.find("arg ") != string::npos) fn->args.push_back(node);
+                    if (text.find("arg ") != string::npos || text.find("target ") != string::npos) fn->args.push_back(node);
+                }
+                else if (auto fs = dynamic_cast<ForStmtNode*>(parent)) {
+                    if (text.find("start ") != string::npos) fs->startExpr = node;
+                    else if (text.find("end ") != string::npos) fs->endExpr = node;
+                    else if (text.find("body ") != string::npos) fs->body = node;
+                    else {
+                        // asumsi iterVar
+                        if (auto v = dynamic_cast<VarAccessNode*>(node)) fs->iterVar = v->name;
+                    }
+                }
+                else if (auto subp = dynamic_cast<SubprogDeclNode*>(parent)) {
+                    if (text.find("param ") != string::npos || dynamic_cast<VarDeclNode*>(node)) subp->params.push_back(node);
+                    else if (text.find("block") != string::npos || text.find("Block") != string::npos) subp->block = node;
                 }
             }
             stack.push_back({depth, node});
@@ -274,11 +294,30 @@ void ASTParser::parseDecoratedAST(const vector<string>& lines, size_t& i) {
             pos += 10;
             while (pos < text.length() && isdigit(text[pos])) idxStr += text[pos++];
             if (!idxStr.empty()) {
-                if (auto vNode = dynamic_cast<VarAccessNode*>(node)) vNode->symRef = stoi(idxStr);
-                if (auto vDecl = dynamic_cast<VarDeclNode*>(node)) vDecl->symRef = stoi(idxStr);
-                if (auto fnNode = dynamic_cast<FuncCallNode*>(node)) fnNode->symRef = stoi(idxStr);
+                int symIdx = stoi(idxStr);
+                if (auto vNode = dynamic_cast<VarAccessNode*>(node)) {
+                    vNode->symRef = symIdx;
+                    if (symIdx >= 0 && symIdx < (int)st.tab.size()) vNode->lexicalLevel = st.tab[symIdx].lev;
+                }
+                if (auto vDecl = dynamic_cast<VarDeclNode*>(node)) {
+                    vDecl->symRef = symIdx;
+                    if (symIdx >= 0 && symIdx < (int)st.tab.size()) vDecl->lexicalLevel = st.tab[symIdx].lev;
+                }
+                if (auto fnNode = dynamic_cast<FuncCallNode*>(node)) fnNode->symRef = symIdx;
             }
         }
+        
+        // Ekstrak lev (Lexical Level) jika ada tertulis eksplisit
+        if (text.find("lev:") != string::npos) {
+            size_t pos = text.find("lev:");
+            string levStr = "";
+            pos += 4;
+            while (pos < text.length() && isdigit(text[pos])) levStr += text[pos++];
+            if (!levStr.empty()) {
+                node->lexicalLevel = stoi(levStr);
+            }
+        }
+
         if (auto lit = dynamic_cast<LiteralNode*>(node)) {
             size_t arrowPos = text.find(" \xE2\x86\x92"); // arrow
             if (arrowPos == string::npos) arrowPos = text.find(" ->");
@@ -296,6 +335,11 @@ void ASTParser::parseDecoratedAST(const vector<string>& lines, size_t& i) {
                 while(!val.empty() && !isalnum(val[0]) && val[0] != '-' && val[0] != '\'') val.erase(0,1);
                 lit->value = trim(val);
             }
+            if (text.find("type:integer") != string::npos) lit->literalType = DataType::INTEGER;
+            else if (text.find("type:real") != string::npos) lit->literalType = DataType::REAL;
+            else if (text.find("type:boolean") != string::npos) lit->literalType = DataType::BOOLEAN;
+            else if (text.find("type:char") != string::npos) lit->literalType = DataType::CHAR;
+            else if (text.find("type:string") != string::npos) lit->literalType = DataType::STRING;
         }
         if (auto bin = dynamic_cast<BinaryOpNode*>(node)) {
             size_t firstQuote = text.find('\'');
