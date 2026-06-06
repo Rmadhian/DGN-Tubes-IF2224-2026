@@ -57,8 +57,9 @@ InputType detectInputType(const string& content) {
     if (firstLine.find("<program>") != string::npos || firstLine.find("\xE2\x94") != string::npos) {
         return InputType::PARSE_TREE;
     }
-    // Cek jika ini format Decorated AST Milestone 3
-    if (firstLine.find("tab:") != string::npos || firstLine.find("Decorated AST:") != string::npos) {
+    // Cek jika ini format Decorated AST Milestone 3 (dengan tabel atau tree-only)
+    if (firstLine.find("tab:") != string::npos || firstLine.find("Decorated AST:") != string::npos
+        || firstLine.find("ProgramNode") != string::npos || firstLine.find("Program:") != string::npos) {
         return InputType::DECORATED_AST;
     }
     // Cek jika ini format Token List Milestone 1

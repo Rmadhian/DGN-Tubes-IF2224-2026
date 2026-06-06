@@ -107,8 +107,14 @@ void VirtualMachine::executeOPR(int oprCode, int lField) {
             }
             break;
         }
-        case 14: { // WRTLN: cetak newline saja (tanpa pop)
-            std::cout << std::endl;
+        case 14: { // WRTLN: cetak nilai teratas stack beserta newline
+            Security::checkStackUnderflow(SP + 1, 1);
+            int val = pop();
+            if (lField == 1) { // flag string
+                std::cout << stringPool[val] << std::endl;
+            } else {
+                std::cout << val << std::endl;
+            }
             break;
         }
         case 15: { // READ: baca input dari stdin

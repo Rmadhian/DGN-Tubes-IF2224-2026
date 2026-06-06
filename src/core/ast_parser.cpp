@@ -2,10 +2,6 @@
 #include <sstream>
 #include <algorithm>
 
-class DummyNode : public ASTNode {
-public:
-    void accept(SemanticVisitor* visitor) override {}
-};
 
 using namespace std;
 
@@ -57,121 +53,57 @@ ObjClass ASTParser::strToObjClass(const string& str) {
 void ASTParser::parse() {
     vector<string> lines = splitLines(content);
     size_t i = 0;
+
     while (i < lines.size()) {
         string line = trim(lines[i]);
-        if (line == "tab:") {
-            parseSymbolTable(lines, i);
-        } else if (line == "Decorated AST:") {
-            parseDecoratedAST(lines, i);
+        if (line == "Decorated AST:" || line.find("ProgramNode") != string::npos) {
+            if (line == "Decorated AST:") {
+                parseDecoratedAST(lines, i);
+            } else {
+                size_t start = i;
+                parseDecoratedAST(lines, start);
+                i = start;
+            }
         } else {
             i++;
         }
     }
+
+    // Bangun symbol table dari tree
+    buildSymbolTableFromTree();
 }
 
-void ASTParser::parseSymbolTable(const vector<string>& lines, size_t& i) {
-    // 1. Parse tab:
-    i++; // lewati "tab:"
-    while (i < lines.size() && lines[i].find("----") == string::npos) i++; // cari divider
-    i++; // lewati divider
-    
-    st.tab.clear();
-    while (i < lines.size() && !trim(lines[i]).empty() && trim(lines[i]) != "btab:") {
-        vector<string> cols = splitWhitespace(lines[i]);
-        if (cols.size() >= 7) {
-            int idx = stoi(cols[0]);
-            if (st.tab.size() <= idx) {
-                st.tab.resize(idx + 1);
-            }
-            TabEntry t;
-            t.link = stoi(cols[cols.size()-1]);
-            t.adr = stoi(cols[cols.size()-2]);
-            t.lev = stoi(cols[cols.size()-3]);
-            t.nrm = stoi(cols[cols.size()-4]);
-            t.ref = stoi(cols[cols.size()-5]);
-            t.type = (DataType)stoi(cols[cols.size()-6]);
-            if (cols.size() >= 8) {
-                t.identifiers = cols[1];
-                t.obj = strToObjClass(cols[2]);
-            }
-            st.tab[idx] = t;
-        }
-        i++;
-    }
-
-    // 2. Parse btab:
-    while (i < lines.size() && trim(lines[i]) != "btab:") i++;
-    if (i < lines.size()) {
-        i++; // lewati btab:
-        while (i < lines.size() && lines[i].find("----") == string::npos) i++; // divider
-        i++; // lewati divider
-        
-        st.btab.clear();
-        while (i < lines.size() && !trim(lines[i]).empty() && lines[i].find("atab:") == string::npos) {
-            vector<string> cols = splitWhitespace(lines[i]);
-            if (cols.size() >= 5) {
-                BTabEntry b;
-                b.blocks = stoi(cols[0]);
-                b.last = stoi(cols[1]);
-                b.lpar = stoi(cols[2]);
-                b.psze = stoi(cols[3]);
-                b.vsze = stoi(cols[4]);
-                st.btab.push_back(b);
-            }
-            i++;
-        }
-    }
-
-    // 3. Parse atab:
-    while (i < lines.size() && lines[i].find("atab:") == string::npos) i++;
-    if (i < lines.size()) {
-        if (lines[i].find("(kosong") != string::npos) {
-            i++;
-        } else {
-            i++;
-            while (i < lines.size() && lines[i].find("----") == string::npos) i++;
-            i++;
-            st.atab.clear();
-            while (i < lines.size() && !trim(lines[i]).empty() && lines[i].find("Decorated AST:") == string::npos) {
-                vector<string> cols = splitWhitespace(lines[i]);
-                if (cols.size() >= 8) {
-                    ATabEntry a;
-                    a.arrays = stoi(cols[0]);
-                    a.xtyp = (DataType)stoi(cols[1]);
-                    a.etyp = (DataType)stoi(cols[2]);
-                    a.eref = stoi(cols[3]);
-                    a.low = stoi(cols[4]);
-                    a.high = stoi(cols[5]);
-                    a.elsz = stoi(cols[6]);
-                    a.size = stoi(cols[7]);
-                    st.atab.push_back(a);
-                }
-                i++;
-            }
-        }
-    }
-}
-
-// Regex / Pattern matching manual
+// Pattern matching untuk node AST (support format internal dan format spek)
 ASTNode* ASTParser::parseASTNode(const string& text) {
+    // Format internal: ProgramNode, VarDecl, AssignStmt, etc.
     if (text.find("ProgramNode") != string::npos) return new ProgramNode();
     if (text.find("VarDecl") != string::npos) return new VarDeclNode();
     if (text.find("ConstDecl") != string::npos) return new ConstDeclNode();
     if (text.find("SubprogDecl") != string::npos) return new SubprogDeclNode();
     if (text.find("Assign") != string::npos) return new AssignStmtNode();
-    if (text.find("IfStmt") != string::npos) return new IfStmtNode();
-    if (text.find("WhileStmt") != string::npos) return new WhileStmtNode();
-    if (text.find("ForStmt") != string::npos) return new ForStmtNode();
+    if (text.find("IfSt") != string::npos) return new IfStmtNode();
+    if (text.find("WhileSt") != string::npos) return new WhileStmtNode();
+    if (text.find("ForSt") != string::npos) return new ForStmtNode();
     if (text.find("FuncCall") != string::npos || text.find("writeln") != string::npos || text.find("readln") != string::npos) return new FuncCallNode();
-    if (text.find("CompoundStmt") != string::npos || text.find("Block") != string::npos) return new CompoundStmtNode();
-    if (text.find("BinOp") != string::npos) return new BinaryOpNode();
+    if (text.find("CompoundStmt") != string::npos || text.find("CompoundBlock") != string::npos || text.find("Block") != string::npos) return new CompoundStmtNode();
+    if (text.find("BinOp") != string::npos) {
+        auto bin = new BinaryOpNode();
+        size_t firstQuote = text.find('\'');
+        size_t lastQuote = text.rfind('\'');
+        if (firstQuote != string::npos && lastQuote != string::npos && firstQuote != lastQuote) {
+            bin->op = text.substr(firstQuote + 1, lastQuote - firstQuote - 1);
+        }
+        return bin;
+    }
     if (text.find("UnOp") != string::npos) return new UnaryOpNode();
     
-    // Cek jika Literal atau VarAccess
-    if (text.find("\'") != string::npos || text.find("index ") != string::npos || text.find("tab_index:") != string::npos) {
-        if (text.find("tab_index:") != string::npos && text.find("type:") != string::npos) {
-            return new VarAccessNode();
-        }
+    // Format internal: cek tab_index untuk VarAccess
+    if (text.find("tab_index:") != string::npos && text.find("type:") != string::npos) {
+        return new VarAccessNode();
+    }
+    if (text.find("\'") != string::npos && text.find("type:") != string::npos) {
+        // Bisa jadi literal string atau var access
+        if (text.find("tab_index:") != string::npos) return new VarAccessNode();
     }
     
     // Literal jika punya type tapi bukan var
@@ -181,13 +113,19 @@ ASTNode* ASTParser::parseASTNode(const string& text) {
 }
 
 void ASTParser::parseDecoratedAST(const vector<string>& lines, size_t& i) {
-    i++; // lewati "Decorated AST:"
+    if (lines[i].find("Decorated AST:") != string::npos) {
+        i++; // lewati "Decorated AST:"
+    }
     
     vector<pair<int, ASTNode*>> stack;
     
     while (i < lines.size()) {
         string line = lines[i];
-        if (line.find("Intermediate Code:") != string::npos || line.empty()) break;
+        if (line.find("Intermediate Code:") != string::npos) break;
+        if (trim(line).empty()) {
+            i++;
+            continue;
+        }
         
         // Hitung depth secara logis (UTF-8 safe)
         int depth = 0;
@@ -206,7 +144,8 @@ void ASTParser::parseDecoratedAST(const vector<string>& lines, size_t& i) {
         ASTNode* node = parseASTNode(text);
         
         if (!node) {
-            node = new DummyNode(); // Dummy node
+            i++;
+            continue; // Skip decorative nodes like 'Declarations'
         }
 
         if (stack.empty()) {
@@ -225,16 +164,14 @@ void ASTParser::parseDecoratedAST(const vector<string>& lines, size_t& i) {
                 ASTNode* parent = stack.back().second;
                 
                 if (auto prog = dynamic_cast<ProgramNode*>(parent)) {
-                    if (text.find("Declarations") != string::npos) {
-                        // Dummy node
-                    } else if (text.find("Block") != string::npos) {
+                    if (text.find("Block") != string::npos) {
                         prog->mainBlock = node;
-                    } else if (dynamic_cast<VarDeclNode*>(node) || dynamic_cast<ConstDeclNode*>(node)) {
+                    } else if (dynamic_cast<VarDeclNode*>(node) || dynamic_cast<ConstDeclNode*>(node) || dynamic_cast<SubprogDeclNode*>(node)) {
                         prog->declarations.push_back(node);
                     }
                 } 
                 else if (auto comp = dynamic_cast<CompoundStmtNode*>(parent)) {
-                    if (node && !dynamic_cast<DummyNode*>(node)) { 
+                    if (node) { 
                         comp->statements.push_back(node);
                     }
                 }
@@ -254,13 +191,6 @@ void ASTParser::parseDecoratedAST(const vector<string>& lines, size_t& i) {
                     else wh->body = node;
                 }
                 else if (auto bin = dynamic_cast<BinaryOpNode*>(parent)) {
-                    if (text.find("BinOp") != string::npos) {
-                        size_t firstQuote = text.find('\'');
-                        size_t lastQuote = text.rfind('\'');
-                        if (firstQuote != string::npos && lastQuote != string::npos && firstQuote != lastQuote) {
-                            bin->op = text.substr(firstQuote + 1, lastQuote - firstQuote - 1);
-                        }
-                    }
                     if (!bin->left) bin->left = node;
                     else bin->right = node;
                 }
@@ -324,7 +254,7 @@ void ASTParser::parseDecoratedAST(const vector<string>& lines, size_t& i) {
             if (arrowPos == string::npos) arrowPos = text.find("\t");
             if (arrowPos != string::npos) {
                 string val = text.substr(0, arrowPos);
-                string prefixes[] = {"value ", "target ", "condition ", "then ", "else ", "arg ", "index ", "body "};
+                string prefixes[] = {"value ", "target ", "condition ", "then ", "else ", "arg ", "index ", "body ", "Literal: "};
                 for (const string& p : prefixes) {
                     size_t pPos = val.find(p);
                     if (pPos != string::npos) {
@@ -334,12 +264,15 @@ void ASTParser::parseDecoratedAST(const vector<string>& lines, size_t& i) {
                 }
                 while(!val.empty() && !isalnum(val[0]) && val[0] != '-' && val[0] != '\'') val.erase(0,1);
                 lit->value = trim(val);
+            } else if (text.find("Literal: ") != string::npos) {
+                lit->value = trim(text.substr(text.find("Literal: ") + 9));
             }
-            if (text.find("type:integer") != string::npos) lit->literalType = DataType::INTEGER;
-            else if (text.find("type:real") != string::npos) lit->literalType = DataType::REAL;
-            else if (text.find("type:boolean") != string::npos) lit->literalType = DataType::BOOLEAN;
-            else if (text.find("type:char") != string::npos) lit->literalType = DataType::CHAR;
-            else if (text.find("type:string") != string::npos) lit->literalType = DataType::STRING;
+            
+            if (text.find("type:integer") != string::npos || text.find("Type: integer") != string::npos) lit->literalType = DataType::INTEGER;
+            else if (text.find("type:real") != string::npos || text.find("Type: real") != string::npos) lit->literalType = DataType::REAL;
+            else if (text.find("type:boolean") != string::npos || text.find("Type: boolean") != string::npos) lit->literalType = DataType::BOOLEAN;
+            else if (text.find("type:char") != string::npos || text.find("Type: char") != string::npos) lit->literalType = DataType::CHAR;
+            else if (text.find("type:string") != string::npos || text.find("Type: string") != string::npos) lit->literalType = DataType::STRING;
         }
         if (auto bin = dynamic_cast<BinaryOpNode*>(node)) {
             size_t firstQuote = text.find('\'');
@@ -348,17 +281,57 @@ void ASTParser::parseDecoratedAST(const vector<string>& lines, size_t& i) {
                 bin->op = text.substr(firstQuote + 1, lastQuote - firstQuote - 1);
             }
         }
+        if (auto varDecl = dynamic_cast<VarDeclNode*>(node)) {
+            size_t firstColon = text.find(":");
+            size_t secondColon = text.find(":", firstColon + 1);
+            if (text.find("VarDecl: ") != string::npos && secondColon != string::npos) {
+                string name = text.substr(firstColon + 1, secondColon - firstColon - 1);
+                name = trim(name);
+                varDecl->idents.push_back(name);
+                varDeclNames.push_back(name);
+            } else {
+                size_t firstQuote = text.find('\'');
+                size_t lastQuote = text.find('\'', firstQuote + 1);
+                if (firstQuote != string::npos && lastQuote != string::npos) {
+                    string name = text.substr(firstQuote + 1, lastQuote - firstQuote - 1);
+                    varDecl->idents.push_back(name);
+                    varDeclNames.push_back(name);
+                }
+            }
+            if (text.find("type:integer") != string::npos || text.find("Type: integer") != string::npos) varDecl->type = DataType::INTEGER;
+            else if (text.find("type:real") != string::npos || text.find("Type: real") != string::npos) varDecl->type = DataType::REAL;
+            else if (text.find("type:boolean") != string::npos || text.find("Type: boolean") != string::npos) varDecl->type = DataType::BOOLEAN;
+            else if (text.find("type:char") != string::npos || text.find("Type: char") != string::npos) varDecl->type = DataType::CHAR;
+            else if (text.find("type:string") != string::npos || text.find("Type: string") != string::npos) varDecl->type = DataType::STRING;
+        }
         if (auto varNode = dynamic_cast<VarAccessNode*>(node)) {
             size_t firstQuote = text.find('\'');
             size_t lastQuote = text.find('\'', firstQuote + 1);
             if (firstQuote != string::npos && lastQuote != string::npos) {
                 varNode->name = text.substr(firstQuote + 1, lastQuote - firstQuote - 1);
+            } else if (text.find("Identifier: ") != string::npos) {
+                size_t arrowPos = text.find(" -->");
+                if (arrowPos == string::npos) arrowPos = text.find(" ->");
+                if (arrowPos == string::npos) arrowPos = text.find(" \xE2\x86\x92");
+                if (arrowPos != string::npos) {
+                    varNode->name = trim(text.substr(text.find("Identifier: ") + 12, arrowPos - (text.find("Identifier: ") + 12)));
+                } else {
+                    varNode->name = trim(text.substr(text.find("Identifier: ") + 12));
+                }
             }
         }
         if (auto fnNode = dynamic_cast<FuncCallNode*>(node)) {
             size_t parenPos = text.find("(");
             if (parenPos != string::npos) {
                 string name = text.substr(0, parenPos);
+                string prefixes[] = {"condition ", "then ", "else ", "body "};
+                for (const string& p : prefixes) {
+                    size_t pPos = name.find(p);
+                    if (pPos != string::npos) {
+                        name = name.substr(pPos + p.length());
+                        break;
+                    }
+                }
                 // buang spasi dan karakter grafis
                 while(!name.empty() && !isalpha(name[0])) name.erase(0,1);
                 fnNode->name = name;
@@ -367,4 +340,103 @@ void ASTParser::parseDecoratedAST(const vector<string>& lines, size_t& i) {
 
         i++;
     }
+}
+
+void ASTParser::buildSymbolTableFromTree() {
+    // Kosongkan tab, btab, atab
+    st.tab.clear();
+    st.btab.clear();
+    st.atab.clear();
+
+    // Inisialisasi predefined identifiers
+    st.initPredefined();
+
+    // reset tab supaya yang sisa cuma built-in (0..39)
+    while (st.tab.size() > 40) {
+        st.tab.pop_back();
+    }
+
+    // Alamat variabel dimulai dari offset 3 (karena 0=SL, 1=DL, 2=RA)
+    int currentAdr = 3;
+    
+    for (size_t i = 0; i < varDeclNames.size(); i++) {
+        TabEntry t;
+        t.identifiers = varDeclNames[i];
+        t.obj = ObjClass::VARIABLE;
+        t.type = DataType::INTEGER; // Default, karena kita tidak parsing tipe secara ketat di sini jika tidak ada
+        t.ref = 0;
+        t.nrm = 1;
+        t.lev = 0;
+        t.adr = currentAdr++;
+        t.link = 0;
+        st.tab.push_back(t);
+    }
+
+    // Resolusi symRef untuk VarAccessNode dan VarDeclNode yang tidak punya index
+    // DFS traversal sederhana untuk assign symRef
+    vector<ASTNode*> stack;
+    if (root) stack.push_back(root);
+    
+    while (!stack.empty()) {
+        ASTNode* curr = stack.back();
+        stack.pop_back();
+        
+        if (auto vNode = dynamic_cast<VarAccessNode*>(curr)) {
+            for (size_t k = 33; k < st.tab.size(); k++) {
+                if (st.tab[k].identifiers == vNode->name) {
+                    vNode->symRef = k;
+                    vNode->lexicalLevel = st.tab[k].lev;
+                    break;
+                }
+            }
+        }
+        else if (auto asgn = dynamic_cast<AssignStmtNode*>(curr)) {
+            if (asgn->left) stack.push_back(asgn->left);
+            if (asgn->right) stack.push_back(asgn->right);
+        }
+        else if (auto bin = dynamic_cast<BinaryOpNode*>(curr)) {
+            if (bin->left) stack.push_back(bin->left);
+            if (bin->right) stack.push_back(bin->right);
+        }
+        else if (auto un = dynamic_cast<UnaryOpNode*>(curr)) {
+            if (un->operand) stack.push_back(un->operand);
+        }
+        else if (auto comp = dynamic_cast<CompoundStmtNode*>(curr)) {
+            for (auto* stmt : comp->statements) stack.push_back(stmt);
+        }
+        else if (auto ifst = dynamic_cast<IfStmtNode*>(curr)) {
+            if (ifst->condition) stack.push_back(ifst->condition);
+            if (ifst->thenStmt) stack.push_back(ifst->thenStmt);
+            if (ifst->elseStmt) stack.push_back(ifst->elseStmt);
+        }
+        else if (auto wh = dynamic_cast<WhileStmtNode*>(curr)) {
+            if (wh->condition) stack.push_back(wh->condition);
+            if (wh->body) stack.push_back(wh->body);
+        }
+        else if (auto fs = dynamic_cast<ForStmtNode*>(curr)) {
+            if (fs->startExpr) stack.push_back(fs->startExpr);
+            if (fs->endExpr) stack.push_back(fs->endExpr);
+            if (fs->body) stack.push_back(fs->body);
+        }
+        else if (auto wrt = dynamic_cast<WriteStatementNode*>(curr)) {
+            for (auto* arg : wrt->args) stack.push_back(arg);
+        }
+        else if (auto prog = dynamic_cast<ProgramNode*>(curr)) {
+            if (prog->mainBlock) stack.push_back(prog->mainBlock);
+        }
+    }
+
+    // Init 1 block di btab (Program block)
+    BTabEntry b;
+    b.blocks = 0;
+    b.last = st.tab.size() - 1;
+    b.lpar = 0;
+    b.psze = 0;
+    b.vsze = varDeclNames.size(); // Hanya jumlah variabel, +3 (SL/DL/RA) akan ditambahkan saat instruksi INT
+    st.btab.push_back(b);
+    
+    // Main block
+    BTabEntry b2 = b;
+    b2.vsze = 0; // blok utama biasanya vsze-nya menumpang program block di arsitektur kita
+    st.btab.push_back(b2);
 }

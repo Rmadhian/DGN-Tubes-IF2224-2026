@@ -25,11 +25,15 @@ private:
     std::string trim(const std::string& str);
     std::vector<std::string> splitWhitespace(const std::string& str);
 
-    void parseSymbolTable(const std::vector<std::string>& lines, size_t& i);
+
     void parseDecoratedAST(const std::vector<std::string>& lines, size_t& i);
+    void buildSymbolTableFromTree(); // Derive symbol table dari tree tanpa tab/btab/atab
     
     ASTNode* parseASTNode(const std::string& line);
     ObjClass strToObjClass(const std::string& str);
+
+    // Tracking variabel yang ditemukan di tree (untuk tree-only mode)
+    std::vector<std::string> varDeclNames;
 };
 
 #endif
